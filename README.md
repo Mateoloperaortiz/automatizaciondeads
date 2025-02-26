@@ -327,5 +327,5 @@ This proof of concept addresses the following evaluation criteria:
 ## 📞 Contact
 
 For any questions or further information, please contact:
-- Email: mateoloperaortiz@gmail.com
+- Email: mloperao1@eafit.edu.co, ehernandem@eafit.edu.co, myriverac@eafit.edu.co, mfalvarezm@eafit.edu.co
 - GitHub: [Mateoloperaortiz](https://github.com/Mateoloperaortiz)
