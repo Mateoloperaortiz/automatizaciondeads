@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with role-based access
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole  @default(CREATOR)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  platformConnections PlatformConnection[]
+  vacancies     Vacancy[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CREATOR
+}
+
+// Platform connection model for OAuth tokens
+model PlatformConnection {
+  id            String    @id @default(cuid())
+  platform      Platform
+  accessToken   String
+  refreshToken  String?
+  expiresAt     DateTime?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, platform])
+}
+
+enum Platform {
+  META
+  GOOGLE
+  TWITTER
+  TIKTOK
+  SNAPCHAT
+}
+
+// Vacancy model imported from ATS
+model Vacancy {
+  id            String    @id @default(cuid())
+  atsId         String    @unique
+  title         String
+  description   String
+  location      String
+  department    String
+  status        VacancyStatus @default(DRAFT)
+  importedBy    String
+  user          User      @relation(fields: [importedBy], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  campaigns     Campaign[]
+}
+
+enum VacancyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Campaign model for ad campaigns
+model Campaign {
+  id            String    @id @default(cuid())
+  name          String
+  platform      Platform
+  status        CampaignStatus @default(DRAFT)
+  vacancyId     String
+  vacancy       Vacancy   @relation(fields: [vacancyId], references: [id])
+  startDate     DateTime?
+  endDate       DateTime?
+  budget        Float?
+  platformCampaignId String?
+  creatives     Creative[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  FAILED
+}
+
+// Platform format requirements for creative adaptation
+model PlatformFormat {
+  id              String    @id @default(cuid())
+  platform        Platform
+  formatName      String
+  width           Int
+  height          Int
+  aspectRatio     String
+  maxFileSize     Int       // in KB
+  supportedTypes  String[]  // e.g., ["jpg", "png"]
+  textMaxLength   Int?      // maximum characters allowed
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  adaptations     CreativeAdaptation[]
+
+  @@unique([platform, formatName])
+}
+
+// Creative model for ad assets
+model Creative {
+  id              String    @id @default(cuid())
+  name            String
+  originalUrl     String
+  mimeType        String
+  width           Int
+  height          Int
+  fileSize        Int       // in KB
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  adaptations     CreativeAdaptation[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Adapted versions of creative assets
+model CreativeAdaptation {
+  id              String        @id @default(cuid())
+  adaptedUrl      String
+  width           Int
+  height          Int
+  fileSize        Int           // in KB
+  status          AdaptationStatus
+  creativeId      String
+  creative        Creative      @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+  platformFormatId String
+  platformFormat  PlatformFormat @relation(fields: [platformFormatId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum AdaptationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  NEEDS_REVIEW
+}
