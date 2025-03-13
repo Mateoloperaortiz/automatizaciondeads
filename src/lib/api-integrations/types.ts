@@ -38,12 +38,37 @@ export interface AdCampaign {
 
 export type SocialPlatform = 'meta' | 'x' | 'google' | 'tiktok' | 'snapchat';
 
+export interface ApiErrorDetail {
+  code: string;
+  message: string;
+  platform?: SocialPlatform;
+  statusCode?: number;
+  originalError?: unknown;
+  retryable?: boolean;
+  rateLimited?: boolean;
+  authError?: boolean;
+  recommendedAction?: string;
+}
+
 export interface ApiResponse {
   success: boolean;
-  data?: any;
-  error?: {
-    code: string;
-    message: string;
+  data?: Record<string, unknown>;
+  error?: ApiErrorDetail;
+  // Metadata for pagination and rate limiting
+  meta?: {
+    pagination?: {
+      hasNext: boolean;
+      hasPrevious: boolean;
+      totalCount?: number;
+      nextCursor?: string;
+      previousCursor?: string;
+    };
+    rateLimit?: {
+      limit: number;
+      remaining: number;
+      resetAt: Date | string;
+    };
+    requestId?: string;
   };
 }
 

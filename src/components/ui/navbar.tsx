@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from './button';
 
 export function Navbar() {
@@ -8,8 +7,8 @@ export function Navbar() {
       <div className="flex flex-wrap justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
-            <span className="self-center text-2xl font-semibold text-magneto-purple whitespace-nowrap">
-              Ads<span className="text-magneto-orange">Master</span>
+            <span className="self-center text-2xl font-semibold text-primary whitespace-nowrap">
+              Ads<span className="text-secondary">Master</span>
             </span>
           </Link>
         </div>
@@ -38,23 +37,33 @@ export function Navbar() {
         <div className="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1">
           <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
             <li>
-              <Link href="/" className="block py-2 pr-4 pl-3 text-white rounded bg-magneto-purple lg:bg-transparent lg:text-magneto-purple lg:p-0">
+              <Link href="/" className="block py-2 pr-4 pl-3 text-white rounded bg-primary lg:bg-transparent lg:text-primary lg:p-0">
                 Inicio
               </Link>
             </li>
             <li>
-              <Link href="/dashboard" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-magneto-orange lg:p-0">
+              <Link href="/dashboard" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-secondary lg:p-0">
                 Dashboard
               </Link>
             </li>
             <li>
-              <Link href="/create" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-magneto-orange lg:p-0">
+              <Link href="/create" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-secondary lg:p-0">
                 Crear Anuncio
               </Link>
             </li>
             <li>
-              <Link href="/analytics" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-magneto-orange lg:p-0">
+              <Link href="/analytics" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-secondary lg:p-0">
                 Analíticas
+              </Link>
+            </li>
+            <li>
+              <Link href="/audience/segmentation" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-secondary lg:p-0">
+                Segmentación
+              </Link>
+            </li>
+            <li>
+              <Link href="/settings" className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-secondary lg:p-0">
+                Configuración
               </Link>
             </li>
           </ul>

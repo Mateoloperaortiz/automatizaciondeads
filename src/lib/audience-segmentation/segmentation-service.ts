@@ -1,4 +1,8 @@
 import { AudienceSegment, SegmentationOptions, SegmentationResult, UserProfile } from './types';
+import { SegmentationUtils } from './segmentation-utils';
+import { kmeans } from 'ml-kmeans';
+import { agnes } from 'ml-hclust';
+import * as densityClustering from 'density-clustering';
 
 /**
  * Servicio para la segmentación de audiencias utilizando métodos no supervisados
@@ -54,33 +58,67 @@ export class AudienceSegmentationService {
     const numberOfClusters = options.numberOfClusters || 5;
     console.log(`Aplicando K-means con ${numberOfClusters} clusters`);
     
-    // En una implementación real, aquí iría el algoritmo K-means
-    // Para esta simulación, crearemos segmentos aleatorios
+    // Convertir usuarios a vectores de características
+    const { vectors, featureNames, userIndices } = SegmentationUtils.convertUsersToFeatureVectors(users, options.features as string[]);
     
+    if (vectors.length === 0) {
+      console.warn('No hay suficientes datos para aplicar K-means');
+      return [];
+    }
+    
+    // Aplicar algoritmo K-means
+    const kmeansResult = kmeans(vectors, numberOfClusters, {
+      seed: 42, // Para reproducibilidad
+      initialization: 'kmeans++', // Mejor inicialización que la aleatoria
+      maxIterations: 100
+    });
+    
+    // Crear mapa de usuarios por cluster
+    const usersByCluster: Record<number, UserProfile[]> = {};
+    
+    kmeansResult.clusters.forEach((clusterId: number, i: number) => {
+      if (!usersByCluster[clusterId]) {
+        usersByCluster[clusterId] = [];
+      }
+      
+      const userId = userIndices[i];
+      const user = users.find(u => u.id === userId);
+      
+      if (user) {
+        usersByCluster[clusterId].push(user);
+      }
+    });
+    
+    // Crear segmentos a partir de los clusters
     const segments: AudienceSegment[] = [];
     
-    // Crear segmentos basados en intereses principales
-    const interestGroups = this.groupUsersByInterests(users);
-    
-    // Convertir los grupos de intereses en segmentos formales
-    Object.entries(interestGroups).slice(0, numberOfClusters).forEach(([interest, groupUsers], index) => {
-      const segmentId = `segment_${Date.now()}_${index}`;
+    Object.entries(usersByCluster).forEach(([clusterId, clusterUsers], index) => {
+      if (clusterUsers.length === 0) return;
+      
+      const dominantInterests = this.extractDominantInterests(clusterUsers);
+      const primaryInterest = dominantInterests[0] || 'general';
+      const segmentId = `kmeans_segment_${Date.now()}_${index}`;
       
       segments.push({
         id: segmentId,
-        name: `Segmento de ${interest}`,
-        description: `Usuarios interesados en ${interest}`,
-        size: groupUsers.length,
-        users: groupUsers.map(user => user.id),
+        name: `Segmento K-means ${clusterId}: ${primaryInterest}`,
+        description: `Usuarios agrupados por K-means con interés principal en ${primaryInterest}`,
+        size: clusterUsers.length,
+        users: clusterUsers.map(user => user.id),
         characteristics: {
-          dominantDemographics: this.extractDominantDemographics(groupUsers),
-          dominantInterests: [interest, ...this.extractSecondaryInterests(groupUsers, interest)],
-          engagementLevel: this.calculateEngagementLevel(groupUsers),
-          conversionPotential: this.calculateConversionPotential(groupUsers),
-          bestTimeToTarget: this.calculateBestTimeToTarget(groupUsers)
+          dominantDemographics: this.extractDominantDemographics(clusterUsers),
+          dominantInterests: dominantInterests,
+          engagementLevel: this.calculateEngagementLevel(clusterUsers),
+          conversionPotential: this.calculateConversionPotential(clusterUsers),
+          bestTimeToTarget: this.calculateBestTimeToTarget(clusterUsers)
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        visualizationData: SegmentationUtils.generateVisualizationConfig(
+          vectors,
+          kmeansResult.clusters,
+          featureNames
+        )
       });
     });
     
@@ -94,39 +132,95 @@ export class AudienceSegmentationService {
    * @returns Segmentos generados
    */
   private applyHierarchical(users: UserProfile[], options: SegmentationOptions): AudienceSegment[] {
-    const minSimilarity = options.minSimilarity || 0.7;
-    console.log(`Aplicando Hierarchical Clustering con similaridad mínima ${minSimilarity}`);
+    const numberOfClusters = options.numberOfClusters || 5;
+    console.log(`Aplicando Hierarchical Clustering para generar ${numberOfClusters} clusters`);
     
-    // En una implementación real, aquí iría el algoritmo de clustering jerárquico
-    // Para esta simulación, crearemos segmentos basados en demografía
+    // Convertir usuarios a vectores de características
+    const { vectors, featureNames, userIndices } = SegmentationUtils.convertUsersToFeatureVectors(users, options.features as string[]);
     
+    if (vectors.length === 0) {
+      console.warn('No hay suficientes datos para aplicar Hierarchical Clustering');
+      return [];
+    }
+    
+    // Calcular matriz de distancias
+    const distanceMatrix: number[][] = [];
+    for (let i = 0; i < vectors.length; i++) {
+      const row: number[] = [];
+      for (let j = 0; j < vectors.length; j++) {
+        row.push(SegmentationUtils.euclideanDistance(vectors[i], vectors[j]));
+      }
+      distanceMatrix.push(row);
+    }
+    
+    // Aplicar algoritmo de clustering jerárquico (AGNES - Agglomerative Nesting)
+    const agnesResult = agnes(distanceMatrix, {
+      method: 'ward' // Método de vinculación
+    });
+    
+    // Obtener clusters cortando el dendrograma al nivel que da el número de clusters deseado
+    const clusters = agnesResult.cut(numberOfClusters);
+    // Convertir a tipo adecuado para TypeScript
+    const clusterArray: number[][] = [];    
+    for (let i = 0; i < clusters.length; i++) {
+      if (clusters[i] && Array.isArray(clusters[i])) {
+        clusterArray.push(clusters[i] as unknown as number[]);
+      }
+    }
+    
+    // Crear mapa de usuarios por cluster
+    const usersByCluster: Record<number, UserProfile[]> = {};
+    
+    // Usar el array de clusters correctamente tipado
+    clusterArray.forEach((clusterPoints: number[], clusterId: number) => {
+      if (!usersByCluster[clusterId]) {
+        usersByCluster[clusterId] = [];
+      }
+      
+      // Procesar cada punto en el cluster
+      clusterPoints.forEach((pointIndex: number) => {
+        const userId = userIndices[pointIndex];
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+          usersByCluster[clusterId].push(user);
+        }
+      });
+    });
+    
+    // Crear segmentos a partir de los clusters
     const segments: AudienceSegment[] = [];
     
-    // Agrupar por ubicación como ejemplo de clustering jerárquico
-    const locationGroups = this.groupUsersByLocation(users);
-    
-    // Convertir los grupos de ubicación en segmentos formales
-    Object.entries(locationGroups).forEach(([location, groupUsers], index) => {
-      const segmentId = `segment_${Date.now()}_${index}`;
+    Object.entries(usersByCluster).forEach(([clusterId, clusterUsers], index) => {
+      if (clusterUsers.length === 0) return;
+      
+      // Extraer características dominantes del cluster
+      const dominantDemographics = this.extractDominantDemographics(clusterUsers);
+      const dominantLocation = dominantDemographics.location || 'desconocida';
+      const dominantInterests = this.extractDominantInterests(clusterUsers);
+      
+      const segmentId = `hc_segment_${Date.now()}_${index}`;
       
       segments.push({
         id: segmentId,
-        name: `Segmento de ${location}`,
-        description: `Usuarios ubicados en ${location}`,
-        size: groupUsers.length,
-        users: groupUsers.map(user => user.id),
+        name: `Segmento Jerárquico ${clusterId}: ${dominantLocation}`,
+        description: `Usuarios agrupados jerárquicamente con ubicación principal en ${dominantLocation}`,
+        size: clusterUsers.length,
+        users: clusterUsers.map(user => user.id),
         characteristics: {
-          dominantDemographics: { 
-            ...this.extractDominantDemographics(groupUsers),
-            location 
-          },
-          dominantInterests: this.extractDominantInterests(groupUsers),
-          engagementLevel: this.calculateEngagementLevel(groupUsers),
-          conversionPotential: this.calculateConversionPotential(groupUsers),
-          bestTimeToTarget: this.calculateBestTimeToTarget(groupUsers)
+          dominantDemographics,
+          dominantInterests,
+          engagementLevel: this.calculateEngagementLevel(clusterUsers),
+          conversionPotential: this.calculateConversionPotential(clusterUsers),
+          bestTimeToTarget: this.calculateBestTimeToTarget(clusterUsers)
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        visualizationData: SegmentationUtils.generateVisualizationConfig(
+          vectors,
+          clusterArray.map((_, i) => i), // Convert to cluster assignments array
+          featureNames
+        )
       });
     });
     
@@ -144,45 +238,129 @@ export class AudienceSegmentationService {
     const epsilon = options.epsilon || 0.5;
     console.log(`Aplicando DBSCAN con minPoints=${minPoints} y epsilon=${epsilon}`);
     
-    // En una implementación real, aquí iría el algoritmo DBSCAN
-    // Para esta simulación, crearemos segmentos basados en nivel de engagement
+    // Convertir usuarios a vectores de características
+    const { vectors, featureNames, userIndices } = SegmentationUtils.convertUsersToFeatureVectors(users, options.features as string[]);
     
-    const segments: AudienceSegment[] = [];
+    if (vectors.length === 0) {
+      console.warn('No hay suficientes datos para aplicar DBSCAN');
+      return [];
+    }
     
-    // Dividir usuarios en grupos de engagement (bajo, medio, alto)
-    const engagementLevels: Record<string, UserProfile[]> = {
-      low: [],
-      medium: [],
-      high: []
-    };
+    // Aplicar algoritmo DBSCAN
+    const dbscan = new densityClustering.DBSCAN();
+    const clusters = dbscan.run(vectors, epsilon, minPoints);
     
-    users.forEach(user => {
-      const level = this.calculateEngagementLevel([user]);
-      engagementLevels[level].push(user);
+    // Crear mapa de usuarios por cluster
+    const usersByCluster: Record<number, UserProfile[]> = {};
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const noise: UserProfile[] = [];
+    
+    // Inicializar cluster -1 para puntos de ruido
+    usersByCluster[-1] = [];
+    
+    // Asignar usuarios a clusters
+    clusters.forEach((clusterPoints: number[], clusterId: number) => {
+      usersByCluster[clusterId] = [];
+      
+      clusterPoints.forEach((pointIndex: number) => {
+        const userId = userIndices[pointIndex];
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+          usersByCluster[clusterId].push(user);
+        }
+      });
     });
     
-    // Convertir los niveles de engagement en segmentos formales
-    Object.entries(engagementLevels).forEach(([level, groupUsers], index) => {
-      if (groupUsers.length < minPoints) return; // Simular el concepto de "ruido" en DBSCAN
+    // Identificar puntos de ruido (no asignados a ningún cluster)
+    const assignedIndices = new Set<number>();
+    clusters.forEach((cluster: number[]) => {
+      cluster.forEach((index: number) => assignedIndices.add(index));
+    });
+    
+    for (let i = 0; i < vectors.length; i++) {
+      if (!assignedIndices.has(i)) {
+        const userId = userIndices[i];
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+          usersByCluster[-1].push(user);
+        }
+      }
+    }
+    
+    // Crear segmentos a partir de los clusters
+    const segments: AudienceSegment[] = [];
+    
+    // Crear un array plano de asignaciones de cluster para visualización
+    const clusterAssignments: number[] = new Array(vectors.length).fill(-1);
+    clusters.forEach((clusterPoints: number[], clusterId: number) => {
+      clusterPoints.forEach((pointIndex: number) => {
+        clusterAssignments[pointIndex] = clusterId;
+      });
+    });
+    
+    // Eliminar variables no utilizadas para evitar advertencias
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _noise: UserProfile[] = [];
+    
+    Object.entries(usersByCluster).forEach(([clusterIdStr, clusterUsers]) => {
+      if (clusterUsers.length === 0) return;
       
-      const segmentId = `segment_${Date.now()}_${index}`;
-      const levelName = level.charAt(0).toUpperCase() + level.slice(1);
+      const clusterId = parseInt(clusterIdStr);
+      
+      // Los puntos de ruido (clusterId = -1) se manejan de manera especial
+      if (clusterId === -1 && clusterUsers.length > 0) {
+        segments.push({
+          id: `dbscan_noise_${Date.now()}`,
+          name: 'Segmento de Outliers',
+          description: 'Usuarios que no encajan en ningún patrón de comportamiento definido',
+          size: clusterUsers.length,
+          users: clusterUsers.map(user => user.id),
+          characteristics: {
+            dominantDemographics: this.extractDominantDemographics(clusterUsers),
+            dominantInterests: this.extractDominantInterests(clusterUsers),
+            engagementLevel: this.calculateEngagementLevel(clusterUsers),
+            conversionPotential: this.calculateConversionPotential(clusterUsers),
+            bestTimeToTarget: this.calculateBestTimeToTarget(clusterUsers)
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          visualizationData: SegmentationUtils.generateVisualizationConfig(
+            vectors,
+            clusterAssignments,
+            featureNames
+          )
+        });
+        return;
+      }
+      
+      // Determinar el nivel de engagement predominante en el cluster
+      const engagementLevel = this.calculateEngagementLevel(clusterUsers);
+      const levelName = engagementLevel.charAt(0).toUpperCase() + engagementLevel.slice(1);
+      
+      const segmentId = `dbscan_segment_${Date.now()}_${clusterId}`;
       
       segments.push({
         id: segmentId,
-        name: `Segmento de Engagement ${levelName}`,
-        description: `Usuarios con nivel de engagement ${level}`,
-        size: groupUsers.length,
-        users: groupUsers.map(user => user.id),
+        name: `Segmento DBSCAN ${clusterId}: Engagement ${levelName}`,
+        description: `Usuarios agrupados por patrones de comportamiento con nivel de engagement ${engagementLevel}`,
+        size: clusterUsers.length,
+        users: clusterUsers.map(user => user.id),
         characteristics: {
-          dominantDemographics: this.extractDominantDemographics(groupUsers),
-          dominantInterests: this.extractDominantInterests(groupUsers),
-          engagementLevel: level as 'low' | 'medium' | 'high',
-          conversionPotential: this.calculateConversionPotential(groupUsers),
-          bestTimeToTarget: this.calculateBestTimeToTarget(groupUsers)
+          dominantDemographics: this.extractDominantDemographics(clusterUsers),
+          dominantInterests: this.extractDominantInterests(clusterUsers),
+          engagementLevel: engagementLevel as 'low' | 'medium' | 'high',
+          conversionPotential: this.calculateConversionPotential(clusterUsers),
+          bestTimeToTarget: this.calculateBestTimeToTarget(clusterUsers)
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        visualizationData: SegmentationUtils.generateVisualizationConfig(
+          vectors,
+          clusterAssignments,
+          featureNames
+        )
       });
     });
     

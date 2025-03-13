@@ -3,23 +3,23 @@ import { Button } from '@/components/ui/button';
 export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-magneto-purple mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-primary mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-magneto-purple mb-2">Anuncios Activos</h2>
+          <h2 className="text-xl font-semibold text-primary mb-2">Anuncios Activos</h2>
           <p className="text-4xl font-bold">12</p>
           <p className="text-sm text-gray-500">+3 desde el mes pasado</p>
         </div>
         
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-magneto-purple mb-2">Aplicaciones</h2>
+          <h2 className="text-xl font-semibold text-primary mb-2">Aplicaciones</h2>
           <p className="text-4xl font-bold">248</p>
           <p className="text-sm text-gray-500">+24% desde el mes pasado</p>
         </div>
         
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-magneto-purple mb-2">Costo por Aplicación</h2>
+          <h2 className="text-xl font-semibold text-primary mb-2">Costo por Aplicación</h2>
           <p className="text-4xl font-bold">$12.40</p>
           <p className="text-sm text-gray-500">-18% desde el mes pasado</p>
         </div>
@@ -27,7 +27,7 @@ export default function Dashboard() {
       
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-magneto-purple">Anuncios Recientes</h2>
+          <h2 className="text-xl font-semibold text-primary">Anuncios Recientes</h2>
           <Button variant="secondary" size="sm">Ver Todos</Button>
         </div>
         
@@ -83,7 +83,7 @@ export default function Dashboard() {
       
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-magneto-purple">Rendimiento por Plataforma</h2>
+          <h2 className="text-xl font-semibold text-primary">Rendimiento por Plataforma</h2>
           <div>
             <select className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
               <option>Últimos 30 días</option>
@@ -100,7 +100,7 @@ export default function Dashboard() {
               <span className="text-sm font-medium">78%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-magneto-purple h-2.5 rounded-full" style={{ width: '78%' }}></div>
+              <div className="bg-secondary h-2.5 rounded-full" style={{ width: '78%' }}></div>
             </div>
           </div>
           
@@ -110,7 +110,7 @@ export default function Dashboard() {
               <span className="text-sm font-medium">62%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-magneto-orange h-2.5 rounded-full" style={{ width: '62%' }}></div>
+              <div className="bg-primary h-2.5 rounded-full" style={{ width: '62%' }}></div>
             </div>
           </div>
           

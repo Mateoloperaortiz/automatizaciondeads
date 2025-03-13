@@ -56,6 +56,7 @@ export interface AudienceSegment {
   };
   createdAt: Date;
   updatedAt: Date;
+  visualizationData?: Record<string, unknown>; // Datos para visualizar el segmento
 }
 
 export interface SegmentationResult {
