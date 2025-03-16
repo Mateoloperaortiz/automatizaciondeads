@@ -1,8 +1,0 @@
-node_modules
-.windsurfrules
-.DS_Store
-.next
-docs/
-.env
-CLAUDE.md
-.env.local

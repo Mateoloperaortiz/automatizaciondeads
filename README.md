@@ -1,70 +1,69 @@
-# AdsMaster - Plataforma de Automatización de Anuncios
+# Welcome to your Lovable project
 
-AdsMaster es una plataforma diseñada para automatizar la creación y publicación de anuncios de vacantes laborales en múltiples canales de redes sociales para Magneto365. La plataforma busca minimizar los procesos manuales, agilizar los flujos de trabajo de reclutamiento y proporcionar análisis unificados para mejorar los resultados de reclutamiento.
+## Project info
 
-## Objetivos
+**URL**: https://lovable.dev/projects/8fa92554-9d35-41c9-8c21-82347f8b324e
 
-- Reducir el tiempo dedicado a la creación de anuncios en un 70%
-- Disminuir las métricas de costo por aplicación en un 25%
+## How can I edit this code?
 
-## Tecnologías Utilizadas
+There are several ways of editing your application.
 
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript
-- **Estilos**: Tailwind CSS, Shadcn UI
-- **Despliegue**: Vercel (recomendado)
+**Use Lovable**
 
-## Estructura del Proyecto
+Simply visit the [Lovable Project](https://lovable.dev/projects/8fa92554-9d35-41c9-8c21-82347f8b324e) and start prompting.
 
-- `src/app`: Contiene las páginas principales de la aplicación utilizando el paradigma App Router de Next.js 14
-- `src/components`: Componentes UI reutilizables
-- `src/lib`: Utilidades y funciones auxiliares
+Changes made via Lovable will be committed automatically to this repo.
 
-## Paleta de Colores de Magneto365
+**Use your preferred IDE**
 
-La aplicación utiliza los colores corporativos de Magneto365:
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-- **Púrpura (#5D3B90)**: Color principal de la marca, utilizado en logos y elementos principales de la UI
-- **Naranja (#FF6B00)**: Color de acento secundario, utilizado para CTAs y destacados
-- **Blanco (#FFFFFF)**: Utilizado para fondos y texto sobre fondos oscuros
-- **Gris Oscuro (#333333)**: Utilizado para texto y elementos secundarios de la UI
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-## Instalación
+Follow these steps:
 
-1. Clona este repositorio:
-```bash
-git clone <url-del-repositorio>
-cd automatizaciondeads
-```
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
 
-2. Instala las dependencias:
-```bash
-npm install
-```
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
 
-3. Ejecuta el servidor de desarrollo:
-```bash
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-4. Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
+**Edit a file directly in GitHub**
 
-## Funcionalidades Principales
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-- **Dashboard**: Visualización de métricas clave y rendimiento de anuncios
-- **Creación de Anuncios**: Formulario intuitivo para crear y automatizar anuncios de empleo
-- **Analíticas**: Análisis detallado del rendimiento de las campañas y demografía de los aplicantes
+**Use GitHub Codespaces**
 
-## Despliegue
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-Para desplegar la aplicación en producción:
+## What technologies are used for this project?
 
-```bash
-npm run build
-npm start
-```
+This project is built with .
 
-Para un despliegue más sencillo, se recomienda utilizar Vercel, que se integra perfectamente con Next.js.
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-## Licencia
+## How can I deploy this project?
 
-Este proyecto es propiedad de Magneto365 y está destinado únicamente para uso interno.
+Simply open [Lovable](https://lovable.dev/projects/8fa92554-9d35-41c9-8c21-82347f8b324e) and click on Share -> Publish.
+
+## I want to use a custom domain - is that possible?
+
+We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
