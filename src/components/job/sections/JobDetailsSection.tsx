@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/form';
 import { useJobForm } from '../JobFormContext';
 import { Card } from '@/components/ui/card';
+import JobDescriptionOptimizer from '../optimization/JobDescriptionOptimizer';
 
 interface JobDetailsSectionProps {
   readOnly?: boolean;
@@ -48,6 +49,18 @@ const JobDetailsSection: React.FC<JobDetailsSectionProps> = ({
   
   if (!form) return null;
   
+  const currentDescription = form.watch('description');
+  const currentRequirements = form.watch('requirements');
+  const selectedPlatforms = form.watch('platforms');
+  
+  const handleApplyOptimization = (optimizedDescription: string) => {
+    form.setValue('description', optimizedDescription, { 
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
+  };
+  
   return (
     <div className="space-y-6">
       <FormField
@@ -55,7 +68,15 @@ const JobDetailsSection: React.FC<JobDetailsSectionProps> = ({
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Job Description</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>Job Description</FormLabel>
+              <JobDescriptionOptimizer
+                currentDescription={currentDescription}
+                currentRequirements={currentRequirements}
+                onApplyOptimization={handleApplyOptimization}
+                platformTargets={selectedPlatforms}
+              />
+            </div>
             <FormControl>
               <Textarea
                 placeholder="Describe the role, responsibilities, and what a typical day looks like"

@@ -20,7 +20,7 @@ export const platforms: Platform[] = [
     icon: <MetaIcon />,
     color: 'bg-blue-500',
     description: 'Connect to Facebook Business Manager to post job ads on Facebook and Instagram',
-    isConnected: false,
+    isConnected: true,
   },
   {
     id: 'twitter',
@@ -28,7 +28,7 @@ export const platforms: Platform[] = [
     icon: <TwitterIcon />,
     color: 'bg-black',
     description: 'Connect to X for Business to post job openings as promoted tweets',
-    isConnected: false,
+    isConnected: true,
   },
   {
     id: 'linkedin',
@@ -36,7 +36,7 @@ export const platforms: Platform[] = [
     icon: <div className="flex items-center justify-center w-full h-full"><Linkedin className="w-5 h-5" /></div>,
     color: 'bg-blue-700',
     description: 'Post job openings to LinkedIn and target professional audiences',
-    isConnected: false,
+    isConnected: true,
   },
   {
     id: 'google',

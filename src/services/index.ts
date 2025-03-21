@@ -3,3 +3,4 @@
 export * from './campaignService';
 export * from './eventsService';
 export * from './metricsService';
+export * from './platformHealthService';
