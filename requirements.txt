@@ -33,7 +33,7 @@ python-dotenv==1.0.0
 Faker==22.4.0
 
 # Cloud deployment
-gunicorn==21.2.0
+gunicorn==23.0.0
 pandas-stubs==2.2.3.250308
 
 # Security
