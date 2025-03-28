@@ -1,0 +1,2044 @@
+{% extends "simple_base.html" %}
+
+{% block title %}API Testing | Ad Automation P-01{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('main.index') }}">Home</a>
+<i class="fas fa-chevron-right"></i>
+<span>API Testing</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Main styles */
+    .api-dashboard {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        height: calc(100vh - 180px);
+    }
+    
+    @media (max-width: 992px) {
+        .api-dashboard {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+    }
+    
+    /* Sidebar */
+    .test-sidebar {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 20px;
+    }
+    
+    .sidebar-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .sidebar-footer {
+        padding: 12px 16px;
+        background: var(--gray-50);
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    /* Endpoint list */
+    .endpoints-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .endpoint-item {
+        margin-bottom: 6px;
+    }
+    
+    .endpoint-button {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 10px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        background: white;
+        font-size: 14px;
+        color: var(--gray-800);
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        align-items: center;
+    }
+    
+    .endpoint-button:hover {
+        background: var(--gray-50);
+        border-color: var(--gray-300);
+    }
+    
+    .endpoint-button.active {
+        background: var(--primary-50);
+        border-color: var(--primary-300);
+        color: var(--primary);
+    }
+    
+    .endpoint-method {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 42px;
+        text-align: center;
+    }
+    
+    .endpoint-method.get {
+        background: var(--success-50);
+        color: var(--success-700);
+    }
+    
+    .endpoint-method.post {
+        background: var(--primary-50);
+        color: var(--primary-700);
+    }
+    
+    .endpoint-method.put {
+        background: var(--warning-50);
+        color: var(--warning-700);
+    }
+    
+    .endpoint-method.delete {
+        background: var(--danger-50);
+        color: var(--danger-700);
+    }
+    
+    .endpoint-path {
+        flex: 1;
+        margin: 0 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Platform status */
+    .platform-status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .platform-item {
+        display: flex;
+        padding: 10px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        margin-bottom: 8px;
+        align-items: center;
+    }
+    
+    .platform-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--border-radius);
+        background: var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 18px;
+    }
+    
+    .platform-info {
+        flex: 1;
+    }
+    
+    .platform-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+    
+    .platform-status {
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+    
+    .status-indicator.connected {
+        background: var(--success);
+    }
+    
+    .status-indicator.disconnected {
+        background: var(--danger);
+    }
+    
+    .platform-actions {
+        display: flex;
+    }
+    
+    /* Main content area */
+    .test-main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .test-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--gray-200);
+        margin-bottom: 20px;
+        background: white;
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+        overflow-x: auto;
+    }
+    
+    .test-tab {
+        padding: 16px 20px;
+        font-weight: 500;
+        color: var(--gray-600);
+        cursor: pointer;
+        white-space: nowrap;
+        position: relative;
+    }
+    
+    .test-tab:hover {
+        color: var(--primary);
+    }
+    
+    .test-tab.active {
+        color: var(--primary);
+    }
+    
+    .test-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--primary);
+    }
+    
+    .test-tab-content {
+        display: none;
+        flex: 1;
+        overflow: auto;
+        background: white;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        padding: 20px;
+    }
+    
+    .test-tab-content.active {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Endpoint detail */
+    .endpoint-detail-header {
+        border-bottom: 1px solid var(--gray-200);
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .endpoint-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .endpoint-url {
+        margin-top: 8px;
+        font-family: monospace;
+        display: flex;
+        align-items: center;
+        background: var(--gray-50);
+        padding: 8px 12px;
+        border-radius: var(--border-radius);
+        overflow-x: auto;
+    }
+    
+    .endpoint-description {
+        margin-top: 12px;
+        color: var(--gray-700);
+    }
+    
+    /* Parameters section */
+    .parameters-section {
+        margin-bottom: 20px;
+    }
+    
+    .parameters-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .parameters-table th, .parameters-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: left;
+    }
+    
+    .parameters-table th {
+        font-weight: 600;
+        color: var(--gray-700);
+        background: var(--gray-50);
+    }
+    
+    .parameter-required {
+        color: var(--danger);
+        margin-left: 4px;
+    }
+    
+    .parameter-type {
+        font-family: monospace;
+        background: var(--gray-100);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    .parameter-default {
+        color: var(--gray-600);
+        font-size: 12px;
+    }
+    
+    /* Request builder */
+    .request-section {
+        margin-bottom: 20px;
+    }
+    
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .code-editor {
+        font-family: monospace;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        width: 100%;
+        height: 200px;
+        resize: vertical;
+        margin-bottom: 12px;
+    }
+    
+    .send-request-btn {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+    }
+    
+    .send-request-btn i {
+        margin-right: 6px;
+    }
+    
+    /* Response section */
+    .response-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .response-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .response-meta-item {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+    }
+    
+    .response-meta-label {
+        color: var(--gray-600);
+        margin-right: 6px;
+    }
+    
+    .response-meta-value {
+        font-weight: 500;
+    }
+    
+    .success-response {
+        color: var(--success);
+    }
+    
+    .error-response {
+        color: var(--danger);
+    }
+    
+    .response-content {
+        font-family: monospace;
+        background: var(--gray-900);
+        color: var(--gray-100);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        overflow: auto;
+        max-height: 300px;
+        white-space: pre;
+    }
+    
+    /* Sample Response */
+    .sample-response {
+        font-family: monospace;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        margin-top: 12px;
+        white-space: pre;
+        overflow: auto;
+        max-height: 200px;
+    }
+    
+    /* History Table */
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .history-table th, .history-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: left;
+    }
+    
+    .history-table th {
+        font-weight: 600;
+        color: var(--gray-700);
+        background: var(--gray-50);
+    }
+    
+    .history-status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    
+    .history-status-indicator.success {
+        background: var(--success);
+    }
+    
+    .history-status-indicator.error {
+        background: var(--danger);
+    }
+    
+    /* Health Dashboard */
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .health-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+    
+    .health-card-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .health-card-body {
+        padding: 16px;
+    }
+    
+    .health-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .health-stat {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .health-stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .health-stat-label {
+        font-size: 13px;
+        color: var(--gray-600);
+    }
+    
+    .health-chart {
+        height: 200px;
+        margin-top: 16px;
+    }
+    
+    /* Saved Tests */
+    .saved-tests {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    
+    .saved-test-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    
+    .saved-test-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    
+    .saved-test-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .saved-test-title {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    
+    .saved-test-meta {
+        font-size: 12px;
+        color: var(--gray-600);
+    }
+    
+    .saved-test-body {
+        padding: 16px;
+    }
+    
+    .saved-test-detail {
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .saved-test-detail-label {
+        font-weight: 500;
+        margin-right: 4px;
+    }
+    
+    .saved-test-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 12px 16px;
+        background: var(--gray-50);
+        gap: 8px;
+    }
+    
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal.active {
+        display: flex;
+        animation: fadeIn 0.3s;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s;
+    }
+    
+    .modal-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        font-weight: 600;
+        font-size: 18px;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        color: var(--gray-500);
+    }
+    
+    .modal-close:hover {
+        color: var(--gray-800);
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .modal-footer {
+        padding: 16px;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* Toast notification */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        padding: 16px;
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        min-width: 300px;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .toast-notification.active {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .toast-icon {
+        margin-right: 12px;
+        font-size: 20px;
+    }
+    
+    .toast-content {
+        flex: 1;
+    }
+    
+    .toast-message {
+        margin-bottom: 4px;
+    }
+    
+    .toast-detail {
+        font-size: 12px;
+        color: var(--gray-600);
+    }
+    
+    .toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--gray-500);
+        margin-left: 12px;
+    }
+    
+    .toast-success .toast-icon {
+        color: var(--success);
+    }
+    
+    .toast-error .toast-icon {
+        color: var(--danger);
+    }
+    
+    /* Loader */
+    .loader {
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .loader.active {
+        display: flex;
+    }
+    
+    .loader-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--gray-200);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spinner 1s linear infinite;
+    }
+    
+    .loader-text {
+        font-size: 14px;
+        color: var(--gray-600);
+    }
+    
+    @keyframes spinner {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive tweaks */
+    @media (max-width: 768px) {
+        .health-grid, .saved-tests {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-left">
+        <h1>API Endpoint Testing</h1>
+        <p class="text-muted">Comprehensive testing interface for all API endpoints</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-outline-secondary" id="saveConfigBtn">
+            <i class="fas fa-save"></i> Save Config
+        </button>
+        <button class="btn btn-outline-secondary" id="exportResultsBtn">
+            <i class="fas fa-download"></i> Export Results
+        </button>
+        <button class="btn btn-primary" id="refreshAllBtn">
+            <i class="fas fa-sync-alt"></i> Test All
+        </button>
+    </div>
+</div>
+
+<div class="api-dashboard">
+    <!-- Sidebar -->
+    <div class="test-sidebar">
+        <div class="sidebar-header">
+            Available Endpoints
+            <button class="btn btn-sm btn-outline-secondary" id="refreshEndpointsBtn">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <!-- Platform Status Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    Platform Status
+                    <button class="btn btn-sm btn-outline-secondary" id="refreshPlatformsBtn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <ul class="platform-status-list">
+                    {% for platform in platform_status %}
+                    <li class="platform-item">
+                        <div class="platform-icon">
+                            <i class="{{ platform.icon }}"></i>
+                        </div>
+                        <div class="platform-info">
+                            <div class="platform-name">{{ platform.name }}</div>
+                            <div class="platform-status">
+                                <span class="status-indicator {{ 'connected' if platform.initialized else 'disconnected' }}"></span>
+                                {{ 'Connected' if platform.initialized else 'Disconnected' }}
+                            </div>
+                        </div>
+                        <div class="platform-actions">
+                            <button class="btn btn-sm btn-outline-primary test-platform-btn" data-platform="{{ platform.id }}">
+                                <i class="fas fa-plug"></i>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <!-- API Endpoints Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">API Endpoints</div>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="endpointSearch" placeholder="Search endpoints...">
+                </div>
+                <ul class="endpoints-list" id="endpointsList">
+                    {% for endpoint in endpoints %}
+                    <li class="endpoint-item">
+                        <button class="endpoint-button" data-endpoint="{{ endpoint.name }}">
+                            <span class="endpoint-method {{ endpoint.methods[0]|lower }}">{{ endpoint.methods[0] }}</span>
+                            <span class="endpoint-path">{{ endpoint.routes[0] }}</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <span id="endpointCount">{{ endpoints|length }} endpoints</span>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="test-main">
+        <div class="test-tabs">
+            <div class="test-tab active" data-tab="endpoint-detail">Endpoint Detail</div>
+            <div class="test-tab" data-tab="test-history">Test History</div>
+            <div class="test-tab" data-tab="health-dashboard">Health Dashboard</div>
+            <div class="test-tab" data-tab="saved-tests">Saved Tests</div>
+        </div>
+        
+        <!-- Endpoint Detail Tab -->
+        <div class="test-tab-content active" id="endpoint-detail-tab">
+            <div class="endpoint-detail-header">
+                <div class="endpoint-title">
+                    <span class="endpoint-method get" id="detail-method">GET</span>
+                    <h2 class="ml-2" id="detail-name">Select an endpoint</h2>
+                </div>
+                <div class="endpoint-url" id="detail-url">
+                    https://api.example.com/path
+                    <button class="btn btn-sm btn-link ml-2" id="copyUrlBtn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="endpoint-description" id="detail-description">
+                    Select an endpoint from the sidebar to see its details and test it.
+                </div>
+            </div>
+            
+            <!-- Parameters Section -->
+            <div class="parameters-section">
+                <h3>Parameters</h3>
+                <table class="parameters-table" id="parameters-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4">No parameters available.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Request Builder Section -->
+            <div class="request-section">
+                <div class="request-header">
+                    <h3>Request</h3>
+                    <button class="btn btn-sm btn-outline-secondary" id="formatJsonBtn">
+                        <i class="fas fa-code"></i> Format JSON
+                    </button>
+                </div>
+                <textarea class="code-editor" id="requestEditor" placeholder="Enter request parameters in JSON format..."></textarea>
+                <div class="d-flex">
+                    <div class="form-group mr-2">
+                        <label for="authSelect">Authorization</label>
+                        <select class="form-control" id="authSelect">
+                            <option value="none">None</option>
+                            <option value="bearer" selected>Bearer Token</option>
+                            <option value="basic">Basic Auth</option>
+                            <option value="apikey">API Key</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-grow-1">
+                        <label for="authValue">Auth Value</label>
+                        <input type="text" class="form-control" id="authValue" placeholder="Enter token or credentials">
+                    </div>
+                    <button class="btn btn-primary send-request-btn" id="sendRequestBtn">
+                        <i class="fas fa-paper-plane"></i> Send Request
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Response Section -->
+            <div class="response-section">
+                <div class="response-header">
+                    <h3>Response</h3>
+                    <div class="loader" id="responseLoader">
+                        <div class="loader-spinner"></div>
+                        <span class="loader-text">Sending request...</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" id="copyResponseBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="response-meta">
+                    <div class="response-meta-item">
+                        <span class="response-meta-label">Status:</span>
+                        <span class="response-meta-value" id="responseStatus">-</span>
+                    </div>
+                    <div class="response-meta-item">
+                        <span class="response-meta-label">Time:</span>
+                        <span class="response-meta-value" id="responseTime">-</span>
+                    </div>
+                    <div class="response-meta-item">
+                        <span class="response-meta-label">Size:</span>
+                        <span class="response-meta-value" id="responseSize">-</span>
+                    </div>
+                </div>
+                <pre class="response-content" id="responseContent">// Response will appear here</pre>
+            </div>
+            
+            <!-- Sample Response Section -->
+            <div class="sample-section">
+                <h3>Sample Response</h3>
+                <pre class="sample-response" id="sampleResponse">// Sample response will appear here</pre>
+            </div>
+        </div>
+        
+        <!-- Test History Tab -->
+        <div class="test-tab-content" id="test-history-tab">
+            <h3>Test Execution History</h3>
+            <div class="mb-3">
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary active" data-filter="all">All</button>
+                    <button class="btn btn-outline-secondary" data-filter="success">Success</button>
+                    <button class="btn btn-outline-secondary" data-filter="error">Error</button>
+                </div>
+                <button class="btn btn-outline-danger float-right" id="clearHistoryBtn">
+                    <i class="fas fa-trash"></i> Clear History
+                </button>
+            </div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Time</th>
+                        <th>Response Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- Populated via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Health Dashboard Tab -->
+        <div class="test-tab-content" id="health-dashboard-tab">
+            <h3>API Health Dashboard</h3>
+            <div class="mb-4">
+                <div class="form-group">
+                    <label for="timeRangeSelect">Time Range</label>
+                    <select class="form-control" id="timeRangeSelect" style="width: auto;">
+                        <option value="1h">Last Hour</option>
+                        <option value="24h" selected>Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="health-grid">
+                <!-- Meta API Health -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <h4><i class="fab fa-facebook mr-2"></i> Meta API</h4>
+                        <span class="badge badge-success">Healthy</span>
+                    </div>
+                    <div class="health-card-body">
+                        <div class="health-stats">
+                            <div class="health-stat">
+                                <div class="health-stat-value">99.8%</div>
+                                <div class="health-stat-label">Uptime</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">245ms</div>
+                                <div class="health-stat-label">Avg Response</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">42</div>
+                                <div class="health-stat-label">Requests</div>
+                            </div>
+                        </div>
+                        <div class="health-chart" id="metaApiChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Google API Health -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <h4><i class="fab fa-google mr-2"></i> Google Ads API</h4>
+                        <span class="badge badge-success">Healthy</span>
+                    </div>
+                    <div class="health-card-body">
+                        <div class="health-stats">
+                            <div class="health-stat">
+                                <div class="health-stat-value">100%</div>
+                                <div class="health-stat-label">Uptime</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">189ms</div>
+                                <div class="health-stat-label">Avg Response</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">36</div>
+                                <div class="health-stat-label">Requests</div>
+                            </div>
+                        </div>
+                        <div class="health-chart" id="googleApiChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Twitter API Health -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <h4><i class="fab fa-twitter mr-2"></i> X API</h4>
+                        <span class="badge badge-warning">Degraded</span>
+                    </div>
+                    <div class="health-card-body">
+                        <div class="health-stats">
+                            <div class="health-stat">
+                                <div class="health-stat-value">97.2%</div>
+                                <div class="health-stat-label">Uptime</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">382ms</div>
+                                <div class="health-stat-label">Avg Response</div>
+                            </div>
+                            <div class="health-stat">
+                                <div class="health-stat-value">28</div>
+                                <div class="health-stat-label">Requests</div>
+                            </div>
+                        </div>
+                        <div class="health-chart" id="twitterApiChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Rate Limits -->
+                <div class="health-card">
+                    <div class="health-card-header">
+                        <h4><i class="fas fa-tachometer-alt mr-2"></i> Rate Limits</h4>
+                    </div>
+                    <div class="health-card-body">
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Meta API: 45% (90/200 requests)</span>
+                            <span>Resets in 42m</span>
+                        </div>
+                        
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Google API: 15% (30/200 requests)</span>
+                            <span>Resets in 42m</span>
+                        </div>
+                        
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Twitter API: 75% (150/200 requests)</span>
+                            <span>Resets in 12m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Saved Tests Tab -->
+        <div class="test-tab-content" id="saved-tests-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Saved Tests</h3>
+                <button class="btn btn-primary" id="newTestBtn">
+                    <i class="fas fa-plus"></i> New Test
+                </button>
+            </div>
+            
+            <div class="saved-tests" id="savedTestsContainer">
+                <!-- Populated via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Configuration Modal -->
+<div class="modal" id="saveConfigModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Save Test Configuration</h5>
+            <button class="modal-close" id="closeSaveConfigModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="configName">Configuration Name</label>
+                <input type="text" class="form-control" id="configName" placeholder="Enter a name for this configuration">
+            </div>
+            <div class="form-group">
+                <label for="configDescription">Description (optional)</label>
+                <textarea class="form-control" id="configDescription" rows="3" placeholder="Enter a description"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Save Options</label>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="saveAuth" checked>
+                    <label class="custom-control-label" for="saveAuth">Include authentication</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="saveParams" checked>
+                    <label class="custom-control-label" for="saveParams">Include parameters</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelSaveConfigBtn">Cancel</button>
+            <button class="btn btn-primary" id="confirmSaveConfigBtn">Save Configuration</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Results Modal -->
+<div class="modal" id="exportModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Export Test Results</h5>
+            <button class="modal-close" id="closeExportModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="exportFormat">Export Format</label>
+                <select class="form-control" id="exportFormat">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="html">HTML</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Export Options</label>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="includeHeaders" checked>
+                    <label class="custom-control-label" for="includeHeaders">Include request headers</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="includeResponses" checked>
+                    <label class="custom-control-label" for="includeResponses">Include full responses</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="includeTimestamps" checked>
+                    <label class="custom-control-label" for="includeTimestamps">Include timestamps</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelExportBtn">Cancel</button>
+            <button class="btn btn-primary" id="confirmExportBtn">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-notification" id="toastNotification">
+    <div class="toast-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="toast-content">
+        <div class="toast-message">Operation successful</div>
+        <div class="toast-detail">The operation was completed successfully.</div>
+    </div>
+    <button class="toast-close" id="closeToastBtn">&times;</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const endpointsList = document.getElementById('endpointsList');
+    const endpointSearch = document.getElementById('endpointSearch');
+    const testTabs = document.querySelectorAll('.test-tab');
+    const tabContents = document.querySelectorAll('.test-tab-content');
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    const exportResultsBtn = document.getElementById('exportResultsBtn');
+    const refreshAllBtn = document.getElementById('refreshAllBtn');
+    const refreshEndpointsBtn = document.getElementById('refreshEndpointsBtn');
+    const refreshPlatformsBtn = document.getElementById('refreshPlatformsBtn');
+    const sendRequestBtn = document.getElementById('sendRequestBtn');
+    const formatJsonBtn = document.getElementById('formatJsonBtn');
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    const copyResponseBtn = document.getElementById('copyResponseBtn');
+    const requestEditor = document.getElementById('requestEditor');
+    const responseContent = document.getElementById('responseContent');
+    const sampleResponse = document.getElementById('sampleResponse');
+    const responseLoader = document.getElementById('responseLoader');
+    const responseStatus = document.getElementById('responseStatus');
+    const responseTime = document.getElementById('responseTime');
+    const responseSize = document.getElementById('responseSize');
+    const authSelect = document.getElementById('authSelect');
+    const authValue = document.getElementById('authValue');
+    const savedTestsContainer = document.getElementById('savedTestsContainer');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const platformButtons = document.querySelectorAll('.test-platform-btn');
+    
+    // Modals
+    const saveConfigModal = document.getElementById('saveConfigModal');
+    const closeSaveConfigModal = document.getElementById('closeSaveConfigModal');
+    const cancelSaveConfigBtn = document.getElementById('cancelSaveConfigBtn');
+    const confirmSaveConfigBtn = document.getElementById('confirmSaveConfigBtn');
+    const configName = document.getElementById('configName');
+    
+    const exportModal = document.getElementById('exportModal');
+    const closeExportModal = document.getElementById('closeExportModal');
+    const cancelExportBtn = document.getElementById('cancelExportBtn');
+    const confirmExportBtn = document.getElementById('confirmExportBtn');
+    
+    // Toast
+    const toastNotification = document.getElementById('toastNotification');
+    const closeToastBtn = document.getElementById('closeToastBtn');
+    
+    // Global variables
+    let currentEndpoint = null;
+    let testHistory = [];
+    let savedConfigurations = [];
+    
+    // Event Listeners
+    
+    // Tab Navigation
+    testTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            testTabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById(`${this.dataset.tab}-tab`).classList.add('active');
+            
+            // Load data based on active tab
+            if (this.dataset.tab === 'test-history') {
+                loadTestHistory();
+            } else if (this.dataset.tab === 'saved-tests') {
+                loadSavedTests();
+            } else if (this.dataset.tab === 'health-dashboard') {
+                initializeCharts();
+            }
+        });
+    });
+    
+    // Endpoint Search
+    endpointSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const endpointItems = endpointsList.querySelectorAll('.endpoint-item');
+        
+        endpointItems.forEach(item => {
+            const button = item.querySelector('.endpoint-button');
+            const path = button.querySelector('.endpoint-path').textContent.toLowerCase();
+            const method = button.querySelector('.endpoint-method').textContent.toLowerCase();
+            
+            if (path.includes(searchTerm) || method.includes(searchTerm)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+    
+    // Endpoint Selection
+    endpointsList.addEventListener('click', function(e) {
+        const button = e.target.closest('.endpoint-button');
+        if (button) {
+            const endpointName = button.dataset.endpoint;
+            
+            // Remove active class from all buttons
+            const buttons = endpointsList.querySelectorAll('.endpoint-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            // Load endpoint details
+            loadEndpointDetails(endpointName);
+        }
+    });
+    
+    // Platform Test Buttons
+    platformButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const platform = this.dataset.platform;
+            testPlatformConnection(platform, this);
+        });
+    });
+    
+    // Send Request Button
+    sendRequestBtn.addEventListener('click', function() {
+        if (!currentEndpoint) {
+            showToast('No endpoint selected', 'Please select an endpoint from the sidebar.', 'error');
+            return;
+        }
+        
+        sendApiRequest();
+    });
+    
+    // Format JSON Button
+    formatJsonBtn.addEventListener('click', function() {
+        try {
+            const json = JSON.parse(requestEditor.value);
+            requestEditor.value = JSON.stringify(json, null, 2);
+        } catch (e) {
+            showToast('Invalid JSON', 'Please enter valid JSON in the request editor.', 'error');
+        }
+    });
+    
+    // Copy Buttons
+    copyUrlBtn.addEventListener('click', function() {
+        const url = document.getElementById('detail-url').textContent.trim();
+        copyToClipboard(url);
+        showToast('Copied to clipboard', 'URL copied to clipboard.', 'success');
+    });
+    
+    copyResponseBtn.addEventListener('click', function() {
+        copyToClipboard(responseContent.textContent);
+        showToast('Copied to clipboard', 'Response copied to clipboard.', 'success');
+    });
+    
+    // Modal Buttons
+    saveConfigBtn.addEventListener('click', function() {
+        openModal(saveConfigModal);
+    });
+    
+    closeSaveConfigModal.addEventListener('click', function() {
+        closeModal(saveConfigModal);
+    });
+    
+    cancelSaveConfigBtn.addEventListener('click', function() {
+        closeModal(saveConfigModal);
+    });
+    
+    confirmSaveConfigBtn.addEventListener('click', function() {
+        if (!configName.value.trim()) {
+            showToast('Name required', 'Please enter a name for the configuration.', 'error');
+            return;
+        }
+        
+        saveConfiguration();
+    });
+    
+    exportResultsBtn.addEventListener('click', function() {
+        openModal(exportModal);
+    });
+    
+    closeExportModal.addEventListener('click', function() {
+        closeModal(exportModal);
+    });
+    
+    cancelExportBtn.addEventListener('click', function() {
+        closeModal(exportModal);
+    });
+    
+    confirmExportBtn.addEventListener('click', function() {
+        exportResults();
+    });
+    
+    // Toast Close Button
+    closeToastBtn.addEventListener('click', function() {
+        toastNotification.classList.remove('active');
+    });
+    
+    // Functions
+    
+    // Load endpoint details
+    function loadEndpointDetails(endpointName) {
+        // Show endpoint detail tab
+        testTabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        document.querySelector('.test-tab[data-tab="endpoint-detail"]').classList.add('active');
+        document.getElementById('endpoint-detail-tab').classList.add('active');
+        
+        // Find endpoint in the list
+        fetch('/api/test/endpoints')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const endpoint = data.data.find(e => e.name === endpointName);
+                    if (endpoint) {
+                        currentEndpoint = endpoint;
+                        
+                        // Update UI with endpoint details
+                        const detailMethod = document.getElementById('detail-method');
+                        const detailName = document.getElementById('detail-name');
+                        const detailUrl = document.getElementById('detail-url');
+                        const detailDescription = document.getElementById('detail-description');
+                        const parametersTable = document.getElementById('parameters-table').querySelector('tbody');
+                        
+                        // Set method and class
+                        detailMethod.textContent = endpoint.methods[0];
+                        detailMethod.className = `endpoint-method ${endpoint.methods[0].toLowerCase()}`;
+                        
+                        // Set name and URL
+                        detailName.textContent = endpoint.name;
+                        detailUrl.textContent = endpoint.routes[0];
+                        
+                        // Set description
+                        detailDescription.textContent = endpoint.description || 'No description provided.';
+                        
+                        // Set parameters
+                        if (endpoint.parameters && endpoint.parameters.length > 0) {
+                            let tableHtml = '';
+                            endpoint.parameters.forEach(param => {
+                                tableHtml += `
+                                    <tr>
+                                        <td>${param.name}${param.required ? '<span class="parameter-required">*</span>' : ''}</td>
+                                        <td><span class="parameter-type">${param.type}</span></td>
+                                        <td>${param.description || ''}</td>
+                                        <td>${param.default ? `<span class="parameter-default">${param.default}</span>` : '-'}</td>
+                                    </tr>
+                                `;
+                            });
+                            parametersTable.innerHTML = tableHtml;
+                            
+                            // Generate sample request
+                            const sampleRequest = {};
+                            endpoint.parameters.forEach(param => {
+                                if (param.required) {
+                                    sampleRequest[param.name] = param.type === 'string' ? 'sample_value' : 
+                                                               param.type === 'number' ? 123 : 
+                                                               param.type === 'boolean' ? true : null;
+                                }
+                            });
+                            requestEditor.value = JSON.stringify(sampleRequest, null, 2);
+                            
+                            // Generate sample response
+                            const sampleResp = {
+                                success: true,
+                                data: {
+                                    // Generic sample based on the endpoint
+                                    id: 123,
+                                    name: 'Sample Response',
+                                    // Include a sample for each parameter
+                                    ...sampleRequest
+                                }
+                            };
+                            sampleResponse.textContent = JSON.stringify(sampleResp, null, 2);
+                        } else {
+                            parametersTable.innerHTML = '<tr><td colspan="4">No parameters required.</td></tr>';
+                            requestEditor.value = '{}';
+                            sampleResponse.textContent = '{\n  "success": true,\n  "data": {}\n}';
+                        }
+                        
+                        // Reset response section
+                        responseContent.textContent = '// Response will appear here';
+                        responseStatus.textContent = '-';
+                        responseTime.textContent = '-';
+                        responseSize.textContent = '-';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading endpoint details:', error);
+                showToast('Error', 'Failed to load endpoint details.', 'error');
+            });
+    }
+    
+    // Test platform connection
+    function testPlatformConnection(platform, button) {
+        // Show spinner
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        // Get parent li
+        const platformItem = button.closest('.platform-item');
+        const statusIndicator = platformItem.querySelector('.status-indicator');
+        const statusText = platformItem.querySelector('.platform-status');
+        
+        // Send request to test connection
+        fetch('/api/test/connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ platform })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update status indicator
+            if (data.success) {
+                statusIndicator.className = 'status-indicator connected';
+                statusText.innerHTML = '<span class="status-indicator connected"></span>Connected';
+                showToast('Connection Successful', `Successfully connected to ${platform.toUpperCase()} API (${data.response_time}ms)`, 'success');
+            } else {
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.innerHTML = '<span class="status-indicator disconnected"></span>Disconnected';
+                showToast('Connection Failed', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error testing connection:', error);
+            statusIndicator.className = 'status-indicator disconnected';
+            statusText.innerHTML = '<span class="status-indicator disconnected"></span>Error';
+            showToast('Connection Error', 'An error occurred while testing the connection.', 'error');
+        })
+        .finally(() => {
+            // Restore button
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+        });
+    }
+    
+    // Send API request
+    function sendApiRequest() {
+        if (!currentEndpoint) return;
+        
+        // Show loader
+        responseLoader.classList.add('active');
+        
+        // Get request data
+        let requestData;
+        try {
+            requestData = JSON.parse(requestEditor.value);
+        } catch (e) {
+            responseLoader.classList.remove('active');
+            showToast('Invalid JSON', 'Please enter valid JSON in the request editor.', 'error');
+            return;
+        }
+        
+        // Prepare request
+        const platform = currentEndpoint.platform || 'api';
+        const endpoint = currentEndpoint.name.split('.').pop();
+        const method = currentEndpoint.methods[0];
+        
+        // Send request
+        fetch('/api/test/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                platform,
+                endpoint,
+                method,
+                params: requestData
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Format and display response
+            responseContent.textContent = JSON.stringify(data, null, 2);
+            
+            // Update response metadata
+            if (data.success) {
+                responseStatus.textContent = 'Success';
+                responseStatus.className = 'response-meta-value success-response';
+            } else {
+                responseStatus.textContent = 'Error';
+                responseStatus.className = 'response-meta-value error-response';
+            }
+            
+            responseTime.textContent = `${data.meta?.response_time || 0}ms`;
+            
+            const responseBytes = JSON.stringify(data).length;
+            responseSize.textContent = responseBytes < 1024 ? 
+                `${responseBytes} bytes` : 
+                `${(responseBytes / 1024).toFixed(1)} KB`;
+            
+            // Add to history
+            addToHistory({
+                id: Date.now().toString(),
+                platform,
+                endpoint,
+                method,
+                timestamp: new Date().toISOString(),
+                response_time: data.meta?.response_time || 0,
+                status: data.success ? 'success' : 'error',
+                request: requestData,
+                response: data
+            });
+            
+            // Show toast
+            if (data.success) {
+                showToast('Request Successful', `${method} request to ${endpoint} completed successfully.`, 'success');
+            } else {
+                showToast('Request Failed', data.message || 'The request failed.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error sending request:', error);
+            responseContent.textContent = `Error: ${error.message}`;
+            responseStatus.textContent = 'Error';
+            responseStatus.className = 'response-meta-value error-response';
+            showToast('Request Error', 'An error occurred while sending the request.', 'error');
+        })
+        .finally(() => {
+            // Hide loader
+            responseLoader.classList.remove('active');
+        });
+    }
+    
+    // Save configuration
+    function saveConfiguration() {
+        if (!currentEndpoint || !configName.value.trim()) return;
+        
+        const configDescription = document.getElementById('configDescription').value;
+        const saveAuth = document.getElementById('saveAuth').checked;
+        const saveParams = document.getElementById('saveParams').checked;
+        
+        const config = {
+            name: configName.value.trim(),
+            description: configDescription,
+            endpoint: currentEndpoint.name,
+            method: currentEndpoint.methods[0],
+            platform: currentEndpoint.platform || 'api',
+            url: currentEndpoint.routes[0],
+            created_at: new Date().toISOString()
+        };
+        
+        if (saveParams) {
+            try {
+                config.parameters = JSON.parse(requestEditor.value);
+            } catch (e) {
+                config.parameters = {};
+            }
+        }
+        
+        if (saveAuth) {
+            config.auth = {
+                type: authSelect.value,
+                value: authValue.value
+            };
+        }
+        
+        // Save to server
+        fetch('/api/test/save-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: config.name,
+                config
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add to local saved configurations
+                savedConfigurations.push({
+                    ...config,
+                    id: data.config_id
+                });
+                
+                // Update UI if saved tests tab is active
+                if (document.querySelector('.test-tab[data-tab="saved-tests"]').classList.contains('active')) {
+                    loadSavedTests();
+                }
+                
+                showToast('Configuration Saved', 'Test configuration has been saved successfully.', 'success');
+                closeModal(saveConfigModal);
+                
+                // Clear modal fields
+                configName.value = '';
+                document.getElementById('configDescription').value = '';
+            } else {
+                showToast('Save Failed', data.message || 'Failed to save configuration.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving configuration:', error);
+            showToast('Save Error', 'An error occurred while saving the configuration.', 'error');
+        });
+    }
+    
+    // Export results
+    function exportResults() {
+        const format = document.getElementById('exportFormat').value;
+        const includeHeaders = document.getElementById('includeHeaders').checked;
+        const includeResponses = document.getElementById('includeResponses').checked;
+        const includeTimestamps = document.getElementById('includeTimestamps').checked;
+        
+        // In a real implementation, we would generate the export file based on the
+        // selected format and options. Here, we'll just show a success toast.
+        
+        showToast('Export Complete', `Test results exported in ${format.toUpperCase()} format.`, 'success');
+        closeModal(exportModal);
+        
+        // Simulate download
+        setTimeout(() => {
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('Exported test results');
+            a.download = `api_tests_export_${format}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }, 500);
+    }
+    
+    // Load test history
+    function loadTestHistory() {
+        // In a real implementation, we would fetch this from the server
+        // Here, we'll use the history stored in memory
+        
+        fetch('/api/test/history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    testHistory = data.data;
+                    
+                    // Render history table
+                    renderHistoryTable(testHistory);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading test history:', error);
+            });
+    }
+    
+    // Render history table
+    function renderHistoryTable(history) {
+        // Clear table
+        historyTableBody.innerHTML = '';
+        
+        if (history.length === 0) {
+            historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No test history available.</td></tr>';
+            return;
+        }
+        
+        // Add rows
+        history.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <span class="history-status-indicator ${item.status}"></span>
+                    ${item.status === 'success' ? 'Success' : 'Error'}
+                </td>
+                <td>${item.method}</td>
+                <td>${item.endpoint}</td>
+                <td>${formatDateTime(item.timestamp)}</td>
+                <td>${item.response_time}ms</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary history-view-btn" data-id="${item.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary history-retry-btn" data-id="${item.id}">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </td>
+            `;
+            historyTableBody.appendChild(row);
+        });
+    }
+    
+    // Add to history
+    function addToHistory(item) {
+        testHistory.unshift(item);
+        
+        // Limit history size
+        if (testHistory.length > 100) {
+            testHistory.pop();
+        }
+        
+        // Update UI if history tab is active
+        if (document.querySelector('.test-tab[data-tab="test-history"]').classList.contains('active')) {
+            renderHistoryTable(testHistory);
+        }
+    }
+    
+    // Load saved tests
+    function loadSavedTests() {
+        fetch('/api/test/configs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    savedConfigurations = data.data;
+                    
+                    // Render saved tests
+                    renderSavedTests(savedConfigurations);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading saved tests:', error);
+            });
+    }
+    
+    // Render saved tests
+    function renderSavedTests(configs) {
+        // Clear container
+        savedTestsContainer.innerHTML = '';
+        
+        if (configs.length === 0) {
+            savedTestsContainer.innerHTML = '<div class="text-center p-4">No saved tests available.</div>';
+            return;
+        }
+        
+        // Add cards
+        configs.forEach(config => {
+            const card = document.createElement('div');
+            card.className = 'saved-test-card';
+            card.innerHTML = `
+                <div class="saved-test-header">
+                    <div class="saved-test-title">${config.name}</div>
+                    <div class="saved-test-meta">Created ${formatDateTime(config.last_modified)}</div>
+                </div>
+                <div class="saved-test-body">
+                    <div class="saved-test-detail">
+                        <span class="saved-test-detail-label">Endpoint:</span>
+                        ${config.config.url || 'N/A'}
+                    </div>
+                    <div class="saved-test-detail">
+                        <span class="saved-test-detail-label">Method:</span>
+                        ${config.config.method || 'GET'}
+                    </div>
+                    <div class="saved-test-detail">
+                        <span class="saved-test-detail-label">Platform:</span>
+                        ${config.config.platform || 'API'}
+                    </div>
+                    <div class="saved-test-detail">
+                        <span class="saved-test-detail-label">Description:</span>
+                        ${config.config.description || 'No description provided.'}
+                    </div>
+                </div>
+                <div class="saved-test-actions">
+                    <button class="btn btn-sm btn-primary saved-test-run-btn" data-id="${config.id}">
+                        <i class="fas fa-play"></i> Run
+                    </button>
+                    <button class="btn btn-sm btn-secondary saved-test-edit-btn" data-id="${config.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger saved-test-delete-btn" data-id="${config.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            savedTestsContainer.appendChild(card);
+        });
+    }
+    
+    // Initialize charts for health dashboard
+    function initializeCharts() {
+        // In a real implementation, we would fetch data from the server and create charts
+        // Here, we'll just show a placeholder using Chart.js
+        
+        // Meta API Chart
+        const metaCtx = document.getElementById('metaApiChart');
+        if (metaCtx && typeof Chart !== 'undefined') {
+            new Chart(metaCtx, {
+                type: 'line',
+                data: {
+                    labels: ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now'],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [220, 235, 280, 270, 250, 290, 245],
+                        borderColor: '#4A6CF7',
+                        backgroundColor: 'rgba(74, 108, 247, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Google API Chart
+        const googleCtx = document.getElementById('googleApiChart');
+        if (googleCtx && typeof Chart !== 'undefined') {
+            new Chart(googleCtx, {
+                type: 'line',
+                data: {
+                    labels: ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now'],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [180, 160, 200, 230, 190, 175, 189],
+                        borderColor: '#EA4335',
+                        backgroundColor: 'rgba(234, 67, 53, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Twitter API Chart
+        const twitterCtx = document.getElementById('twitterApiChart');
+        if (twitterCtx && typeof Chart !== 'undefined') {
+            new Chart(twitterCtx, {
+                type: 'line',
+                data: {
+                    labels: ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now'],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [320, 290, 450, 520, 380, 350, 382],
+                        borderColor: '#1DA1F2',
+                        backgroundColor: 'rgba(29, 161, 242, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Utility functions
+    
+    // Show toast notification
+    function showToast(title, message, type = 'success') {
+        const toast = document.getElementById('toastNotification');
+        const toastIcon = toast.querySelector('.toast-icon i');
+        const toastMessage = toast.querySelector('.toast-message');
+        const toastDetail = toast.querySelector('.toast-detail');
+        
+        // Set content
+        toastMessage.textContent = title;
+        toastDetail.textContent = message;
+        
+        // Set type
+        toast.className = 'toast-notification';
+        toast.classList.add(`toast-${type}`);
+        
+        if (type === 'success') {
+            toastIcon.className = 'fas fa-check-circle';
+        } else if (type === 'error') {
+            toastIcon.className = 'fas fa-exclamation-circle';
+        } else if (type === 'warning') {
+            toastIcon.className = 'fas fa-exclamation-triangle';
+        } else {
+            toastIcon.className = 'fas fa-info-circle';
+        }
+        
+        // Show toast
+        toast.classList.add('active');
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+            toast.classList.remove('active');
+        }, 5000);
+    }
+    
+    // Open modal
+    function openModal(modal) {
+        modal.classList.add('active');
+    }
+    
+    // Close modal
+    function closeModal(modal) {
+        modal.classList.remove('active');
+    }
+    
+    // Copy to clipboard
+    function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+        }
+        
+        document.body.removeChild(textarea);
+    }
+    
+    // Format date/time
+    function formatDateTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    }
+    
+    // Initialize the page
+    function initialize() {
+        // Load initial data
+        loadTestHistory();
+        
+        // Select first endpoint
+        const firstEndpointButton = document.querySelector('.endpoint-button');
+        if (firstEndpointButton) {
+            firstEndpointButton.click();
+        }
+    }
+    
+    // Call initialize
+    initialize();
+});
+</script>
+{% endblock %}

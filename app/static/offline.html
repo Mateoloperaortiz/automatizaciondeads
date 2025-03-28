@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MagnetoCursor - Offline</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --primary-dark: #0a58ca;
+      --secondary-color: #6c757d;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #0dcaf0;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --body-bg: #f5f5f5;
+      --body-color: #333;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--body-bg);
+      color: var(--body-color);
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .offline-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: center;
+    }
+    
+    .offline-icon {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    .offline-icon svg {
+      width: 64px;
+      height: 64px;
+      fill: var(--primary-color);
+    }
+    
+    h1 {
+      margin: 0 0 15px;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--dark-color);
+    }
+    
+    p {
+      margin: 0 0 20px;
+      font-size: 1.125rem;
+      color: var(--secondary-color);
+    }
+    
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      min-width: 200px;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .btn-secondary {
+      background-color: var(--light-color);
+      color: var(--dark-color);
+      border: 1px solid var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #eee;
+    }
+    
+    .btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .offline-data {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .offline-data h2 {
+      margin: 0 0 15px;
+      font-size: 1.25rem;
+      color: var(--dark-color);
+    }
+    
+    .offline-data-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .offline-data-item {
+      padding: 10px 20px;
+      background-color: var(--light-color);
+      border-radius: 20px;
+      font-size: 0.875rem;
+      color: var(--dark-color);
+    }
+    
+    .note {
+      margin-top: 30px;
+      font-size: 0.875rem;
+      color: var(--secondary-color);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .network-status {
+      position: relative;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--secondary-color);
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--danger-color);
+    }
+    
+    .status-indicator.online {
+      background-color: var(--success-color);
+    }
+    
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--secondary-color);
+      border-top: 1px solid #eee;
+      background-color: white;
+    }
+    
+    @media (min-width: 768px) {
+      .actions {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --body-bg: #121212;
+        --body-color: #f8f9fa;
+        --dark-color: #f8f9fa;
+        --light-color: #343a40;
+        --secondary-color: #adb5bd;
+      }
+      
+      .offline-data {
+        background-color: #1e1e1e;
+      }
+      
+      .offline-icon {
+        background-color: rgba(13, 110, 253, 0.2);
+      }
+      
+      .btn-secondary {
+        background-color: #343a40;
+        color: white;
+        border-color: #495057;
+      }
+      
+      .btn-secondary:hover {
+        background-color: #495057;
+      }
+      
+      footer {
+        background-color: #1e1e1e;
+        border-color: #333;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M24 8.98C20.93 5.9 16.69 4 12 4S3.07 5.9 0 8.98L12 21v-9h8.99L24 8.98zM19.59 14l-2.09 2.09L15.41 14 14 15.41l2.09 2.09L14 19.59 15.41 21l2.09-2.08L19.59 21 21 19.59l-2.08-2.09L21 15.41 19.59 14z"/>
+      </svg>
+    </div>
+    
+    <h1>You're offline</h1>
+    <p>The page you're trying to access is not available offline</p>
+    
+    <div class="actions">
+      <button class="btn btn-primary" id="retry-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="white" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 10h7V3l-2.35 3.35z"/>
+        </svg>
+        Retry Connection
+      </button>
+      
+      <a href="/" class="btn btn-secondary" id="home-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        Go to Homepage
+      </a>
+    </div>
+    
+    <div id="available-content" class="offline-data" style="display: none;">
+      <h2>Available Offline Content</h2>
+      <div class="offline-data-list" id="offline-data-list">
+        <!-- Will be populated dynamically -->
+      </div>
+    </div>
+    
+    <div class="network-status">
+      <span class="status-indicator" id="status-indicator"></span>
+      <span id="status-text">Offline</span>
+    </div>
+    
+    <p class="note">Any changes you make while offline will be synchronized automatically when you reconnect to the internet.</p>
+  </div>
+  
+  <footer>
+    <div>MagnetoCursor &copy; 2025</div>
+  </footer>
+  
+  <script>
+    // Check network status
+    function updateNetworkStatus() {
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusText = document.getElementById('status-text');
+      
+      if (navigator.onLine) {
+        statusIndicator.classList.add('online');
+        statusText.textContent = 'Back Online';
+      } else {
+        statusIndicator.classList.remove('online');
+        statusText.textContent = 'Offline';
+      }
+    }
+    
+    // Update initial status
+    updateNetworkStatus();
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+      updateNetworkStatus();
+      
+      // Show a notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('MagnetoCursor', {
+          body: 'You are back online! Syncing your changes...',
+          icon: '/static/images/icon-192x192.png'
+        });
+      }
+    });
+    
+    window.addEventListener('offline', updateNetworkStatus);
+    
+    // Retry button
+    document.getElementById('retry-button').addEventListener('click', () => {
+      // Attempt to reload the page
+      window.location.reload();
+    });
+    
+    // Check for available cached content
+    async function checkCachedContent() {
+      if ('caches' in window) {
+        try {
+          // Get all cache keys
+          const cacheNames = await caches.keys();
+          const magnetoCursorCaches = cacheNames.filter(name => 
+            name.startsWith('magnetocursor-'));
+          
+          if (magnetoCursorCaches.length === 0) {
+            return;
+          }
+          
+          // Get available URLs from cache
+          const cachedUrls = [];
+          
+          for (const cacheName of magnetoCursorCaches) {
+            const cache = await caches.open(cacheName);
+            const requests = await cache.keys();
+            
+            for (const request of requests) {
+              // Skip service worker and API requests
+              if (request.url.includes('service-worker.js') || 
+                  request.url.includes('/api/')) {
+                continue;
+              }
+              
+              const url = new URL(request.url);
+              if (url.origin === location.origin && 
+                  !url.pathname.endsWith('.js') && 
+                  !url.pathname.endsWith('.css') && 
+                  !url.pathname.endsWith('.png') && 
+                  !url.pathname.endsWith('.jpg') && 
+                  !url.pathname.endsWith('.svg') && 
+                  !url.pathname.endsWith('.woff2')) {
+                
+                // Add to cached URLs if not already included
+                if (!cachedUrls.includes(url.pathname)) {
+                  cachedUrls.push(url.pathname);
+                }
+              }
+            }
+          }
+          
+          // Show available content
+          if (cachedUrls.length > 0) {
+            const availableContent = document.getElementById('available-content');
+            const contentList = document.getElementById('offline-data-list');
+            
+            availableContent.style.display = 'block';
+            contentList.innerHTML = '';
+            
+            // Map paths to friendly names
+            const pathNames = {
+              '/': 'Home',
+              '/campaigns': 'Campaigns',
+              '/websocket/filters': 'Filters',
+              '/analytics': 'Analytics',
+              '/settings': 'Settings'
+            };
+            
+            cachedUrls.forEach(url => {
+              const item = document.createElement('a');
+              item.className = 'offline-data-item';
+              item.href = url;
+              item.textContent = pathNames[url] || url.replace(/^\//, '');
+              contentList.appendChild(item);
+            });
+          }
+        } catch (error) {
+          console.error('Error checking cached content:', error);
+        }
+      }
+    }
+    
+    // Check cached content on load
+    checkCachedContent();
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      document.addEventListener('click', () => {
+        Notification.requestPermission();
+      }, { once: true });
+    }
+  </script>
+</body>
+</html>

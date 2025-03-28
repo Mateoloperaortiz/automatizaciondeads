@@ -1,0 +1,163 @@
+{% extends "simple_base.html" %}
+
+{% block title %}User Preferences - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">User Preferences</h5>
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-sm btn-outline-light">Back to Profile</a>
+      </div>
+      <div class="card-body p-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <div id="preferences-message" class="alert alert-success d-none">
+          Preferences saved successfully.
+        </div>
+        
+        <form id="preferences-form">
+          <h6 class="mb-3">Display Settings</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Theme</label>
+              <select class="form-select" name="theme" id="theme">
+                <option value="light" {% if preferences.get('theme') == 'light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if preferences.get('theme') == 'dark' %}selected{% endif %}>Dark</option>
+                <option value="system" {% if preferences.get('theme') == 'system' or not preferences.get('theme') %}selected{% endif %}>System Default</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Dashboard Layout</label>
+              <select class="form-select" name="dashboard_layout" id="dashboard_layout">
+                <option value="compact" {% if preferences.get('dashboard_layout') == 'compact' %}selected{% endif %}>Compact</option>
+                <option value="comfortable" {% if preferences.get('dashboard_layout') == 'comfortable' or not preferences.get('dashboard_layout') %}selected{% endif %}>Comfortable</option>
+                <option value="expanded" {% if preferences.get('dashboard_layout') == 'expanded' %}selected{% endif %}>Expanded</option>
+              </select>
+            </div>
+          </div>
+          
+          <h6 class="mb-3">Notification Preferences</h6>
+          <div class="mb-4">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {% if preferences.get('email_notifications', True) %}checked{% endif %}>
+              <label class="form-check-label" for="email_notifications">Email Notifications</label>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="desktop_notifications" name="desktop_notifications" {% if preferences.get('desktop_notifications', True) %}checked{% endif %}>
+              <label class="form-check-label" for="desktop_notifications">Desktop Notifications</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="sound_notifications" name="sound_notifications" {% if preferences.get('sound_notifications', False) %}checked{% endif %}>
+              <label class="form-check-label" for="sound_notifications">Sound Notifications</label>
+            </div>
+          </div>
+          
+          <h6 class="mb-3">Profile Customization</h6>
+          <div class="mb-4">
+            <label class="form-label">Profile Avatar URL</label>
+            <input type="url" class="form-control" name="avatar_url" id="avatar_url" placeholder="Enter URL to your avatar image" value="{{ preferences.get('avatar_url', '') }}">
+            <div class="form-text">Leave empty to use the default avatar.</div>
+          </div>
+          
+          <h6 class="mb-3">Campaign Settings</h6>
+          <div class="mb-4">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="auto_refresh_campaigns" name="auto_refresh_campaigns" {% if preferences.get('auto_refresh_campaigns', True) %}checked{% endif %}>
+              <label class="form-check-label" for="auto_refresh_campaigns">Auto-refresh Campaign Data</label>
+            </div>
+            <label class="form-label">Default Campaign View</label>
+            <select class="form-select" name="default_campaign_view" id="default_campaign_view">
+              <option value="list" {% if preferences.get('default_campaign_view') == 'list' or not preferences.get('default_campaign_view') %}selected{% endif %}>List View</option>
+              <option value="grid" {% if preferences.get('default_campaign_view') == 'grid' %}selected{% endif %}>Grid View</option>
+              <option value="table" {% if preferences.get('default_campaign_view') == 'table' %}selected{% endif %}>Table View</option>
+            </select>
+          </div>
+          
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-secondary me-2" id="reset-defaults">Reset to Defaults</button>
+            <button type="submit" class="btn btn-primary" id="save-preferences">Save Preferences</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('preferences-form');
+    const message = document.getElementById('preferences-message');
+    
+    // Save preferences
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Collect form data
+      const formData = new FormData(form);
+      const preferences = {};
+      
+      // Convert form data to object
+      for (const [key, value] of formData.entries()) {
+        // Handle checkboxes
+        if (form.elements[key].type === 'checkbox') {
+          preferences[key] = form.elements[key].checked;
+        } else {
+          preferences[key] = value;
+        }
+      }
+      
+      // Send to server
+      fetch('{{ url_for("auth.preferences") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preferences),
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Show success message
+        message.classList.remove('d-none');
+        message.textContent = data.message;
+        
+        // Hide message after 3 seconds
+        setTimeout(() => {
+          message.classList.add('d-none');
+        }, 3000);
+      })
+      .catch(error => {
+        console.error('Error saving preferences:', error);
+        message.classList.remove('d-none');
+        message.classList.remove('alert-success');
+        message.classList.add('alert-danger');
+        message.textContent = 'Error saving preferences. Please try again.';
+      });
+    });
+    
+    // Reset to defaults
+    document.getElementById('reset-defaults').addEventListener('click', function() {
+      if (confirm('Are you sure you want to reset all preferences to default values?')) {
+        // Set default values
+        form.elements['theme'].value = 'system';
+        form.elements['dashboard_layout'].value = 'comfortable';
+        form.elements['email_notifications'].checked = true;
+        form.elements['desktop_notifications'].checked = true;
+        form.elements['sound_notifications'].checked = false;
+        form.elements['avatar_url'].value = '';
+        form.elements['auto_refresh_campaigns'].checked = true;
+        form.elements['default_campaign_view'].value = 'list';
+      }
+    });
+  });
+</script>
+{% endblock %}

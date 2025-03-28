@@ -1,0 +1,569 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Platform Status | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="segments-dashboard">
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Platform Connection Status (REDESIGNED)</h1>
+            <p class="text-muted">View and monitor the connection status of all integrated social media platforms</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-secondary active" data-history-period="day">24h</button>
+                <button type="button" class="btn btn-outline-secondary" data-history-period="week">7d</button>
+                <button type="button" class="btn btn-outline-secondary" data-history-period="month">30d</button>
+            </div>
+            <button id="refresh-platform-status" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> Refresh Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Stats Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-plug text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Connected Platforms</div>
+                <div class="stats-value">3</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> All services operational
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">API Health</div>
+                <div class="stats-value">98<span class="percent">%</span></div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 2.5% from last week
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-tachometer-alt text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Avg. Response Time</div>
+                <div class="stats-value">245<span class="small">ms</span></div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-down"></i> 12ms improvement
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Rate Limit Usage</div>
+                <div class="stats-value">42<span class="percent">%</span></div>
+                <div class="stats-change negative">
+                    <i class="fas fa-arrow-up"></i> 5.3% from yesterday
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Charts -->
+        <div class="dashboard-main">
+            <!-- Global Status -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Global Connection Status</h2>
+                </div>
+                <div class="card-body">
+                    <div id="global-platform-status" class="platform-global-status">
+                        <div class="alert bg-primary">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-spinner fa-spin fa-2x me-3"></i>
+                                <div>
+                                    <h4 class="alert-heading mb-1">Loading platform status...</h4>
+                                    <div class="text-small">Please wait while we check the connection status</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Status List -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Platform Overview</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search platforms..." id="platformSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="platform-status-container">
+                        <ul class="platform-status-list" id="platform-status-list">
+                            <!-- Platform status items will be populated by JavaScript -->
+                            <li class="platform-item placeholder-glow">
+                                <div class="platform-icon placeholder"></div>
+                                <div class="platform-info">
+                                    <div class="platform-name placeholder col-5"></div>
+                                    <div class="platform-status placeholder col-3"></div>
+                                </div>
+                                <div class="platform-actions">
+                                    <button class="btn btn-sm btn-outline-primary placeholder col-12" disabled></button>
+                                </div>
+                            </li>
+                            <li class="platform-item placeholder-glow">
+                                <div class="platform-icon placeholder"></div>
+                                <div class="platform-info">
+                                    <div class="platform-name placeholder col-4"></div>
+                                    <div class="platform-status placeholder col-3"></div>
+                                </div>
+                                <div class="platform-actions">
+                                    <button class="btn btn-sm btn-outline-primary placeholder col-12" disabled></button>
+                                </div>
+                            </li>
+                            <li class="platform-item placeholder-glow">
+                                <div class="platform-icon placeholder"></div>
+                                <div class="platform-info">
+                                    <div class="platform-name placeholder col-6"></div>
+                                    <div class="platform-status placeholder col-3"></div>
+                                </div>
+                                <div class="platform-actions">
+                                    <button class="btn btn-sm btn-outline-primary placeholder col-12" disabled></button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Insights & Tools -->
+        <div class="dashboard-sidebar">
+            <!-- API Quota Usage -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>API Quota Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Meta (Facebook)</span>
+                                <span class="metric-value">68%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 68%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Resets in 6 hours and 45 minutes
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Google</span>
+                                <span class="metric-value">32%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 32%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Resets daily at midnight UTC
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Twitter (X)</span>
+                                <span class="metric-value">41%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 41%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Resets in 15 minutes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    :root {
+        --card-border-radius: 0.5rem;
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        --card-header-bg: rgba(248, 250, 252, 0.5);
+        --sidebar-width: 320px;
+        --grid-gap: 1.5rem;
+        --primary: #4361ee;
+        --success: #2ec4b6;
+        --warning: #ff9f1c;
+        --danger: #e71d36;
+        --info: #4cc9f0;
+        --card-padding: 1.25rem;
+        --text-muted: #6c757d;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --success-light: rgba(46, 196, 182, 0.1);
+        --warning-light: rgba(255, 159, 28, 0.1);
+        --danger-light: rgba(231, 29, 54, 0.1);
+        --info-light: rgba(76, 201, 240, 0.1);
+        --transition-speed: 0.2s;
+    }
+
+    /* Dashboard Layout */
+    .segments-dashboard {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--grid-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr var(--sidebar-width);
+        gap: var(--grid-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--grid-gap);
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--card-shadow);
+        transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .percent, .small {
+        font-size: 1rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success);
+    }
+
+    .stats-change.negative {
+        color: var(--danger);
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .dashboard-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .dashboard-card .card-body {
+        padding: var(--card-padding);
+    }
+
+    .dashboard-card .card-footer {
+        padding: 0.75rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    /* Platform Status List */
+    .platform-status-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .platform-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem var(--card-padding);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        transition: background-color 0.2s ease;
+    }
+
+    .platform-item:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .platform-item:last-child {
+        border-bottom: none;
+    }
+
+    .platform-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        border-radius: 8px;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .platform-info {
+        flex: 1;
+    }
+
+    .platform-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .platform-status, .platform-health {
+        display: flex;
+        align-items: center;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .platform-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Status Indicator */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .status-indicator.connected {
+        background-color: var(--success);
+        box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.2);
+    }
+
+    .status-indicator.disconnected {
+        background-color: var(--danger);
+        box-shadow: 0 0 0 2px rgba(231, 29, 54, 0.2);
+    }
+
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .progress {
+        height: 0.5rem;
+        border-radius: 1rem;
+    }
+
+    /* Global Status Alert */
+    .platform-global-status .alert {
+        margin-bottom: 0;
+    }
+
+    .platform-global-status .alert-heading {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+    }
+
+    .platform-global-status .text-small {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    /* Background Colors */
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-info-light { background-color: var(--info-light); }
+
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-info { color: var(--info) !important; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1199px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .platform-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .platform-icon {
+            margin-bottom: 0.75rem;
+        }
+        
+        .platform-actions {
+            margin-top: 0.75rem;
+            align-self: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/platform-status-visualization.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize platform status monitor
+    window.platformStatusMonitor = new PlatformStatusMonitor({
+        statusEndpoint: '{{ url_for("api.platform_status") }}',
+        testEndpoint: '{{ url_for("api.test_connection") }}',
+        refreshInterval: 60000, // 1 minute
+        showNotifications: true
+    });
+});
+</script>
+{% endblock %}

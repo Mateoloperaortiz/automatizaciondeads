@@ -1,0 +1,134 @@
+/* Job Listings Page */
+.job-list {
+    margin-top: 20px;
+}
+
+.job-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.job-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.job-card h2 {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: 1.4em;
+}
+
+.job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.job-meta span {
+    margin-right: 15px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.job-meta .company {
+    font-weight: bold;
+}
+
+.job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #f1f1f1;
+    color: #555;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e5e5;
+}
+
+/* Job Detail Page */
+.job-detail {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-top: 20px;
+}
+
+.back-btn {
+    margin-bottom: 20px;
+}
+
+.job-detail h1 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #f1f1f1;
+    padding-bottom: 15px;
+}
+
+.job-detail .job-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+    border-bottom: 1px solid #f1f1f1;
+    padding-bottom: 20px;
+}
+
+.job-meta-item {
+    margin-bottom: 10px;
+}
+
+.job-section {
+    margin-bottom: 25px;
+}
+
+.job-section h2 {
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.job-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.job-actions .btn {
+    padding: 10px 20px;
+    font-size: 1em;
+} 

@@ -1,0 +1,92 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Cursor project rules
+
+These rules govern Cursor's behavior across all workspaces for the Ad Automation P-01 project, a university proof-of-concept for automating job ad publishing on social media platforms. The project uses Python, Flask, PostgreSQL, Scikit-learn, and Google Cloud, with a timeline of March 24 - May 2025. These guidelines ensure maintainability, security, and successful delivery.
+
+---
+
+## Programming Language and Frameworks
+
+1. Use **Python 3.8 or later** for all development to ensure compatibility with project libraries.
+2. Use **Flask** as the backend framework for all API and server-side logic.
+3. Use **PostgreSQL** for the database, with **SQLAlchemy** for ORM and database interactions.
+4. Use **Scikit-learn** for all machine learning tasks, specifically for audience segmentation with unsupervised methods (e.g., K-means clustering).
+
+---
+
+## Project Architecture and Structure
+
+1. Maintain the following **project structure**:
+   - `app/`: Flask application code (routes, models, etc.)
+   - `ml/`: Machine learning scripts and Jupyter notebooks
+   - `tests/`: Unit tests for all components
+   - `docs/`: Documentation files (e.g., API docs, data simulation report)
+2. For **social media API integrations**:
+   - Use official Python libraries where available (e.g., `facebook-python-business-sdk` for Meta).
+   - For platforms without official libraries (e.g., TikTok, Snapchat), use well-documented unofficial wrappers or direct HTTP requests.
+3. Always use a **virtual environment (`venv`)** for dependency management.
+4. Install dependencies exclusively via **`requirements.txt`** to maintain version control.
+
+---
+
+## Cloud Deployment and Configuration
+
+1. Use **Google Cloud** for deployment:
+   - **App Engine** for the Flask application.
+   - **Cloud SQL** for PostgreSQL.
+2. Store sensitive information (e.g., API keys, database credentials) in **environment variables** or **Google Cloud Secret Manager**. **Never hardcode sensitive data**.
+3. Use **Google Cloud Monitoring and Logging** for system health tracking. Set up alerts for critical metrics (e.g., error rates, latency).
+
+---
+
+## Data and Machine Learning
+
+1. Use **simulated data** for all development and testing. Store data generation scripts in `ml/` and document them thoroughly.
+2. Train machine learning models using **Jupyter notebooks** in Cursor IDE. Export final models to the Flask app.
+3. Evaluate models with metrics like **silhouette score** for clustering. Document results and refine models as needed.
+
+---
+
+## Collaboration and Version Control
+
+1. Use **Git** for version control with regular, descriptive commits. Host the repository on **GitHub**.
+2. Conduct **code reviews** for all pull requests to ensure adherence to standards.
+3. Write **unit tests** using **pytest** for all critical components. Run tests before merging changes.
+
+---
+
+## Documentation and AI Usage
+
+1. Maintain comprehensive documentation:
+   - **Final project report**
+   - **API documentation** (e.g., using Swagger)
+   - **Data simulation report**
+   - Store all docs in the `docs/` directory using Cursor's markdown support.
+
+2. Use Cursor's AI features (Copilot++, inline chat) for code suggestions and debugging, but **always review AI-generated code** to ensure it meets project and academic standards.
+
+---
+
+## Security and Best Practices
+
+1. **Do not expose sensitive information** in logs or error messages. Implement proper error handling.
+2. Be mindful of **social media API rate limits**. Implement caching or rate limiting where necessary.
+3. **Avoid unapproved third-party libraries**. Stick to those in `requirements.txt`.
+4. **Do not modify** files in `venv/` or auto-generated files (e.g., migration files). Use proper tools for management.
+
+---
+
+## Forbidden Actions
+
+- **Do not use global Python installations** or install packages outside the virtual environment.
+- **Do not hardcode sensitive information** (e.g., API keys, passwords).
+- **Do not modify the project structure** without my approval.
+- **Do not bypass code reviews** or testing procedures.
+
+---
+
+These rules ensure that the Ad Automation P-01 project is developed efficiently, securely, and in alignment with its academic and technical goals. Adherence across all workspaces is mandatory to meet the May 2025 deadline.

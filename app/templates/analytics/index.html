@@ -1,0 +1,1399 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Analytics Dashboard | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="analytics-dashboard">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Analytics Dashboard</h1>
+            <p class="text-muted">Analyze performance data and monitor campaign metrics</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt"></i> Last 30 Days
+                </button>
+            </div>
+            <button class="btn btn-primary">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Stats Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-eye text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Impressions</div>
+                <div class="stats-value">1,854,621</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 18.2% from last month
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-mouse-pointer text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Clicks</div>
+                <div class="stats-value">78,423</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 12.5% from last month
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-percentage text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">CTR</div>
+                <div class="stats-value">4.2%</div>
+                <div class="stats-change negative">
+                    <i class="fas fa-arrow-down"></i> 0.3% from last month
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-exchange-alt text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Conversion Rate</div>
+                <div class="stats-value">2.8%</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 0.5% from last month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Charts -->
+        <div class="dashboard-main">
+            <!-- Performance Overview Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Performance Overview</h2>
+                    <div class="header-actions">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="periodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Last 30 Days
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="periodDropdown">
+                                <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                                <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                                <li><a class="dropdown-item" href="#">Last 90 Days</a></li>
+                                <li><a class="dropdown-item" href="#">Year to Date</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Custom Range</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" data-bs-toggle="tooltip" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Performance -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Platform Performance</h2>
+                    <div class="header-actions">
+                        <div class="btn-group view-toggle">
+                            <button class="btn btn-sm btn-outline-primary active" data-view="chart">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" data-view="table">
+                                <i class="fas fa-table"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="view-content chart-view">
+                        <div class="chart-container platform-chart-container">
+                            <canvas id="platformChart"></canvas>
+                        </div>
+                        <div class="chart-legend mt-3">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: rgba(66, 103, 178, 0.7)"></div>
+                                <span>Meta</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: rgba(234, 67, 53, 0.7)"></div>
+                                <span>Google</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: rgba(29, 161, 242, 0.7)"></div>
+                                <span>X (Twitter)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: rgba(0, 119, 181, 0.7)"></div>
+                                <span>LinkedIn</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="view-content table-view" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Platform</th>
+                                        <th>Impressions</th>
+                                        <th>Clicks</th>
+                                        <th>CTR</th>
+                                        <th>Avg. Session</th>
+                                        <th>Conversions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="platform-badge meta">
+                                                <i class="fab fa-facebook"></i> Meta
+                                            </div>
+                                        </td>
+                                        <td>958,362</td>
+                                        <td>45,921</td>
+                                        <td>4.8%</td>
+                                        <td>1:32</td>
+                                        <td>1,195</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="platform-badge google">
+                                                <i class="fab fa-google"></i> Google
+                                            </div>
+                                        </td>
+                                        <td>624,785</td>
+                                        <td>24,367</td>
+                                        <td>3.9%</td>
+                                        <td>2:15</td>
+                                        <td>756</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="platform-badge twitter">
+                                                <i class="fab fa-twitter"></i> X
+                                            </div>
+                                        </td>
+                                        <td>214,673</td>
+                                        <td>6,870</td>
+                                        <td>3.2%</td>
+                                        <td>0:58</td>
+                                        <td>124</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="platform-badge linkedin">
+                                                <i class="fab fa-linkedin"></i> LinkedIn
+                                            </div>
+                                        </td>
+                                        <td>56,801</td>
+                                        <td>3,265</td>
+                                        <td>5.7%</td>
+                                        <td>3:42</td>
+                                        <td>137</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Performing Campaigns -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Top Performing Campaigns</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search campaigns..." id="campaignSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table campaign-management-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Campaign</th>
+                                    <th scope="col">Impressions</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">Conversions</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">SD</div>
+                                            <div>
+                                                <div class="name">Senior Java Developer</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>245,621</td>
+                                    <td>5.8%</td>
+                                    <td>128</td>
+                                    <td><span class="status-badge active">Active</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">UX</div>
+                                            <div>
+                                                <div class="name">UI/UX Designer</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>198,453</td>
+                                    <td>4.9%</td>
+                                    <td>96</td>
+                                    <td><span class="status-badge active">Active</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">DE</div>
+                                            <div>
+                                                <div class="name">DevOps Engineer</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>178,965</td>
+                                    <td>4.2%</td>
+                                    <td>74</td>
+                                    <td><span class="status-badge active">Active</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">PM</div>
+                                            <div>
+                                                <div class="name">Product Manager</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>156,782</td>
+                                    <td>3.7%</td>
+                                    <td>58</td>
+                                    <td><span class="status-badge active">Active</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">MS</div>
+                                            <div>
+                                                <div class="name">Marketing Specialist</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>134,521</td>
+                                    <td>3.1%</td>
+                                    <td>42</td>
+                                    <td><span class="status-badge active">Active</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Detailed Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Showing 5 of 24 campaigns</div>
+                        <a href="/campaigns/" class="btn btn-outline-primary btn-sm">View All Campaigns</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demographics Overview -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Demographics Overview</h2>
+                    <div class="header-actions">
+                        <a href="/segments" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-users"></i> View Audience Segments
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="demographics-grid">
+                        <div class="demographic-chart">
+                            <h3>Age Distribution</h3>
+                            <div class="chart-container">
+                                <canvas id="ageChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="demographic-chart">
+                            <h3>Education Level</h3>
+                            <div class="chart-container">
+                                <canvas id="educationChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="demographic-chart">
+                            <h3>Experience Level</h3>
+                            <div class="chart-container">
+                                <canvas id="experienceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Insights & Tools -->
+        <div class="dashboard-sidebar">
+            <!-- Analytics Tools -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Analytics Tools</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-cog"></i> Configure
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="analytics-tools">
+                        <div class="tool-card">
+                            <div class="tool-icon bg-primary-light">
+                                <i class="fas fa-chart-line text-primary"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3>Platform Comparison</h3>
+                                <p>Compare performance metrics across different platforms</p>
+                                <a href="/analytics/platform-comparison" class="btn btn-primary btn-sm">View Dashboard</a>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <div class="tool-icon bg-warning-light">
+                                <i class="fas fa-flask text-warning"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3>A/B Testing</h3>
+                                <p>Compare audience segments and optimize campaign effectiveness</p>
+                                <a href="/analytics/ab-testing" class="btn btn-primary btn-sm">Launch A/B Tests</a>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <div class="tool-icon bg-success-light">
+                                <i class="fas fa-dollar-sign text-success"></i>
+                            </div>
+                            <div class="tool-content">
+                                <h3>ROI Dashboard</h3>
+                                <p>Track conversions, revenue, and return on investment metrics</p>
+                                <a href="/analytics/roi-dashboard" class="btn btn-primary btn-sm">View ROI Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quality Metrics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Analytics Quality Metrics</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Data Accuracy</span>
+                                <span class="metric-value">85%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 85%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Measures the accuracy of campaign data and metrics
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Data Completeness</span>
+                                <span class="metric-value">92%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of complete data points across all sources
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Tracking Coverage</span>
+                                <span class="metric-value">78%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 78%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of user interactions tracked successfully
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>API Service Status</span>
+                                <span class="metric-value">96%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 96%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Platform API availability over the last 30 days
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audience Insights -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>AI-Powered Insights</h2>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Campaign Overlap</h3>
+                                <p>Senior Developer and DevOps Engineer campaigns have 42% audience overlap - consider consolidation.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Analyze Overlap</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-success-light">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Performance Improvement</h3>
+                                <p>UI/UX Designer campaign shows 23% higher CTR on Instagram vs Facebook.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Optimize Budget</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-warning-light">
+                                <i class="fas fa-bullseye text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Conversion Opportunity</h3>
+                                <p>Product Manager click-to-application rate is 34% below benchmark.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Review Funnel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --card-border-radius: 0.5rem;
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        --card-header-bg: rgba(248, 250, 252, 0.5);
+        --sidebar-width: 320px;
+        --grid-gap: 1.5rem;
+        --primary: #4361ee;
+        --success: #2ec4b6;
+        --warning: #ff9f1c;
+        --danger: #e71d36;
+        --info: #4cc9f0;
+        --card-padding: 1.25rem;
+        --text-muted: #6c757d;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --success-light: rgba(46, 196, 182, 0.1);
+        --warning-light: rgba(255, 159, 28, 0.1);
+        --danger-light: rgba(231, 29, 54, 0.1);
+        --info-light: rgba(76, 201, 240, 0.1);
+        --transition-speed: 0.2s;
+    }
+    
+    /* Dashboard Layout */
+    .analytics-dashboard {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--grid-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--card-shadow);
+        transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .percent {
+        font-size: 1rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success);
+    }
+
+    .stats-change.negative {
+        color: var(--danger);
+    }
+    
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .dashboard-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: var(--card-padding);
+    }
+
+    .card-footer {
+        padding: 0.75rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* Platform chart specific styles */
+    .platform-chart-container {
+        height: 400px;
+        width: 100%;
+        max-width: 600px; 
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Analytics tools */
+    .analytics-tools {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .tool-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform var(--transition-speed) ease-in-out;
+        padding: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .tool-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.15);
+    }
+    
+    .tool-icon {
+        font-size: 1.5rem;
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .tool-content {
+        flex: 1;
+    }
+    
+    .tool-content h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .tool-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Table styling */
+    .campaign-name {
+        display: flex;
+        align-items: center;
+    }
+    
+    .campaign-icon {
+        width: 36px;
+        height: 36px;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 0.75rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-badge.active {
+        background-color: var(--success-light);
+        color: var(--success);
+    }
+    
+    .status-badge.paused {
+        background-color: var(--warning-light);
+        color: var(--warning);
+    }
+    
+    .status-badge.draft {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: var(--text-muted);
+    }
+    
+    /* Platform badges */
+    .platform-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .platform-badge i {
+        margin-right: 0.5rem;
+    }
+    
+    .platform-badge.meta {
+        background-color: rgba(66, 103, 178, 0.1);
+        color: #4267B2;
+    }
+    
+    .platform-badge.google {
+        background-color: rgba(234, 67, 53, 0.1);
+        color: #EA4335;
+    }
+    
+    .platform-badge.twitter {
+        background-color: rgba(29, 161, 242, 0.1);
+        color: #1DA1F2;
+    }
+    
+    .platform-badge.linkedin {
+        background-color: rgba(0, 119, 181, 0.1);
+        color: #0077B5;
+    }
+    
+    /* Chart view toggle */
+    .view-toggle {
+        display: flex;
+    }
+    
+    .view-toggle .btn {
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
+    
+    .chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+    
+    /* Demographics grid */
+    .demographics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .demographic-chart {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        height: 250px;
+    }
+    
+    .demographic-chart h3 {
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .demographic-chart .chart-container {
+        height: 180px;
+    }
+
+    /* Add dashboard grid for consistent layout */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr var(--sidebar-width);
+        gap: var(--grid-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--grid-gap);
+    }
+    
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .progress {
+        height: 0.5rem;
+        border-radius: 1rem;
+    }
+
+    /* Insights */
+    .insights-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-content h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Background Colors */
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-info-light { background-color: var(--info-light); }
+    
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-info { color: var(--info) !important; }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .demographics-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .demographics-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .demographic-chart {
+            height: 280px;
+        }
+        
+        .demographic-chart .chart-container {
+            height: 200px;
+        }
+        
+        .tool-card {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        if (tooltipTriggerList.length > 0 && typeof bootstrap !== 'undefined') {
+            tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+        }
+        
+        // Initialize charts
+        initializePerformanceChart();
+        initializePlatformChart();
+        initializeDemographicsCharts();
+        
+        // Set up view toggling for platform performance
+        const viewButtons = document.querySelectorAll('.view-toggle button');
+        const viewContents = document.querySelectorAll('.view-content');
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button state
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding view
+                const viewToShow = this.getAttribute('data-view');
+                viewContents.forEach(content => {
+                    content.style.display = content.classList.contains(viewToShow + '-view') ? '' : 'none';
+                });
+            });
+        });
+        
+        // Campaign search functionality
+        const searchInput = document.getElementById('campaignSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchValue = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('.campaign-management-table tbody tr');
+                
+                tableRows.forEach(row => {
+                    const campaignName = row.querySelector('.campaign-name .name').textContent.toLowerCase();
+                    row.style.display = campaignName.includes(searchValue) ? '' : 'none';
+                });
+            });
+        }
+    });
+    
+    function initializePerformanceChart() {
+        const ctx = document.getElementById('performanceChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Impressions',
+                    data: [125000, 145000, 160000, 180000, 210000, 190000, 200000, 220000, 240000, 230000, 250000, 270000],
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Clicks',
+                    data: [5200, 6100, 6800, 7600, 8900, 8000, 8400, 9200, 10100, 9700, 10500, 11300],
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Impressions' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Clicks' }
+                    }
+                }
+            }
+        });
+    }
+    
+    function initializePlatformChart() {
+        const ctx = document.getElementById('platformChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['CTR', 'Conversion Rate', 'Cost per Click', 'Engagement Rate', 'Average Session'],
+                datasets: [{
+                    label: 'Meta',
+                    data: [4.8, 2.6, 1.2, 3.8, 3.5],
+                    backgroundColor: 'rgba(66, 103, 178, 0.2)',
+                    borderColor: 'rgba(66, 103, 178, 0.7)',
+                    pointBackgroundColor: 'rgba(66, 103, 178, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(66, 103, 178, 1)'
+                }, {
+                    label: 'Google',
+                    data: [3.9, 3.1, 1.5, 4.2, 4.8],
+                    backgroundColor: 'rgba(234, 67, 53, 0.2)',
+                    borderColor: 'rgba(234, 67, 53, 0.7)',
+                    pointBackgroundColor: 'rgba(234, 67, 53, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(234, 67, 53, 1)'
+                }, {
+                    label: 'X (Twitter)',
+                    data: [3.2, 1.8, 0.8, 2.9, 1.8],
+                    backgroundColor: 'rgba(29, 161, 242, 0.2)',
+                    borderColor: 'rgba(29, 161, 242, 0.7)',
+                    pointBackgroundColor: 'rgba(29, 161, 242, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(29, 161, 242, 1)'
+                }, {
+                    label: 'LinkedIn',
+                    data: [5.7, 4.2, 2.1, 4.5, 5.8],
+                    backgroundColor: 'rgba(0, 119, 181, 0.2)',
+                    borderColor: 'rgba(0, 119, 181, 0.7)',
+                    pointBackgroundColor: 'rgba(0, 119, 181, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(0, 119, 181, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: { line: { borderWidth: 2 } },
+                plugins: { legend: { display: false } },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        ticks: { 
+                            display: true,
+                            maxTicksLimit: 5,
+                            backdropColor: 'rgba(255, 255, 255, 0)'
+                        },
+                        angleLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function initializeDemographicsCharts() {
+        // Age Chart
+        const ageCtx = document.getElementById('ageChart');
+        if (ageCtx && typeof Chart !== 'undefined') {
+            new Chart(ageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['18-24', '25-34', '35-44', '45-54', '55+'],
+                    datasets: [{
+                        label: 'Distribution',
+                        data: [15, 38, 25, 12, 10],
+                        backgroundColor: [
+                            'rgba(67, 97, 238, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(243, 156, 18, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value + '%' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Education Chart
+        const educationCtx = document.getElementById('educationChart');
+        if (educationCtx && typeof Chart !== 'undefined') {
+            new Chart(educationCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['High School', 'Associate', 'Bachelor', 'Master', 'PhD'],
+                    datasets: [{
+                        data: [10, 15, 45, 25, 5],
+                        backgroundColor: [
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(243, 156, 18, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(155, 89, 182, 0.7)'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, padding: 5, font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Experience Chart
+        const experienceCtx = document.getElementById('experienceChart');
+        if (experienceCtx && typeof Chart !== 'undefined') {
+            new Chart(experienceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entry (0-2)', 'Mid (3-5)', 'Senior (6-10)', 'Executive (10+)'],
+                    datasets: [{
+                        data: [28, 35, 25, 12],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(230, 126, 34, 0.7)'
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, padding: 5, font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

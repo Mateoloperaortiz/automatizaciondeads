@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Analytics Dashboard Demo</title>
+  
+  <!-- Required external dependencies -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                     "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background-color: #f5f5f5;
+    }
+    
+    body.dark-theme {
+      background-color: #121212;
+      color: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+    
+    .dashboard-container {
+      height: 1200px;
+      border-radius: 8px;
+      background-color: #fff;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark-theme .dashboard-container {
+      background-color: #1e1e1e;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+    
+    .dashboard-controls {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .date-range-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    /* Form controls */
+    select, button, input {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+      background-color: #fff;
+      font-size: 0.875rem;
+    }
+    
+    .dark-theme select,
+    .dark-theme button,
+    .dark-theme input {
+      background-color: #2a2a2a;
+      border-color: #444;
+      color: #f8f9fa;
+    }
+    
+    button {
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* Presets */
+    .preset-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .preset-button {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+      background-color: #fff;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    
+    .preset-button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .dark-theme .preset-button {
+      background-color: #2a2a2a;
+      border-color: #444;
+      color: #f8f9fa;
+    }
+    
+    .dark-theme .preset-button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Campaign Analytics Dashboard</h1>
+      <div class="control-group">
+        <span>Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="dark-mode-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+    
+    <div class="dashboard-controls">
+      <div class="control-group">
+        <label for="campaign-selector">Campaign:</label>
+        <select id="campaign-selector">
+          <option value="1">Q1 2025 Product Launch</option>
+          <option value="2">Summer Sale 2025</option>
+          <option value="3">Holiday Promotion 2024</option>
+          <option value="4">Brand Awareness Campaign</option>
+          <option value="5">Lead Generation Q2 2025</option>
+        </select>
+      </div>
+      
+      <div class="control-group date-range-picker">
+        <label for="date-start">From:</label>
+        <input type="date" id="date-start">
+        <label for="date-end">To:</label>
+        <input type="date" id="date-end">
+        <button id="apply-date-range">Apply</button>
+      </div>
+      
+      <div class="control-group">
+        <select id="date-range-preset">
+          <option value="7">Last 7 Days</option>
+          <option value="30" selected>Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+          <option value="ytd">Year to Date</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <button id="refresh-btn">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button id="export-btn">
+          <i class="fas fa-download"></i> Export
+        </button>
+      </div>
+    </div>
+    
+    <div class="preset-buttons">
+      <button class="preset-button active" data-preset="STANDARD">Standard</button>
+      <button class="preset-button" data-preset="PERFORMANCE_FOCUSED">Performance</button>
+      <button class="preset-button" data-preset="ROI_FOCUSED">ROI Focused</button>
+      <button class="preset-button" data-preset="DARK_MODE">Dark Mode</button>
+    </div>
+    
+    <div id="campaign-dashboard" class="dashboard-container">
+      <!-- Dashboard will be rendered here -->
+    </div>
+    
+    <footer>
+      <p>MagnetoCursor Campaign Analytics | Demo Dashboard</p>
+    </footer>
+  </div>
+  
+  <!-- Required external libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  
+  <!-- Import as a module -->
+  <script type="module">
+    // Import dashboard components
+    import { 
+      createDashboard, 
+      createDashboardWithPreset, 
+      getDefaultDateRange,
+      formatDate,
+      TimeRange,
+      MetricType
+    } from '../index.js';
+    
+    // State
+    let dashboard = null;
+    let currentPreset = 'STANDARD';
+    let darkMode = false;
+    
+    // Initialize date range
+    const defaultDateRange = getDefaultDateRange();
+    
+    // Format date inputs
+    const dateStartInput = document.getElementById('date-start');
+    const dateEndInput = document.getElementById('date-end');
+    
+    dateStartInput.value = formatDateForInput(defaultDateRange.start);
+    dateEndInput.value = formatDateForInput(defaultDateRange.end);
+    
+    // Initialize dashboard
+    function initializeDashboard() {
+      // Clean up existing dashboard
+      if (dashboard) {
+        dashboard.destroy();
+      }
+      
+      // Create new dashboard with selected preset
+      dashboard = createDashboardWithPreset('campaign-dashboard', currentPreset, {
+        darkMode: darkMode,
+        initialCampaignId: getCurrentCampaignId(),
+        initialDateRange: {
+          start: new Date(dateStartInput.value),
+          end: new Date(dateEndInput.value)
+        }
+      });
+    }
+    
+    // Get current campaign ID
+    function getCurrentCampaignId() {
+      const selector = document.getElementById('campaign-selector');
+      return parseInt(selector.value, 10);
+    }
+    
+    // Format date for input field (YYYY-MM-DD)
+    function formatDateForInput(date) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Set up event listeners
+    
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    darkModeToggle.addEventListener('change', (e) => {
+      darkMode = e.target.checked;
+      
+      // Update body class
+      if (darkMode) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
+      
+      // Reinitialize dashboard
+      initializeDashboard();
+    });
+    
+    // Campaign selector
+    const campaignSelector = document.getElementById('campaign-selector');
+    campaignSelector.addEventListener('change', () => {
+      if (dashboard) {
+        dashboard.selectCampaign(getCurrentCampaignId());
+      }
+    });
+    
+    // Date range preset
+    const dateRangePreset = document.getElementById('date-range-preset');
+    dateRangePreset.addEventListener('change', (e) => {
+      const days = e.target.value;
+      
+      if (days === 'custom') {
+        // Do nothing, let user specify custom range
+        return;
+      }
+      
+      // Calculate new date range
+      const end = new Date();
+      const start = new Date();
+      
+      if (days === 'ytd') {
+        // Year to date
+        start.setMonth(0);
+        start.setDate(1);
+      } else {
+        // Last X days
+        start.setDate(start.getDate() - parseInt(days, 10));
+      }
+      
+      // Update inputs
+      dateStartInput.value = formatDateForInput(start);
+      dateEndInput.value = formatDateForInput(end);
+      
+      // Apply date range
+      if (dashboard) {
+        dashboard.setDateRange(start, end);
+      }
+    });
+    
+    // Apply date range button
+    const applyDateRangeBtn = document.getElementById('apply-date-range');
+    applyDateRangeBtn.addEventListener('click', () => {
+      const start = new Date(dateStartInput.value);
+      const end = new Date(dateEndInput.value);
+      
+      if (dashboard && start && end && start <= end) {
+        dashboard.setDateRange(start, end);
+        
+        // Set preset to custom
+        dateRangePreset.value = 'custom';
+      }
+    });
+    
+    // Refresh button
+    const refreshBtn = document.getElementById('refresh-btn');
+    refreshBtn.addEventListener('click', () => {
+      if (dashboard) {
+        dashboard.loadData();
+      }
+    });
+    
+    // Export button
+    const exportBtn = document.getElementById('export-btn');
+    exportBtn.addEventListener('click', () => {
+      if (dashboard) {
+        dashboard.exportData();
+      } else {
+        alert('No dashboard data to export');
+      }
+    });
+    
+    // Preset buttons
+    const presetButtons = document.querySelectorAll('.preset-button');
+    presetButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Update active state
+        presetButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Get preset
+        currentPreset = button.getAttribute('data-preset');
+        
+        // Special case for DARK_MODE preset
+        if (currentPreset === 'DARK_MODE') {
+          darkMode = true;
+          darkModeToggle.checked = true;
+          document.body.classList.add('dark-theme');
+        }
+        
+        // Reinitialize dashboard
+        initializeDashboard();
+      });
+    });
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeDashboard();
+    });
+  </script>
+</body>
+</html>

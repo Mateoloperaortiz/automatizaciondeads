@@ -1,0 +1,57 @@
+{
+  "name": "MagnetoCursor",
+  "short_name": "MagnetoCursor",
+  "description": "Ad campaign management and analytics with realtime WebSocket filtering",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/images/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Filter Manager",
+      "url": "/websocket/filters",
+      "description": "Manage WebSocket filters"
+    },
+    {
+      "name": "Campaign Dashboard",
+      "url": "/campaigns",
+      "description": "View and manage campaigns"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/screenshots/filter-builder.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/static/images/screenshots/campaign-dashboard.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope": "/",
+  "id": "magnetocursor-pwa"
+}

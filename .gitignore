@@ -1,0 +1,167 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Flask instance folder
+instance/
+instance/*.sqlite
+
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Credentials and secrets
+.env
+credentials.json
+token.json
+secrets.json
+*_credentials.json
+credentials.*.json
+*.pem
+*.key
+gcp-key.json
+.env.local
+.env.development
+.env.production
+
+# Machine learning artifacts (except the specific ones we want to keep)
+ml/data/*.csv
+ml/models/*
+!ml/models/README.md
+!ml/models/kmeans_model.pkl
+!ml/models/cluster_descriptions.json
+
+# Generated data
+data/generated/
+*.csv
+!ml/data/candidates.csv
+!ml/data/job_openings.csv
+!ml/data/platforms.csv
+
+# Test coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Static files collected in deployment
+static/collected/
+staticfiles/
+
+# Media uploads
+app/static/uploads/ads/*
+!app/static/uploads/ads/.gitkeep
+app/static/img/uploads/*
+!app/static/img/uploads/.gitkeep
+
+# Temporary files
+tmp/
+temp/
+
+# Node modules
+node_modules/
+bower_components/
+
+# Compiled frontend assets
+app/static/dist/
+app/static/build/
+app/static/*.min.js
+app/static/*.min.css
+
+# Flask migration specific
+migrations/versions/*
+!migrations/versions/ebd6d5887923_initial_migration.py
+!migrations/versions/add_user_table.py
+!migrations/versions/add_notification_tables.py
+!migrations/versions/add_collaboration_tables.py
+!migrations/versions/documentation_models.py
+!migrations/versions/f5e8a6912345_add_enhanced_ad_content_fields.py
+!migrations/versions/rename_metadata_column.py
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Cache
+.cache/
+.sass-cache/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# For project demo only - exclude generated content except example files
+ml/visualizations/*
+!ml/visualizations/age_by_cluster.png
+
+# Deployment files
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Files
+.windsurfrules
+CELERY_README.md
+CLAUDE.md
+/docs
+/phases
+googleScript.py

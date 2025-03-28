@@ -1,0 +1,135 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Teams - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Teams</h1>
+    {% if current_user.can_manage() %}
+    <a href="{{ url_for('teams.create_team') }}" class="btn btn-primary">
+      <i data-feather="plus"></i> Create Team
+    </a>
+    {% endif %}
+  </div>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <div class="row">
+    <!-- Teams you own -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Teams You Own</h5>
+        </div>
+        <div class="card-body">
+          {% if owned_teams %}
+            <div class="list-group">
+              {% for team in owned_teams %}
+                <a href="{{ url_for('teams.detail', team_id=team.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">{{ team.name }}</h6>
+                    <p class="mb-1 small text-muted">{{ team.description or 'No description' }}</p>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{ team.members.count() }} members</span>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <i data-feather="users" class="mb-3" style="width: 48px; height: 48px; color: #ddd;"></i>
+              <p class="mb-0 text-muted">You don't own any teams yet</p>
+              {% if current_user.can_manage() %}
+                <a href="{{ url_for('teams.create_team') }}" class="btn btn-sm btn-outline-primary mt-3">Create Your First Team</a>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Teams you're a member of -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Teams You're In</h5>
+        </div>
+        <div class="card-body">
+          {% if member_teams %}
+            <div class="list-group">
+              {% for team in member_teams %}
+                <a href="{{ url_for('teams.detail', team_id=team.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">{{ team.name }}</h6>
+                    <p class="mb-1 small text-muted">{{ team.description or 'No description' }}</p>
+                  </div>
+                  <span class="badge bg-info rounded-pill">Member</span>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <i data-feather="users" class="mb-3" style="width: 48px; height: 48px; color: #ddd;"></i>
+              <p class="mb-0 text-muted">You're not a member of any teams yet</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="card-title mb-0">About Team Collaboration</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 text-center mb-4 mb-md-0">
+              <div class="feature-icon bg-primary bg-gradient p-2 rounded-circle d-inline-flex mb-3">
+                <i data-feather="users" style="width: 24px; height: 24px; color: white;"></i>
+              </div>
+              <h5>Collaborate with Teams</h5>
+              <p class="text-muted">Create teams and invite colleagues to collaborate on campaigns and resources</p>
+            </div>
+            <div class="col-md-4 text-center mb-4 mb-md-0">
+              <div class="feature-icon bg-success bg-gradient p-2 rounded-circle d-inline-flex mb-3">
+                <i data-feather="edit-2" style="width: 24px; height: 24px; color: white;"></i>
+              </div>
+              <h5>Manage Access Levels</h5>
+              <p class="text-muted">Assign team members as Owners, Editors, or Viewers based on their responsibilities</p>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="feature-icon bg-info bg-gradient p-2 rounded-circle d-inline-flex mb-3">
+                <i data-feather="target" style="width: 24px; height: 24px; color: white;"></i>
+              </div>
+              <h5>Share Campaigns</h5>
+              <p class="text-muted">Work together on campaigns across teams and departments</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize feather icons
+    feather.replace();
+  });
+</script>
+{% endblock %}

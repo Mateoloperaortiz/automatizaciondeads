@@ -1,0 +1,262 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Campaign Analytics Dashboard - MagnetoCursor{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .dashboard-container {
+        min-height: 600px;
+    }
+    .metric-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .chart-container {
+        height: 350px;
+        position: relative;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Campaign Analytics Dashboard</h2>
+            <p class="text-muted">View performance metrics across all platforms</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Back to Campaigns
+            </a>
+        </div>
+    </div>
+
+    <!-- Campaign Dashboard Container -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Campaign Performance</h5>
+            <div>
+                <button id="exportDataBtn" class="btn btn-sm btn-outline-secondary me-2">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <button id="refreshDataBtn" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="campaign-dashboard-container" class="dashboard-container">
+                <!-- Campaign dashboard will be loaded here -->
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fallback Content (displayed if dashboard fails to load) -->
+    <div id="fallback-content" class="row mt-4" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Dashboard failed to load. Showing basic metrics instead.
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light metric-card">
+                <div class="card-body">
+                    <div class="metric-value text-primary">{{ '{:,}'.format(impressions_data[0]) }}</div>
+                    <div class="metric-label">Impressions</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light metric-card">
+                <div class="card-body">
+                    <div class="metric-value text-success">{{ '{:,}'.format(clicks_data[0]) }}</div>
+                    <div class="metric-label">Clicks</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light metric-card">
+                <div class="card-body">
+                    <div class="metric-value text-danger">{{ '{:.2f}'.format(clicks_data[0] / impressions_data[0] * 100) }}%</div>
+                    <div class="metric-label">CTR</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light metric-card">
+                <div class="card-body">
+                    <div class="metric-value text-info">{{ '{:,}'.format(applications_data[0]) }}</div>
+                    <div class="metric-label">Applications</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Platform Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="platformComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Import Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<!-- Import our campaign dashboard components -->
+<script type="module">
+  import { CampaignDashboard } from '/static/js/campaign-analytics/campaign-dashboard.js';
+  
+  document.addEventListener('DOMContentLoaded', async function() {
+    try {
+      // Fetch campaigns list
+      const response = await fetch('/api/campaigns/list');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
+      }
+      
+      const data = await response.json();
+      if (data.status === 'success' && data.campaigns && data.campaigns.length > 0) {
+        // Initialize the dashboard with the first campaign
+        const dashboardContainer = document.getElementById('campaign-dashboard-container');
+        if (dashboardContainer) {
+          console.log('Initializing campaign dashboard...');
+          
+          // Clear loading spinner
+          dashboardContainer.innerHTML = '';
+          
+          const dashboard = new CampaignDashboard('campaign-dashboard-container', {
+            initialCampaignId: {% if initial_campaign_id %}{{ initial_campaign_id }}{% else %}data.campaigns[0].id{% endif %},
+            refreshInterval: 0, // No auto-refresh
+            showTimeSeriesChart: true,
+            showPlatformComparison: true,
+            showRoiVisualization: true,
+            showKpiMetrics: true,
+            darkMode: false
+          });
+          
+          // Handle refresh button
+          document.getElementById('refreshDataBtn').addEventListener('click', () => {
+            dashboard.loadData();
+          });
+          
+          // Handle export button
+          document.getElementById('exportDataBtn').addEventListener('click', () => {
+            dashboard.exportData();
+          });
+          
+          // Store dashboard instance for potential later use
+          window.campaignDashboard = dashboard;
+        }
+      } else {
+        console.error('No campaigns available');
+        document.getElementById('campaign-dashboard-container').innerHTML = `
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> No campaigns available. Please create a campaign first.
+          </div>
+        `;
+        document.getElementById('fallback-content').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Error initializing campaign dashboard:', error);
+      document.getElementById('campaign-dashboard-container').innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-circle"></i> Failed to load campaign dashboard: ${error.message}
+        </div>
+      `;
+      // Show fallback content
+      document.getElementById('fallback-content').style.display = 'flex';
+      
+      // Initialize fallback chart
+      initializeFallbackChart();
+    }
+  });
+  
+  function initializeFallbackChart() {
+    // Get data from template
+    const platformNames = {{ platform_names|tojson }};
+    const impressionsData = {{ impressions_data|tojson }};
+    const clicksData = {{ clicks_data|tojson }};
+    const applicationsData = {{ applications_data|tojson }};
+    
+    // Create chart
+    const ctx = document.getElementById('platformComparisonChart');
+    if (ctx) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: platformNames,
+          datasets: [
+            {
+              label: 'Impressions (x100)',
+              data: impressionsData.map(value => value / 100),
+              backgroundColor: 'rgba(54, 162, 235, 0.5)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Clicks',
+              data: clicksData,
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Applications',
+              data: applicationsData,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Platform Performance Overview'
+            }
+          }
+        }
+      });
+    }
+  }
+</script>
+{% endblock %}

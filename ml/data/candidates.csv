@@ -1,0 +1,51 @@
+age,gender,location,education_level,field_of_study,years_of_experience,desired_job_type,desired_industry,desired_role,desired_salary
+58,Male,"New York, NY",Vocational Training,Finance,7,Part-time,Healthcare,Administrative Assistant,43434
+61,Male,"Miami, FL",Master's Degree,Computer Science,0,Full-time,Education,Marketing Specialist,96237
+56,Male,"Atlanta, GA",Associate Degree,Healthcare,13,Part-time,Hospitality,UX Designer,66463
+18,Female,"Portland, OR",Master's Degree,Psychology,8,Part-time,Education,Business Analyst,74118
+24,Male,"Los Angeles, CA",High School,Psychology,11,Remote,Retail,Business Analyst,35695
+64,Prefer not to say,"Atlanta, GA",High School,Data Science,2,Remote,Retail,Operations Manager,111070
+41,Female,"Portland, OR",High School,Computer Science,21,Part-time,Retail,Data Scientist,142108
+32,Male,"Los Angeles, CA",Bachelor's Degree,Graphic Design,20,Internship,Manufacturing,Project Manager,78520
+40,Female,"Dallas, TX",Bachelor's Degree,Business Administration,19,Hybrid,Healthcare,Product Manager,125568
+33,Female,"Denver, CO",Master's Degree,Finance,20,Hybrid,Construction,Marketing Specialist,119733
+38,Male,"Chicago, IL",High School,Psychology,12,Contract,Finance,Marketing Specialist,149686
+54,Non-binary,"Chicago, IL",Vocational Training,Graphic Design,12,Hybrid,Hospitality,Project Manager,64718
+26,Female,"Portland, OR",PhD,Healthcare,8,Hybrid,Transportation,Customer Support Specialist,147679
+55,Prefer not to say,"Boston, MA",Associate Degree,Engineering,16,Freelance,Finance,Business Analyst,36175
+25,Female,"Dallas, TX",Associate Degree,Data Science,19,Full-time,Entertainment,Customer Support Specialist,108104
+47,Non-binary,"Atlanta, GA",High School,Business Administration,21,Remote,Retail,Business Analyst,114012
+39,Male,"Seattle, WA",Master's Degree,Engineering,14,Full-time,Retail,Product Manager,129871
+29,Male,"Dallas, TX",Bachelor's Degree,Healthcare,19,Part-time,Healthcare,HR Manager,129943
+28,Male,"Miami, FL",Bachelor's Degree,Graphic Design,0,Full-time,Manufacturing,Business Analyst,70306
+33,Male,"Chicago, IL",PhD,Business Administration,2,Hybrid,Hospitality,Data Scientist,129693
+52,Female,"Austin, TX",Vocational Training,Graphic Design,17,Part-time,Retail,Product Manager,144351
+56,Prefer not to say,"Chicago, IL",PhD,Marketing,22,Contract,Entertainment,Operations Manager,115180
+41,Prefer not to say,"Atlanta, GA",Master's Degree,Business Administration,7,Part-time,Finance,HR Manager,32757
+55,Female,"Miami, FL",Associate Degree,Computer Science,2,Hybrid,Technology,Marketing Specialist,38834
+20,Non-binary,"San Francisco, CA",PhD,Marketing,8,Hybrid,Hospitality,Marketing Specialist,100678
+26,Prefer not to say,"Chicago, IL",Master's Degree,Data Science,6,Full-time,Finance,Operations Manager,86498
+40,Prefer not to say,"Los Angeles, CA",Master's Degree,Computer Science,21,Hybrid,Finance,Software Engineer,82772
+64,Non-binary,"San Francisco, CA",Associate Degree,Marketing,6,Remote,Hospitality,Project Manager,85296
+29,Non-binary,"Denver, CO",Associate Degree,Business Administration,14,Internship,Construction,Data Scientist,36630
+59,Male,"San Francisco, CA",Associate Degree,Engineering,13,Freelance,Hospitality,Marketing Specialist,143331
+43,Male,"Austin, TX",Master's Degree,Computer Science,12,Contract,Hospitality,Financial Analyst,85444
+62,Prefer not to say,"Austin, TX",Associate Degree,Finance,6,Full-time,Transportation,Administrative Assistant,101066
+21,Non-binary,"New York, NY",High School,Education,15,Remote,Construction,Project Manager,37455
+50,Male,"Austin, TX",High School,Education,2,Hybrid,Education,Customer Support Specialist,45713
+54,Female,"Miami, FL",PhD,Computer Science,19,Full-time,Entertainment,Operations Manager,106503
+54,Non-binary,"Seattle, WA",Associate Degree,Psychology,7,Contract,Entertainment,Project Manager,118039
+59,Non-binary,"Denver, CO",Bachelor's Degree,Business Administration,0,Freelance,Transportation,UX Designer,43104
+22,Female,"Atlanta, GA",Bachelor's Degree,Engineering,11,Full-time,Education,HR Manager,67353
+28,Prefer not to say,"Atlanta, GA",Vocational Training,Finance,19,Internship,Construction,Software Engineer,117538
+53,Non-binary,"Dallas, TX",High School,Engineering,8,Full-time,Finance,Administrative Assistant,102512
+27,Non-binary,"Seattle, WA",PhD,Marketing,22,Contract,Education,Operations Manager,113130
+34,Prefer not to say,"Seattle, WA",High School,Business Administration,20,Freelance,Retail,Software Engineer,30464
+39,Female,"Dallas, TX",Bachelor's Degree,Engineering,23,Freelance,Construction,Administrative Assistant,86057
+53,Male,"San Francisco, CA",High School,Engineering,17,Full-time,Manufacturing,UX Designer,102420
+27,Prefer not to say,"Austin, TX",High School,Finance,11,Internship,Technology,HR Manager,57535
+61,Female,"Dallas, TX",High School,Psychology,24,Remote,Entertainment,UX Designer,128235
+27,Female,"Austin, TX",Associate Degree,Data Science,0,Part-time,Manufacturing,Business Analyst,83964
+60,Female,"Seattle, WA",Associate Degree,Business Administration,12,Internship,Technology,Sales Representative,59154
+30,Prefer not to say,"Boston, MA",Bachelor's Degree,Marketing,7,Full-time,Education,Customer Support Specialist,73025
+35,Male,"Seattle, WA",Bachelor's Degree,Healthcare,12,Hybrid,Construction,HR Manager,33617

@@ -1,0 +1,738 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Ad Gallery | Ad Automation P-01{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Ad Gallery</h1>
+            <p class="text-muted">Browse and manage ad creatives across platforms</p>
+        </div>
+        <div class="content-actions">
+            <a href="{{ url_for('campaigns.create_campaign_form') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Ad
+            </a>
+            <a href="{{ url_for('ads.templates') }}" class="btn btn-outline-primary ml-2">
+                <i class="fas fa-star"></i> View Templates
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="gallery-filters card mb-4">
+    <div class="card-body">
+        <form action="{{ url_for('ads.gallery') }}" method="GET" class="filter-form">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="platform-filter">Platform</label>
+                        <select id="platform-filter" name="platform" class="form-control">
+                            <option value="all" {% if selected_platform == 'all' %}selected{% endif %}>All Platforms</option>
+                            <option value="1" {% if selected_platform == '1' %}selected{% endif %}>Meta</option>
+                            <option value="2" {% if selected_platform == '2' %}selected{% endif %}>Google</option>
+                            <option value="3" {% if selected_platform == '3' %}selected{% endif %}>X (Twitter)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="status-filter">Status</label>
+                        <select id="status-filter" name="status" class="form-control">
+                            <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All Statuses</option>
+                            <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="paused" {% if selected_status == 'paused' %}selected{% endif %}>Paused</option>
+                            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('ads.gallery') }}" class="btn btn-outline-secondary ml-2">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gallery Sidebar -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ad Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Ads</span>
+                        <span class="stat-value">{{ campaigns|length }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Meta Ads</span>
+                        <span class="stat-value">{{ platform_counts.get(1, 0) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Google Ads</span>
+                        <span class="stat-value">{{ platform_counts.get(2, 0) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">X (Twitter) Ads</span>
+                        <span class="stat-value">{{ platform_counts.get(3, 0) }}</span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="gallery-actions">
+                    <h6>Quick Actions</h6>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary btn-block mb-2" id="exportAdsBtn">
+                            <i class="fas fa-download"></i> Export Ads
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary btn-block" id="bulkEditBtn">
+                            <i class="fas fa-edit"></i> Bulk Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Gallery -->
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Ad Creatives</h5>
+                <div class="view-options">
+                    <button class="btn btn-sm btn-outline-secondary view-grid active" title="Grid View">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary view-list" title="List View">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if campaigns %}
+                    <div class="ad-gallery grid-view">
+                        {% for campaign in campaigns %}
+                            <div class="ad-card" data-platform="{{ campaign.platform_id }}" data-status="{{ campaign.status }}">
+                                <div class="ad-card-header">
+                                    <div class="platform-badge platform-{{ campaign.platform_id }}">
+                                        {% if campaign.platform_id == 1 %}
+                                            <i class="fab fa-facebook"></i> Meta
+                                        {% elif campaign.platform_id == 2 %}
+                                            <i class="fab fa-google"></i> Google
+                                        {% elif campaign.platform_id == 3 %}
+                                            <i class="fab fa-twitter"></i> X
+                                        {% endif %}
+                                    </div>
+                                    <div class="status-badge status-{{ campaign.status }}">
+                                        {{ campaign.status|capitalize }}
+                                    </div>
+                                </div>
+                                
+                                <div class="ad-card-image">
+                                    {% if campaign.ad_image_url %}
+                                        <img src="{{ campaign.ad_image_url }}" alt="Ad creative image">
+                                    {% else %}
+                                        <div class="no-image">
+                                            <i class="fas fa-image"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="ad-card-content">
+                                    <h5 class="ad-title">{{ campaign.ad_headline or campaign.title }}</h5>
+                                    <p class="ad-text">{{ campaign.ad_text|truncate(80) if campaign.ad_text else "No ad text available" }}</p>
+                                    <div class="ad-meta">
+                                        <span class="job-title" title="{{ jobs[campaign.job_opening_id].title if campaign.job_opening_id in jobs else 'Unknown Job' }}">
+                                            <i class="fas fa-briefcase"></i> {{ jobs[campaign.job_opening_id].title|truncate(25) if campaign.job_opening_id in jobs else 'Unknown Job' }}
+                                        </span>
+                                        <span class="created-date" title="Created: {{ campaign.created_at.strftime('%Y-%m-%d') if campaign.created_at else 'Unknown' }}">
+                                            <i class="fas fa-calendar"></i> {{ campaign.created_at.strftime('%b %d') if campaign.created_at else 'Unknown' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="ad-card-actions">
+                                    <a href="{{ url_for('ads.creative_detail', campaign_id=campaign.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{{ url_for('campaigns.get_campaign', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-primary clone-ad" data-id="{{ campaign.id }}">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <h4>No Ad Creatives Found</h4>
+                        <p>Create a campaign to generate ads or adjust your filter criteria.</p>
+                        <a href="{{ url_for('campaigns.create_campaign_form') }}" class="btn btn-primary">
+                            Create New Ad
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates Preview Section -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Popular Ad Templates</h5>
+        <a href="{{ url_for('ads.templates') }}" class="btn btn-sm btn-outline-primary">View All Templates</a>
+    </div>
+    <div class="card-body">
+        <div class="templates-carousel">
+            <div class="template-card">
+                <div class="template-preview">
+                    <img src="{{ url_for('static', filename='img/ad-templates/tech-1.jpg') }}" alt="Tech Recruitment Template">
+                </div>
+                <div class="template-info">
+                    <h5>Tech Recruitment</h5>
+                    <p>Perfect for software engineering and IT positions</p>
+                    <a href="{{ url_for('campaigns.create_campaign_form') }}?template=tech" class="btn btn-sm btn-primary">Use Template</a>
+                </div>
+            </div>
+            
+            <div class="template-card">
+                <div class="template-preview">
+                    <img src="{{ url_for('static', filename='img/ad-templates/creative-1.jpg') }}" alt="Creative Talent Template">
+                </div>
+                <div class="template-info">
+                    <h5>Creative Talent</h5>
+                    <p>For designers, writers & other creative positions</p>
+                    <a href="{{ url_for('campaigns.create_campaign_form') }}?template=creative" class="btn btn-sm btn-primary">Use Template</a>
+                </div>
+            </div>
+            
+            <div class="template-card">
+                <div class="template-preview">
+                    <img src="{{ url_for('static', filename='img/ad-templates/office-1.jpg') }}" alt="Marketing & Sales Template">
+                </div>
+                <div class="template-info">
+                    <h5>Marketing & Sales</h5>
+                    <p>Target marketing, sales & business development</p>
+                    <a href="{{ url_for('campaigns.create_campaign_form') }}?template=marketing" class="btn btn-sm btn-primary">Use Template</a>
+                </div>
+            </div>
+            
+            <div class="template-card">
+                <div class="template-preview">
+                    <img src="{{ url_for('static', filename='img/ad-templates/entry-1.jpg') }}" alt="Entry Level Template">
+                </div>
+                <div class="template-info">
+                    <h5>Entry Level</h5>
+                    <p>For recent graduates & junior positions</p>
+                    <a href="{{ url_for('campaigns.create_campaign_form') }}?template=entry" class="btn btn-sm btn-primary">Use Template</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // View toggle (grid vs list)
+        const viewGrid = document.querySelector('.view-grid');
+        const viewList = document.querySelector('.view-list');
+        const adGallery = document.querySelector('.ad-gallery');
+        
+        if (viewGrid && viewList && adGallery) {
+            viewGrid.addEventListener('click', function() {
+                viewGrid.classList.add('active');
+                viewList.classList.remove('active');
+                adGallery.classList.remove('list-view');
+                adGallery.classList.add('grid-view');
+            });
+            
+            viewList.addEventListener('click', function() {
+                viewList.classList.add('active');
+                viewGrid.classList.remove('active');
+                adGallery.classList.remove('grid-view');
+                adGallery.classList.add('list-view');
+            });
+        }
+        
+        // Export Ads functionality
+        const exportBtn = document.getElementById('exportAdsBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                // Perform API call to export ads data
+                fetch('/ads/api/creatives')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Convert data to CSV or JSON format
+                            const exportData = JSON.stringify(data.data, null, 2);
+                            
+                            // Create download link
+                            const blob = new Blob([exportData], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'ad_creatives_export.json';
+                            document.body.appendChild(a);
+                            a.click();
+                            
+                            // Clean up
+                            setTimeout(() => {
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }, 0);
+                            
+                            showNotification('Ads exported successfully', 'success');
+                        } else {
+                            showNotification('Failed to export ads', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error exporting ads:', error);
+                        showNotification('Error exporting ads', 'error');
+                    });
+            });
+        }
+        
+        // Clone ad functionality
+        const cloneButtons = document.querySelectorAll('.clone-ad');
+        cloneButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const campaignId = this.getAttribute('data-id');
+                showNotification('Cloning ad...', 'info');
+                
+                // Redirect to create form with template=clone&id=campaignId
+                window.location.href = `/campaigns/create?clone=${campaignId}`;
+            });
+        });
+        
+        // Auto-submit filter form on select change
+        const filterSelects = document.querySelectorAll('.filter-form select');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                this.closest('form').submit();
+            });
+        });
+    });
+    
+    /**
+     * Show a notification message
+     */
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        
+        // Set icon based on type
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-circle';
+        if (type === 'warning') icon = 'exclamation-triangle';
+        
+        notification.innerHTML = `
+            <div class="notification-content" style="border-left-color: var(--${type})">
+                <i class="fas fa-${icon}" style="color: var(--${type})"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Add to DOM
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('hide');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Filter Form */
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        margin: -8px;
+    }
+    
+    .filter-form .form-group {
+        margin-bottom: 0;
+        padding: 8px;
+    }
+    
+    .ml-2 {
+        margin-left: 0.5rem;
+    }
+    
+    /* Gallery Styles */
+    .ad-gallery {
+        display: grid;
+        grid-gap: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    .list-view {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-card {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: all 0.2s ease;
+        background-color: white;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .ad-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .ad-card-header {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .platform-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .platform-1 {
+        background-color: #E7F3FF;
+        color: #1877F2;
+    }
+    
+    .platform-2 {
+        background-color: #F1F3F4;
+        color: #4285F4;
+    }
+    
+    .platform-3 {
+        background-color: #E8F5FD;
+        color: #1DA1F2;
+    }
+    
+    .status-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .status-draft {
+        background-color: var(--gray-100);
+        color: var(--gray-600);
+    }
+    
+    .status-active {
+        background-color: var(--success-100);
+        color: var(--success-700);
+    }
+    
+    .status-paused {
+        background-color: var(--warning-100);
+        color: var(--warning-700);
+    }
+    
+    .status-completed {
+        background-color: var(--info-100);
+        color: var(--info-700);
+    }
+    
+    .ad-card-image {
+        height: 140px;
+        overflow: hidden;
+    }
+    
+    .ad-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .no-image {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--gray-100);
+    }
+    
+    .no-image i {
+        font-size: 32px;
+        color: var(--gray-400);
+    }
+    
+    .ad-card-content {
+        padding: 16px;
+        flex-grow: 1;
+    }
+    
+    .ad-title {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .ad-text {
+        margin: 0 0 12px;
+        font-size: 14px;
+        color: var(--gray-600);
+        line-height: 1.4;
+    }
+    
+    .ad-meta {
+        display: flex;
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+    
+    .ad-meta span {
+        display: flex;
+        align-items: center;
+        margin-right: 16px;
+    }
+    
+    .ad-meta i {
+        margin-right: 5px;
+    }
+    
+    .ad-card-actions {
+        padding: 12px;
+        border-top: 1px solid var(--gray-100);
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+    
+    /* List View Specific Styles */
+    .list-view .ad-card {
+        flex-direction: row;
+        height: auto;
+        align-items: center;
+    }
+    
+    .list-view .ad-card-image {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+    }
+    
+    .list-view .ad-card-content {
+        flex-grow: 1;
+    }
+    
+    .list-view .ad-card-actions {
+        border-top: none;
+        border-left: 1px solid var(--gray-100);
+        padding: 12px;
+    }
+    
+    /* Stats Section */
+    .stats-list {
+        margin: 0 0 20px;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        color: var(--gray-600);
+    }
+    
+    .stat-value {
+        font-weight: 600;
+    }
+    
+    .gallery-actions h6 {
+        margin-bottom: 12px;
+    }
+    
+    /* Templates Carousel */
+    .templates-carousel {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .template-card {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: all 0.2s ease;
+        background-color: white;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .template-preview {
+        height: 140px;
+        overflow: hidden;
+    }
+    
+    .template-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .template-info {
+        padding: 16px;
+    }
+    
+    .template-info h5 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .template-info p {
+        margin: 0 0 12px;
+        font-size: 14px;
+        color: var(--gray-600);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        color: var(--gray-300);
+        margin-bottom: 16px;
+    }
+    
+    .empty-state h4 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .empty-state p {
+        margin: 0 0 16px;
+        color: var(--gray-600);
+    }
+    
+    /* View Options */
+    .view-options .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .view-options .btn.active {
+        background-color: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    /* Notification */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        animation: slideInRight 0.3s ease forwards;
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border-left: 4px solid var(--info);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 15px 20px;
+        border-radius: var(--border-radius);
+    }
+    
+    .notification-content i {
+        margin-right: 12px;
+    }
+    
+    .notification.hide {
+        animation: slideOutRight 0.3s ease forwards;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .grid-view {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+        
+        .templates-carousel {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+    }
+</style>
+{% endblock %}

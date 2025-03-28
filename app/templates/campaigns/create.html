@@ -1,0 +1,1091 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Create Ad Campaign - MagnetoCursor{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/campaign-wizard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col">
+      <h1 class="h3">Create Ad Campaign</h1>
+      <p class="text-muted">Create a new advertising campaign for your job openings</p>
+    </div>
+    <div class="col-auto">
+      <a href="{{ url_for('campaigns.list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="campaignWizardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
+                <span class="d-none d-md-inline">1. Job Selection</span>
+                <span class="d-md-none">1</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link disabled" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
+                <span class="d-none d-md-inline">2. Platform Selection</span>
+                <span class="d-md-none">2</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link disabled" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false">
+                <span class="d-none d-md-inline">3. Audience Targeting</span>
+                <span class="d-md-none">3</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link disabled" id="step4-tab" data-bs-toggle="tab" data-bs-target="#step4" type="button" role="tab" aria-controls="step4" aria-selected="false">
+                <span class="d-none d-md-inline">4. Ad Creation</span>
+                <span class="d-md-none">4</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link disabled" id="step5-tab" data-bs-toggle="tab" data-bs-target="#step5" type="button" role="tab" aria-controls="step5" aria-selected="false">
+                <span class="d-none d-md-inline">5. Budget & Schedule</span>
+                <span class="d-md-none">5</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link disabled" id="step6-tab" data-bs-toggle="tab" data-bs-target="#step6" type="button" role="tab" aria-controls="step6" aria-selected="false">
+                <span class="d-none d-md-inline">6. Review & Launch</span>
+                <span class="d-md-none">6</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="campaignWizardTabContent">
+            <!-- Step 1: Job Selection -->
+            <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+              <h4 class="mb-3">Select Job Opening</h4>
+              <div class="mb-3">
+                <label for="jobSelection" class="form-label">Job Opening</label>
+                <select class="form-select" id="jobSelection" required>
+                  <option value="" selected disabled>Select a job opening...</option>
+                  {% for job in jobs %}
+                  <option value="{{ job.id }}">{{ job.title }} - {{ job.location }}</option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">Please select a job opening.</div>
+              </div>
+              
+              <div class="job-details mt-4 d-none" id="jobDetails">
+                <h5>Job Details</h5>
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title" id="jobTitle"></h5>
+                    <h6 class="card-subtitle mb-2 text-muted" id="jobLocation"></h6>
+                    <div class="row mt-3">
+                      <div class="col-md-6">
+                        <p class="mb-1"><strong>Department:</strong> <span id="jobDepartment"></span></p>
+                        <p class="mb-1"><strong>Type:</strong> <span id="jobType"></span></p>
+                        <p class="mb-1"><strong>Experience:</strong> <span id="jobExperience"></span></p>
+                      </div>
+                      <div class="col-md-6">
+                        <p class="mb-1"><strong>Salary Range:</strong> <span id="jobSalary"></span></p>
+                        <p class="mb-1"><strong>Posted:</strong> <span id="jobPosted"></span></p>
+                        <p class="mb-1"><strong>Applications:</strong> <span id="jobApplications"></span></p>
+                      </div>
+                    </div>
+                    <div class="mt-3">
+                      <p><strong>Description:</strong></p>
+                      <p id="jobDescription" class="job-description"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" onclick="window.location='{{ url_for('campaigns.list') }}'">Cancel</button>
+                <button type="button" class="btn btn-primary" id="step1Next" disabled>Next</button>
+              </div>
+            </div>
+            
+            <!-- Step 2: Platform Selection -->
+            <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+              <h4 class="mb-3">Select Advertising Platforms</h4>
+              <p class="text-muted mb-4">Choose the social media platforms where you want to publish this job ad</p>
+              
+              <div class="row mb-4">
+                <div class="col-lg-8">
+                  <div class="platform-selection">
+                    <!-- Platform cards -->
+                    <div class="row g-3">
+                      {% for platform in ['meta', 'google', 'twitter', 'tiktok', 'snapchat'] %}
+                      <div class="col-md-4">
+                        <div class="card platform-card h-100 {% if platform not in active_platforms %}platform-disabled{% endif %}" data-platform="{{ platform }}">
+                          <div class="card-body">
+                            <div class="platform-icon">
+                              <i class="{{ get_platform_icon(platform) }}"></i>
+                            </div>
+                            <h5 class="platform-name">{{ get_platform_name(platform) }}</h5>
+                            
+                            <!-- Platform connection status -->
+                            <div class="platform-status mt-2">
+                              {% for p in platforms %}
+                                {% if p.platform == platform %}
+                                  {% if p.is_connected %}
+                                    <span class="badge bg-success">Connected</span>
+                                  {% else %}
+                                    <span class="badge bg-danger">Disconnected</span>
+                                  {% endif %}
+                                {% endif %}
+                              {% endfor %}
+                            </div>
+                            
+                            <div class="form-check mt-3">
+                              <input class="form-check-input platform-checkbox" type="checkbox" value="{{ platform }}" id="platform{{ platform }}" 
+                                {% if platform not in active_platforms %}disabled{% endif %}>
+                              <label class="form-check-label" for="platform{{ platform }}">
+                                Select platform
+                              </label>
+                            </div>
+                          </div>
+                          {% if platform not in active_platforms %}
+                          <div class="platform-overlay">
+                            <div class="platform-overlay-content">
+                              <i class="fas fa-lock"></i>
+                              <p>Not configured</p>
+                              <a href="{{ url_for('credentials.dashboard') }}" class="btn btn-sm btn-outline-light mt-2">Configure API</a>
+                            </div>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-lg-4">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">Platform Information</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="platform-info-content" id="platformInfoDefault">
+                        <p class="text-center text-muted">
+                          <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                          Select a platform on the left to see details about its ad formats and audience reach.
+                        </p>
+                      </div>
+                      
+                      <div class="platform-info-content d-none" id="platformInfoMeta">
+                        <h5><i class="fab fa-facebook text-primary"></i> Meta (Facebook & Instagram)</h5>
+                        <p><strong>Ad Types:</strong> Image, Video, Carousel, Stories</p>
+                        <p><strong>Audience:</strong> 2.9+ billion monthly active users</p>
+                        <p><strong>Strengths:</strong> Detailed targeting, large audience, multiple placements</p>
+                        <p><strong>Best for:</strong> Broad reach, detailed demographic targeting</p>
+                      </div>
+                      
+                      <div class="platform-info-content d-none" id="platformInfoGoogle">
+                        <h5><i class="fab fa-google text-danger"></i> Google Ads</h5>
+                        <p><strong>Ad Types:</strong> Search, Display, YouTube</p>
+                        <p><strong>Audience:</strong> Google Search Network & millions of websites</p>
+                        <p><strong>Strengths:</strong> Intent-based targeting, wide reach</p>
+                        <p><strong>Best for:</strong> Targeting job seekers actively searching</p>
+                      </div>
+                      
+                      <div class="platform-info-content d-none" id="platformInfoTwitter">
+                        <h5><i class="fab fa-twitter text-info"></i> X (Twitter)</h5>
+                        <p><strong>Ad Types:</strong> Promoted Tweets, Trend Takeover</p>
+                        <p><strong>Audience:</strong> 350+ million monthly active users</p>
+                        <p><strong>Strengths:</strong> Real-time engagement, professional audience</p>
+                        <p><strong>Best for:</strong> Professional & tech-related positions</p>
+                      </div>
+                      
+                      <div class="platform-info-content d-none" id="platformInfoTiktok">
+                        <h5><i class="fab fa-tiktok"></i> TikTok</h5>
+                        <p><strong>Ad Types:</strong> In-Feed Ads, TopView, Branded Effects</p>
+                        <p><strong>Audience:</strong> 1+ billion monthly active users</p>
+                        <p><strong>Strengths:</strong> Creative formats, younger audience</p>
+                        <p><strong>Best for:</strong> Entry-level positions, creative roles</p>
+                      </div>
+                      
+                      <div class="platform-info-content d-none" id="platformInfoSnapchat">
+                        <h5><i class="fab fa-snapchat text-warning"></i> Snapchat</h5>
+                        <p><strong>Ad Types:</strong> Snap Ads, Story Ads, Filters</p>
+                        <p><strong>Audience:</strong> 500+ million monthly active users</p>
+                        <p><strong>Strengths:</strong> Younger demographic, location targeting</p>
+                        <p><strong>Best for:</strong> Local positions, youth-oriented brands</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="step2Prev">Previous</button>
+                <button type="button" class="btn btn-primary" id="step2Next" disabled>Next</button>
+              </div>
+            </div>
+            
+            <!-- Step 3: Audience Targeting -->
+            <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
+              <h4 class="mb-3">Define Your Target Audience</h4>
+              <p class="text-muted mb-4">Specify who should see your job ad to increase relevance and application quality</p>
+              
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="accordion" id="targetingAccordion">
+                    <!-- Demographics -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingDemographics">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDemographics" aria-expanded="true" aria-controls="collapseDemographics">
+                          Demographics
+                        </button>
+                      </h2>
+                      <div id="collapseDemographics" class="accordion-collapse collapse show" aria-labelledby="headingDemographics" data-bs-parent="#targetingAccordion">
+                        <div class="accordion-body">
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <label class="form-label">Age Range</label>
+                              <div class="input-group">
+                                <input type="number" class="form-control" id="ageMin" min="18" max="65" value="18">
+                                <span class="input-group-text">to</span>
+                                <input type="number" class="form-control" id="ageMax" min="18" max="65" value="65">
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label">Gender</label>
+                              <select class="form-select" id="gender">
+                                <option value="all" selected>All genders</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                              </select>
+                            </div>
+                            <div class="col-md-12">
+                              <label class="form-label">Education Level</label>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="high_school" id="eduHighSchool" checked>
+                                <label class="form-check-label" for="eduHighSchool">High School</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="associates" id="eduAssociates" checked>
+                                <label class="form-check-label" for="eduAssociates">Associate's Degree</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="bachelors" id="eduBachelors" checked>
+                                <label class="form-check-label" for="eduBachelors">Bachelor's Degree</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="masters" id="eduMasters" checked>
+                                <label class="form-check-label" for="eduMasters">Master's Degree</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="doctorate" id="eduDoctorate">
+                                <label class="form-check-label" for="eduDoctorate">Doctorate</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Location -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingLocation">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLocation" aria-expanded="false" aria-controls="collapseLocation">
+                          Location
+                        </button>
+                      </h2>
+                      <div id="collapseLocation" class="accordion-collapse collapse" aria-labelledby="headingLocation" data-bs-parent="#targetingAccordion">
+                        <div class="accordion-body">
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <label class="form-label">Location Type</label>
+                              <select class="form-select" id="locationType">
+                                <option value="job_location" selected>Job Location (default)</option>
+                                <option value="custom">Custom Location</option>
+                              </select>
+                            </div>
+                            <div class="col-md-6" id="radiusContainer">
+                              <label class="form-label">Radius</label>
+                              <div class="input-group">
+                                <input type="number" class="form-control" id="radius" min="5" max="100" value="25">
+                                <span class="input-group-text">km</span>
+                              </div>
+                            </div>
+                            <div class="col-md-12 d-none" id="customLocationContainer">
+                              <label class="form-label">Custom Location</label>
+                              <input type="text" class="form-control" id="customLocation" placeholder="City, State, Country">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Professional Interests -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingInterests">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInterests" aria-expanded="false" aria-controls="collapseInterests">
+                          Professional Interests
+                        </button>
+                      </h2>
+                      <div id="collapseInterests" class="accordion-collapse collapse" aria-labelledby="headingInterests" data-bs-parent="#targetingAccordion">
+                        <div class="accordion-body">
+                          <div class="mb-3">
+                            <label class="form-label">Industry</label>
+                            <select class="form-select" id="industry" multiple>
+                              <option value="technology">Technology</option>
+                              <option value="healthcare">Healthcare</option>
+                              <option value="finance">Finance</option>
+                              <option value="education">Education</option>
+                              <option value="retail">Retail</option>
+                              <option value="manufacturing">Manufacturing</option>
+                              <option value="hospitality">Hospitality</option>
+                              <option value="marketing">Marketing</option>
+                              <option value="construction">Construction</option>
+                              <option value="government">Government</option>
+                            </select>
+                            <small class="form-text text-muted">Select multiple industries with Ctrl/Cmd+click</small>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Skills & Interests (comma separated)</label>
+                            <textarea class="form-control" id="skills" rows="3" placeholder="e.g., python, marketing, project management"></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Audience Segments -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingSegments">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSegments" aria-expanded="false" aria-controls="collapseSegments">
+                          Audience Segments
+                        </button>
+                      </h2>
+                      <div id="collapseSegments" class="accordion-collapse collapse" aria-labelledby="headingSegments" data-bs-parent="#targetingAccordion">
+                        <div class="accordion-body">
+                          <div class="mb-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="job_seekers" id="segJobSeekers" checked>
+                              <label class="form-check-label" for="segJobSeekers">Active Job Seekers</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="career_changers" id="segCareerChangers">
+                              <label class="form-check-label" for="segCareerChangers">Career Changers</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="professionals" id="segProfessionals" checked>
+                              <label class="form-check-label" for="segProfessionals">Industry Professionals</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="students" id="segStudents">
+                              <label class="form-check-label" for="segStudents">Students & Recent Graduates</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="passive" id="segPassive">
+                              <label class="form-check-label" for="segPassive">Passive Candidates</label>
+                            </div>
+                          </div>
+                          
+                          <div class="mb-3">
+                            <label class="form-label">Custom Segments</label>
+                            <select class="form-select" id="customSegments" multiple>
+                              {% for segment in segments %}
+                              <option value="{{ segment.id }}">{{ segment.name }}</option>
+                              {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Select custom segments created in the Segments section</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-lg-4">
+                  <div class="card audience-summary-card">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">Audience Summary</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="audience-size mb-3">
+                        <label class="form-label">Estimated Audience Size</label>
+                        <div class="progress">
+                          <div class="progress-bar bg-primary" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                          <small>Too Narrow</small>
+                          <small class="text-primary fw-bold">Balanced</small>
+                          <small>Too Broad</small>
+                        </div>
+                      </div>
+                      
+                      <div class="audience-details">
+                        <p><i class="fas fa-users me-2"></i> <span id="audienceSize">250,000 - 500,000</span> potential candidates</p>
+                        <p><i class="fas fa-map-marker-alt me-2"></i> <span id="audienceLocation">Job location + 25km</span></p>
+                        <p><i class="fas fa-user-graduate me-2"></i> <span id="audienceEducation">All education levels</span></p>
+                        <p><i class="fas fa-briefcase me-2"></i> <span id="audienceSegments">2 segments</span></p>
+                      </div>
+                      
+                      <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> Targeting will be adjusted for each platform based on their capabilities.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="step3Prev">Previous</button>
+                <button type="button" class="btn btn-primary" id="step3Next">Next</button>
+              </div>
+            </div>
+            
+            <!-- Step 4: Ad Creation -->
+            <div class="tab-pane fade" id="step4" role="tabpanel" aria-labelledby="step4-tab">
+              <h4 class="mb-3">Create Your Ad Content</h4>
+              <p class="text-muted mb-4">Design your ad creative for each selected platform</p>
+              
+              <div class="row">
+                <div class="col-lg-7">
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">Ad Content</h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="mb-3">
+                        <label for="adHeadline" class="form-label">Headline <span class="text-muted" id="headlineCounter">(0/100)</span></label>
+                        <input type="text" class="form-control" id="adHeadline" maxlength="100" placeholder="e.g., 'Senior Developer Needed - Join Our Team!'">
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label for="adText" class="form-label">Ad Text <span class="text-muted" id="textCounter">(0/300)</span></label>
+                        <textarea class="form-control" id="adText" rows="4" maxlength="300" placeholder="Describe the position and why someone should apply..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label for="adCta" class="form-label">Call to Action</label>
+                        <select class="form-select" id="adCta">
+                          <option value="apply_now">Apply Now</option>
+                          <option value="learn_more">Learn More</option>
+                          <option value="see_details">See Details</option>
+                          <option value="view_job">View Job</option>
+                          <option value="join_team">Join Our Team</option>
+                        </select>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">Ad Image</label>
+                        <div class="image-upload-container">
+                          <div class="image-upload-area" id="imageUploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop an image here, or</p>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="imageUploadBtn">Choose File</button>
+                            <input type="file" id="imageUpload" accept="image/*" class="d-none">
+                          </div>
+                          <div class="image-preview-container d-none" id="imagePreviewContainer">
+                            <img src="" alt="Ad image preview" id="imagePreview">
+                            <button type="button" class="btn btn-sm btn-outline-danger image-remove-btn" id="imageRemoveBtn">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <small class="form-text text-muted">Recommended image size: 1200x628 pixels</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Platform-specific settings -->
+                  <div class="accordion" id="platformSettingsAccordion">
+                    {% for platform in ['meta', 'google', 'twitter'] %}
+                    <div class="accordion-item platform-settings" data-platform="{{ platform }}">
+                      <h2 class="accordion-header" id="heading{{ platform|capitalize }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ platform|capitalize }}" aria-expanded="false" aria-controls="collapse{{ platform|capitalize }}">
+                          <i class="{{ get_platform_icon(platform) }} me-2"></i> {{ get_platform_name(platform) }} Specific Settings
+                        </button>
+                      </h2>
+                      <div id="collapse{{ platform|capitalize }}" class="accordion-collapse collapse" aria-labelledby="heading{{ platform|capitalize }}" data-bs-parent="#platformSettingsAccordion">
+                        <div class="accordion-body">
+                          {% if platform == 'meta' %}
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <label class="form-label">Ad Format</label>
+                              <select class="form-select" id="metaAdFormat">
+                                <option value="single_image" selected>Single Image</option>
+                                <option value="carousel">Carousel</option>
+                                <option value="video">Video</option>
+                              </select>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label">Placement</label>
+                              <select class="form-select" id="metaPlacement">
+                                <option value="feed" selected>News Feed</option>
+                                <option value="stories">Stories</option>
+                                <option value="all">All Placements</option>
+                              </select>
+                            </div>
+                            <div class="col-md-12">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="metaInstagram" checked>
+                                <label class="form-check-label" for="metaInstagram">Include Instagram</label>
+                              </div>
+                            </div>
+                          </div>
+                          {% elif platform == 'google' %}
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <label class="form-label">Ad Type</label>
+                              <select class="form-select" id="googleAdType">
+                                <option value="responsive" selected>Responsive Search Ad</option>
+                                <option value="display">Display Ad</option>
+                              </select>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label">Keywords</label>
+                              <textarea class="form-control" id="googleKeywords" rows="2" placeholder="e.g., software developer, programmer job"></textarea>
+                            </div>
+                          </div>
+                          {% elif platform == 'twitter' %}
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <label class="form-label">Ad Type</label>
+                              <select class="form-select" id="twitterAdType">
+                                <option value="promoted_tweet" selected>Promoted Tweet</option>
+                                <option value="image">Image Ad</option>
+                              </select>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label">Hashtags</label>
+                              <input type="text" class="form-control" id="twitterHashtags" placeholder="e.g., #Jobs #Hiring">
+                            </div>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                
+                <!-- Ad Preview -->
+                <div class="col-lg-5">
+                  <div class="card sticky-preview-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <h5 class="card-title mb-0">Ad Preview</h5>
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm active" data-preview="meta">
+                          <i class="fab fa-facebook"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preview="google">
+                          <i class="fab fa-google"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preview="twitter">
+                          <i class="fab fa-twitter"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="preview-container">
+                        <!-- Meta preview -->
+                        <div class="platform-preview active" id="metaPreview">
+                          <div class="meta-ad-preview">
+                            <div class="meta-ad-header">
+                              <div class="meta-ad-profile">
+                                <div class="meta-ad-profile-img"></div>
+                                <div class="meta-ad-profile-info">
+                                  <div class="meta-ad-name">Your Company</div>
+                                  <div class="meta-ad-metadata">Sponsored · <i class="fas fa-globe-americas"></i></div>
+                                </div>
+                              </div>
+                              <div class="meta-ad-options"><i class="fas fa-ellipsis-h"></i></div>
+                            </div>
+                            <div class="meta-ad-text" id="metaPreviewText">Ad text will appear here...</div>
+                            <div class="meta-ad-image" id="metaPreviewImage">
+                              <div class="meta-ad-no-image" id="metaNoImage">
+                                <i class="fas fa-image"></i>
+                                <p>Image will appear here</p>
+                              </div>
+                            </div>
+                            <div class="meta-ad-footer">
+                              <div class="meta-ad-cta" id="metaPreviewCta">Apply Now</div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Google preview -->
+                        <div class="platform-preview" id="googlePreview">
+                          <div class="google-ad-preview">
+                            <div class="google-ad-badge">Ad</div>
+                            <div class="google-ad-url">yourcompany.com/careers</div>
+                            <div class="google-ad-headline" id="googlePreviewHeadline">Ad headline will appear here...</div>
+                            <div class="google-ad-description" id="googlePreviewText">Ad text will appear here...</div>
+                            <div class="google-ad-extensions">
+                              <div class="google-ad-extensions-item">About</div>
+                              <div class="google-ad-extensions-item">Jobs</div>
+                              <div class="google-ad-extensions-item" id="googlePreviewCta">Apply Now</div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Twitter preview -->
+                        <div class="platform-preview" id="twitterPreview">
+                          <div class="twitter-ad-preview">
+                            <div class="twitter-ad-header">
+                              <div class="twitter-ad-profile-img"></div>
+                              <div class="twitter-ad-profile-info">
+                                <div class="twitter-ad-name">Your Company <span class="twitter-verified"><i class="fas fa-check-circle"></i></span></div>
+                                <div class="twitter-ad-handle">@YourCompany</div>
+                              </div>
+                              <div class="twitter-ad-options"><i class="fas fa-ellipsis-h"></i></div>
+                            </div>
+                            <div class="twitter-ad-text" id="twitterPreviewText">Ad text will appear here...</div>
+                            <div class="twitter-ad-image" id="twitterPreviewImage">
+                              <div class="twitter-ad-no-image" id="twitterNoImage">
+                                <i class="fas fa-image"></i>
+                                <p>Image will appear here</p>
+                              </div>
+                            </div>
+                            <div class="twitter-ad-footer">
+                              <div class="twitter-ad-metadata">
+                                <span class="twitter-ad-badge">Promoted</span>
+                              </div>
+                              <div class="twitter-ad-actions">
+                                <span><i class="far fa-comment"></i></span>
+                                <span><i class="fas fa-retweet"></i></span>
+                                <span><i class="far fa-heart"></i></span>
+                                <span><i class="far fa-share-square"></i></span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="ad-templates mt-4">
+                        <h6>Ad Templates</h6>
+                        <div class="row g-2">
+                          <div class="col-4">
+                            <div class="ad-template-item" data-template="professional">
+                              <div class="ad-template-preview"></div>
+                              <div class="ad-template-name">Professional</div>
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="ad-template-item" data-template="creative">
+                              <div class="ad-template-preview"></div>
+                              <div class="ad-template-name">Creative</div>
+                            </div>
+                          </div>
+                          <div class="col-4">
+                            <div class="ad-template-item" data-template="technical">
+                              <div class="ad-template-preview"></div>
+                              <div class="ad-template-name">Technical</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="visual-editor-link mt-4">
+                        <a href="{{ url_for('ads.visual_editor') }}" class="btn btn-outline-primary btn-sm w-100" target="_blank">
+                          <i class="fas fa-paint-brush me-2"></i> Open Visual Editor
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="step4Prev">Previous</button>
+                <button type="button" class="btn btn-primary" id="step4Next">Next</button>
+              </div>
+            </div>
+            
+            <!-- Step 5: Budget & Schedule -->
+            <div class="tab-pane fade" id="step5" role="tabpanel" aria-labelledby="step5-tab">
+              <h4 class="mb-3">Set Budget & Schedule</h4>
+              <p class="text-muted mb-4">Define your advertising budget and schedule</p>
+              
+              <!-- Content for Step 5 -->
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="step5Prev">Previous</button>
+                <button type="button" class="btn btn-primary" id="step5Next">Next</button>
+              </div>
+            </div>
+            
+            <!-- Step 6: Review & Launch -->
+            <div class="tab-pane fade" id="step6" role="tabpanel" aria-labelledby="step6-tab">
+              <h4 class="mb-3">Review & Launch Campaign</h4>
+              <p class="text-muted mb-4">Review your campaign details and launch when ready</p>
+              
+              <!-- Content for Step 6 -->
+              <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="step6Prev">Previous</button>
+                <button type="button" class="btn btn-success" id="launchCampaign">Launch Campaign</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/campaign-wizard.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize campaign wizard
+    initCampaignWizard();
+    
+    // Platform selection handling
+    const platformCards = document.querySelectorAll('.platform-card');
+    platformCards.forEach(card => {
+      card.addEventListener('click', function() {
+        if (!this.classList.contains('platform-disabled')) {
+          const checkbox = this.querySelector('.platform-checkbox');
+          checkbox.checked = !checkbox.checked;
+          updatePlatformSelection();
+          
+          // Show platform info
+          const platform = this.dataset.platform;
+          showPlatformInfo(platform);
+        }
+      });
+    });
+    
+    // Step 1: Job Selection
+    const jobSelection = document.getElementById('jobSelection');
+    const step1Next = document.getElementById('step1Next');
+    const jobDetails = document.getElementById('jobDetails');
+    
+    jobSelection.addEventListener('change', function() {
+      if (this.value) {
+        step1Next.disabled = false;
+        fetchJobDetails(this.value);
+        jobDetails.classList.remove('d-none');
+      } else {
+        step1Next.disabled = true;
+        jobDetails.classList.add('d-none');
+      }
+    });
+    
+    // Ad content preview - character counters
+    const adHeadline = document.getElementById('adHeadline');
+    const adText = document.getElementById('adText');
+    const headlineCounter = document.getElementById('headlineCounter');
+    const textCounter = document.getElementById('textCounter');
+    
+    adHeadline.addEventListener('input', function() {
+      const length = this.value.length;
+      headlineCounter.textContent = `(${length}/${this.maxLength})`;
+      updatePreviews();
+    });
+    
+    adText.addEventListener('input', function() {
+      const length = this.value.length;
+      textCounter.textContent = `(${length}/${this.maxLength})`;
+      updatePreviews();
+    });
+    
+    // Ad image upload functionality
+    const imageUploadBtn = document.getElementById('imageUploadBtn');
+    const imageUpload = document.getElementById('imageUpload');
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const imageRemoveBtn = document.getElementById('imageRemoveBtn');
+    
+    imageUploadBtn.addEventListener('click', function() {
+      imageUpload.click();
+    });
+    
+    imageUploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      imageUploadArea.classList.add('dragover');
+    });
+    
+    imageUploadArea.addEventListener('dragleave', function() {
+      imageUploadArea.classList.remove('dragover');
+    });
+    
+    imageUploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      imageUploadArea.classList.remove('dragover');
+      
+      if (e.dataTransfer.files.length) {
+        imageUpload.files = e.dataTransfer.files;
+        handleImageUpload();
+      }
+    });
+    
+    imageUpload.addEventListener('change', handleImageUpload);
+    
+    imageRemoveBtn.addEventListener('click', function() {
+      imageUpload.value = '';
+      imagePreviewContainer.classList.add('d-none');
+      imageUploadArea.classList.remove('d-none');
+      document.getElementById('metaNoImage').style.display = 'flex';
+      document.getElementById('twitterNoImage').style.display = 'flex';
+      document.getElementById('metaPreviewImage').style.backgroundImage = '';
+      document.getElementById('twitterPreviewImage').style.backgroundImage = '';
+    });
+    
+    // Ad CTA selection
+    const adCta = document.getElementById('adCta');
+    adCta.addEventListener('change', function() {
+      updatePreviews();
+    });
+    
+    // Preview tabs functionality
+    const previewButtons = document.querySelectorAll('[data-preview]');
+    previewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const platform = this.dataset.preview;
+        // Activate clicked button
+        previewButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        // Show corresponding preview
+        document.querySelectorAll('.platform-preview').forEach(preview => {
+          preview.classList.remove('active');
+        });
+        document.getElementById(`${platform}Preview`).classList.add('active');
+      });
+    });
+    
+    // Ad templates functionality
+    const adTemplates = document.querySelectorAll('.ad-template-item');
+    adTemplates.forEach(template => {
+      template.addEventListener('click', function() {
+        const templateType = this.dataset.template;
+        applyTemplate(templateType);
+      });
+    });
+    
+    // Location type toggle
+    const locationType = document.getElementById('locationType');
+    const radiusContainer = document.getElementById('radiusContainer');
+    const customLocationContainer = document.getElementById('customLocationContainer');
+    
+    locationType.addEventListener('change', function() {
+      if (this.value === 'custom') {
+        radiusContainer.classList.add('d-none');
+        customLocationContainer.classList.remove('d-none');
+      } else {
+        radiusContainer.classList.remove('d-none');
+        customLocationContainer.classList.add('d-none');
+      }
+      updateAudienceSummary();
+    });
+    
+    // Step navigation
+    step1Next.addEventListener('click', function() {
+      document.getElementById('step2-tab').click();
+      document.getElementById('step2-tab').classList.remove('disabled');
+    });
+    
+    document.getElementById('step2Prev').addEventListener('click', function() {
+      document.getElementById('step1-tab').click();
+    });
+    
+    const step2Next = document.getElementById('step2Next');
+    step2Next.addEventListener('click', function() {
+      document.getElementById('step3-tab').click();
+      document.getElementById('step3-tab').classList.remove('disabled');
+    });
+    
+    document.getElementById('step3Prev').addEventListener('click', function() {
+      document.getElementById('step2-tab').click();
+    });
+    
+    document.getElementById('step3Next').addEventListener('click', function() {
+      document.getElementById('step4-tab').click();
+      document.getElementById('step4-tab').classList.remove('disabled');
+    });
+    
+    document.getElementById('step4Prev').addEventListener('click', function() {
+      document.getElementById('step3-tab').click();
+    });
+    
+    document.getElementById('step4Next').addEventListener('click', function() {
+      document.getElementById('step5-tab').click();
+      document.getElementById('step5-tab').classList.remove('disabled');
+    });
+    
+    document.getElementById('step5Prev').addEventListener('click', function() {
+      document.getElementById('step4-tab').click();
+    });
+    
+    document.getElementById('step5Next').addEventListener('click', function() {
+      document.getElementById('step6-tab').click();
+      document.getElementById('step6-tab').classList.remove('disabled');
+    });
+    
+    document.getElementById('step6Prev').addEventListener('click', function() {
+      document.getElementById('step5-tab').click();
+    });
+    
+    // Initialize audience summary
+    updateAudienceSummary();
+    
+    // Helper functions
+    function fetchJobDetails(jobId) {
+      // In a real application, fetch job details from the server
+      // For demo, populate with dummy data
+      document.getElementById('jobTitle').textContent = document.querySelector(`option[value="${jobId}"]`).textContent;
+      document.getElementById('jobLocation').textContent = 'New York, NY';
+      document.getElementById('jobDepartment').textContent = 'Engineering';
+      document.getElementById('jobType').textContent = 'Full-time';
+      document.getElementById('jobExperience').textContent = '3-5 years';
+      document.getElementById('jobSalary').textContent = '$80,000 - $120,000';
+      document.getElementById('jobPosted').textContent = '2 days ago';
+      document.getElementById('jobApplications').textContent = '12';
+      document.getElementById('jobDescription').textContent = 'We are looking for an experienced software developer to join our team. You will be responsible for developing high-quality applications using modern technologies. The ideal candidate has strong problem-solving skills and experience with our tech stack.';
+    }
+    
+    function updatePlatformSelection() {
+      const selectedPlatforms = document.querySelectorAll('.platform-checkbox:checked');
+      step2Next.disabled = selectedPlatforms.length === 0;
+      
+      // Update platform-specific settings visibility
+      document.querySelectorAll('.platform-settings').forEach(setting => {
+        setting.classList.add('d-none');
+      });
+      
+      selectedPlatforms.forEach(platform => {
+        const platformId = platform.value;
+        const settingElement = document.querySelector(`.platform-settings[data-platform="${platformId}"]`);
+        if (settingElement) {
+          settingElement.classList.remove('d-none');
+        }
+      });
+    }
+    
+    function showPlatformInfo(platform) {
+      // Hide all platform info
+      document.querySelectorAll('.platform-info-content').forEach(content => {
+        content.classList.add('d-none');
+      });
+      
+      // Show selected platform info
+      const infoElement = document.getElementById(`platformInfo${platform.charAt(0).toUpperCase() + platform.slice(1)}`);
+      if (infoElement) {
+        infoElement.classList.remove('d-none');
+      } else {
+        document.getElementById('platformInfoDefault').classList.remove('d-none');
+      }
+    }
+    
+    function updatePreviews() {
+      // Update Meta preview
+      const metaPreviewText = document.getElementById('metaPreviewText');
+      const metaPreviewCta = document.getElementById('metaPreviewCta');
+      
+      // Update Google preview
+      const googlePreviewHeadline = document.getElementById('googlePreviewHeadline');
+      const googlePreviewText = document.getElementById('googlePreviewText');
+      const googlePreviewCta = document.getElementById('googlePreviewCta');
+      
+      // Update Twitter preview
+      const twitterPreviewText = document.getElementById('twitterPreviewText');
+      
+      // Get values
+      const headline = adHeadline.value || 'Ad headline will appear here...';
+      const text = adText.value || 'Ad text will appear here...';
+      const cta = adCta.options[adCta.selectedIndex].text;
+      
+      // Update Meta preview
+      metaPreviewText.innerHTML = headline ? `<strong>${headline}</strong><br>${text}` : text;
+      metaPreviewCta.textContent = cta;
+      
+      // Update Google preview
+      googlePreviewHeadline.textContent = headline;
+      googlePreviewText.textContent = text;
+      googlePreviewCta.textContent = cta;
+      
+      // Update Twitter preview
+      twitterPreviewText.textContent = headline ? `${headline}\n\n${text}` : text;
+    }
+    
+    function handleImageUpload() {
+      if (imageUpload.files && imageUpload.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          // Show image preview
+          imagePreview.src = e.target.result;
+          imagePreviewContainer.classList.remove('d-none');
+          imageUploadArea.classList.add('d-none');
+          
+          // Update ad previews
+          document.getElementById('metaNoImage').style.display = 'none';
+          document.getElementById('twitterNoImage').style.display = 'none';
+          document.getElementById('metaPreviewImage').style.backgroundImage = `url(${e.target.result})`;
+          document.getElementById('twitterPreviewImage').style.backgroundImage = `url(${e.target.result})`;
+        };
+        
+        reader.readAsDataURL(imageUpload.files[0]);
+      }
+    }
+    
+    function applyTemplate(template) {
+      switch (template) {
+        case 'professional':
+          adHeadline.value = 'Join Our Team: [Job Title] Position Open';
+          adText.value = 'We\'re looking for talented professionals to join our growing team. Competitive salary, great benefits, and opportunities for advancement. Apply today!';
+          adCta.value = 'apply_now';
+          break;
+        case 'creative':
+          adHeadline.value = 'Are You Our Next Creative Star?';
+          adText.value = 'Bring your creative talents to a place where innovation is celebrated. We\'re hiring for [Job Title] - show us what you can do!';
+          adCta.value = 'learn_more';
+          break;
+        case 'technical':
+          adHeadline.value = 'Technical [Job Title] - Make an Impact';
+          adText.value = 'Solve challenging problems and build products used by millions. We\'re seeking a technical professional who can drive innovation.';
+          adCta.value = 'view_job';
+          break;
+      }
+      
+      // Update character counters
+      headlineCounter.textContent = `(${adHeadline.value.length}/${adHeadline.maxLength})`;
+      textCounter.textContent = `(${adText.value.length}/${adText.maxLength})`;
+      
+      // Update previews
+      updatePreviews();
+    }
+    
+    function updateAudienceSummary() {
+      // This would be a more complex calculation in a real application
+      // For demo, update with simple text
+      const locationElement = document.getElementById('audienceLocation');
+      const educationElement = document.getElementById('audienceEducation');
+      const segmentsElement = document.getElementById('audienceSegments');
+      
+      // Update location display
+      if (locationType.value === 'custom') {
+        const customLocation = document.getElementById('customLocation').value || 'Custom location';
+        locationElement.textContent = customLocation;
+      } else {
+        const radius = document.getElementById('radius').value;
+        locationElement.textContent = `Job location + ${radius}km`;
+      }
+      
+      // Count selected education levels
+      const educationChecks = document.querySelectorAll('input[id^="edu"]:checked');
+      if (educationChecks.length === 5) {
+        educationElement.textContent = 'All education levels';
+      } else if (educationChecks.length === 0) {
+        educationElement.textContent = 'No education levels selected';
+      } else {
+        educationElement.textContent = `${educationChecks.length} education levels`;
+      }
+      
+      // Count selected segments
+      const segmentChecks = document.querySelectorAll('input[id^="seg"]:checked');
+      segmentsElement.textContent = `${segmentChecks.length} segments`;
+    }
+  });
+</script>
+{% endblock %}

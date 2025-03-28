@@ -1,0 +1,266 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Update System Alert - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <h1 class="h3 mb-3">Update System Alert</h1>
+  
+  <div class="row">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Alert Details</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('alerts.update_alert', alert_id=alert.id) }}">
+            <div class="mb-3">
+              <label class="form-label">Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="title" value="{{ alert.title }}" required>
+              <div class="form-text">Short, attention-grabbing title</div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Message <span class="text-danger">*</span></label>
+              <textarea class="form-control" name="message" rows="3" required>{{ alert.message }}</textarea>
+              <div class="form-text">Detailed description of the alert</div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Alert Type</label>
+                <select class="form-select" name="type">
+                  {% for type in alert_types %}
+                  <option value="{{ type }}" {% if alert.type == type %}selected{% endif %}>{{ type|capitalize }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Icon</label>
+                <input type="text" class="form-control" name="icon" placeholder="alert-triangle" value="{{ alert.icon }}">
+                <div class="form-text">Feather icon name (leave blank for default)</div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Start Date/Time</label>
+                <input type="datetime-local" class="form-control" name="starts_at" value="{{ alert.starts_at.strftime('%Y-%m-%dT%H:%M') if alert.starts_at else '' }}">
+                <div class="form-text">When this alert should start appearing (leave blank for immediate)</div>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">End Date/Time</label>
+                <input type="datetime-local" class="form-control" name="ends_at" value="{{ alert.ends_at.strftime('%Y-%m-%dT%H:%M') if alert.ends_at else '' }}">
+                <div class="form-text">When this alert should stop appearing (leave blank for no end date)</div>
+              </div>
+            </div>
+            
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="active" id="active" {% if alert.active %}checked{% endif %}>
+                  <label class="form-check-label" for="active">Active</label>
+                </div>
+                <div class="form-text">Enable or disable this alert</div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="dismissible" id="dismissible" {% if alert.dismissible %}checked{% endif %}>
+                  <label class="form-check-label" for="dismissible">Dismissible</label>
+                </div>
+                <div class="form-text">Allow users to dismiss the alert (recommended)</div>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">Update Alert</button>
+              <a href="{{ url_for('alerts.list_alerts') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-12 col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Preview</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert-preview p-3 bg-light rounded">
+            <div class="d-flex align-items-center mb-2">
+              <div class="preview-icon me-2">
+                <i data-feather="{{ alert.icon|default('alert-triangle') }}"></i>
+              </div>
+              <h5 class="preview-title mb-0">{{ alert.title }}</h5>
+            </div>
+            <p class="preview-message mb-0">{{ alert.message }}</p>
+          </div>
+          
+          <div class="mt-3">
+            <p class="mb-2"><strong>Alert Type Colors:</strong></p>
+            <div class="d-flex flex-wrap gap-2">
+              {% for type in alert_types %}
+              <div class="alert-type-sample p-2 rounded" data-type="{{ type }}">
+                {{ type }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          
+          <div class="alert alert-info mt-3">
+            <div class="d-flex">
+              <div class="flex-shrink-0">
+                <i data-feather="info" class="me-2"></i>
+              </div>
+              <div>
+                <p class="mb-0"><strong>Alert Status:</strong> 
+                  {% if alert.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </p>
+                <p class="mb-0 mt-1"><strong>Created:</strong> {{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .alert-type-sample {
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  
+  .alert-type-sample[data-type="info"] {
+    background-color: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-700);
+  }
+  
+  .alert-type-sample[data-type="success"] {
+    background-color: rgba(var(--success-rgb), 0.1);
+    color: var(--success-700);
+  }
+  
+  .alert-type-sample[data-type="warning"] {
+    background-color: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning-700);
+  }
+  
+  .alert-type-sample[data-type="error"] {
+    background-color: rgba(var(--danger-rgb), 0.1);
+    color: var(--danger-700);
+  }
+  
+  .alert-type-sample[data-type="critical"] {
+    background-color: rgba(var(--danger-rgb), 0.2);
+    color: var(--danger-900);
+    font-weight: bold;
+  }
+  
+  .preview-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning-500);
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize preview
+    const titleInput = document.querySelector('input[name="title"]');
+    const messageInput = document.querySelector('textarea[name="message"]');
+    const typeSelect = document.querySelector('select[name="type"]');
+    const iconInput = document.querySelector('input[name="icon"]');
+    
+    const previewTitle = document.querySelector('.preview-title');
+    const previewMessage = document.querySelector('.preview-message');
+    const previewIcon = document.querySelector('.preview-icon i');
+    
+    // Update preview on input changes
+    titleInput.addEventListener('input', updatePreview);
+    messageInput.addEventListener('input', updatePreview);
+    typeSelect.addEventListener('change', updatePreview);
+    iconInput.addEventListener('input', updatePreview);
+    
+    // Alert type samples click
+    document.querySelectorAll('.alert-type-sample').forEach(sample => {
+      sample.addEventListener('click', function() {
+        typeSelect.value = this.dataset.type;
+        updatePreview();
+      });
+    });
+    
+    // Update preview based on current type
+    updateIconColors(typeSelect.value);
+    
+    function updatePreview() {
+      // Update preview text
+      previewTitle.textContent = titleInput.value || 'Alert Title';
+      previewMessage.textContent = messageInput.value || 'Alert message will appear here.';
+      
+      // Update preview icon
+      const iconName = iconInput.value.trim() || getDefaultIcon(typeSelect.value);
+      previewIcon.dataset.feather = iconName;
+      feather.replace();
+      
+      // Update colors based on type
+      updateIconColors(typeSelect.value);
+    }
+    
+    function updateIconColors(type) {
+      const previewIconDiv = document.querySelector('.preview-icon');
+      
+      // Reset styles
+      previewIconDiv.style.backgroundColor = '';
+      previewIconDiv.style.color = '';
+      
+      // Add type-specific colors
+      if (type === 'success') {
+        previewIconDiv.style.backgroundColor = 'rgba(var(--success-rgb), 0.1)';
+        previewIconDiv.style.color = 'var(--success-500)';
+      } else if (type === 'error') {
+        previewIconDiv.style.backgroundColor = 'rgba(var(--danger-rgb), 0.1)';
+        previewIconDiv.style.color = 'var(--danger-500)';
+      } else if (type === 'critical') {
+        previewIconDiv.style.backgroundColor = 'rgba(var(--danger-rgb), 0.2)';
+        previewIconDiv.style.color = 'var(--danger-700)';
+      } else if (type === 'info') {
+        previewIconDiv.style.backgroundColor = 'rgba(var(--primary-rgb), 0.1)';
+        previewIconDiv.style.color = 'var(--primary-500)';
+      } else {
+        // warning
+        previewIconDiv.style.backgroundColor = 'rgba(var(--warning-rgb), 0.1)';
+        previewIconDiv.style.color = 'var(--warning-500)';
+      }
+    }
+    
+    function getDefaultIcon(type) {
+      switch (type) {
+        case 'success': return 'check-circle';
+        case 'error': return 'alert-octagon';
+        case 'critical': return 'alert-circle';
+        case 'info': return 'info';
+        default: return 'alert-triangle'; // warning
+      }
+    }
+  });
+</script>
+{% endblock %}

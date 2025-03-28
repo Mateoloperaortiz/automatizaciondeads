@@ -1,0 +1,589 @@
+/**
+ * Campaign Wizard Styles
+ * Styling for multi-step campaign creation wizard and ad previews
+ */
+
+/* Step Navigation */
+.nav-tabs .nav-link {
+  position: relative;
+  padding: 0.75rem 1rem;
+  border-radius: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-tabs .nav-link.active {
+  font-weight: 600;
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+  border-color: var(--bs-primary);
+  border-bottom-color: transparent;
+}
+
+.nav-tabs .nav-link.disabled {
+  color: var(--bs-secondary);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Wizard steps content */
+.tab-pane {
+  padding: 1.5rem 0;
+}
+
+/* Job details card */
+.job-description {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Platform Selection */
+.platform-selection {
+  margin-bottom: 1.5rem;
+}
+
+.platform-card {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid var(--bs-border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.platform-card:hover:not(.platform-disabled) {
+  border-color: var(--bs-primary);
+  transform: translateY(-2px);
+}
+
+.platform-card .card-body {
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.platform-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--bs-light);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.platform-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Platform connection status styling */
+.platform-status {
+  margin-bottom: 0.75rem;
+  min-height: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.platform-status .badge {
+  font-size: 0.7rem;
+  padding: 0.35em 0.65em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.platform-status .badge.bg-success::before, 
+.platform-status .badge.bg-danger::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.platform-disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.platform-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.platform-overlay-content {
+  text-align: center;
+  color: white;
+  padding: 1rem;
+}
+
+.platform-overlay-content i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Icon colors for various platforms */
+.platform-icon .fa-facebook {
+  color: #1877F2;
+}
+
+.platform-icon .fa-google {
+  color: #DB4437;
+}
+
+.platform-icon .fa-twitter {
+  color: #1DA1F2;
+}
+
+.platform-icon .fa-tiktok {
+  color: #000000;
+}
+
+.platform-icon .fa-snapchat {
+  color: #FFFC00;
+}
+
+/* Platform Settings */
+.platform-settings {
+  margin-bottom: 1rem;
+}
+
+/* File upload styling */
+.image-upload-container {
+  width: 100%;
+  position: relative;
+}
+
+.image-upload-area {
+  border: 2px dashed var(--bs-border-color);
+  border-radius: 0.25rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.image-upload-area.dragover {
+  border-color: var(--bs-primary);
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.image-upload-area i {
+  font-size: 2rem;
+  color: var(--bs-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  box-shadow: 0 0 0 1px var(--bs-border-color);
+}
+
+.image-preview-container img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Ad Preview Styling */
+.sticky-preview-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.preview-container {
+  margin-bottom: 1.5rem;
+}
+
+.platform-preview {
+  display: none;
+}
+
+.platform-preview.active {
+  display: block;
+}
+
+/* Meta Ad Preview */
+.meta-ad-preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #1c1e21;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.meta-ad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.meta-ad-profile {
+  display: flex;
+  align-items: center;
+}
+
+.meta-ad-profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f2f5;
+  margin-right: 8px;
+}
+
+.meta-ad-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.meta-ad-metadata {
+  font-size: 0.8rem;
+  color: #65676b;
+}
+
+.meta-ad-options {
+  color: #65676b;
+}
+
+.meta-ad-text {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.meta-ad-image {
+  height: 250px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.meta-ad-no-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #f0f2f5;
+  color: #65676b;
+}
+
+.meta-ad-no-image i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.meta-ad-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.meta-ad-cta {
+  background-color: #1877f2;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Google Ad Preview */
+.google-ad-preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+  font-family: Arial, sans-serif;
+  color: #202124;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.google-ad-badge {
+  display: inline-block;
+  color: #3c4043;
+  background-color: #f8f9fa;
+  font-size: 0.75rem;
+  padding: 0 4px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.google-ad-url {
+  color: #202124;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.google-ad-headline {
+  color: #1a0dab;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+  font-weight: normal;
+}
+
+.google-ad-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #3c4043;
+  margin-bottom: 12px;
+}
+
+.google-ad-extensions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.google-ad-extensions-item {
+  color: #1a0dab;
+  font-size: 0.85rem;
+  background-color: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Twitter Ad Preview */
+.twitter-ad-preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #0f1419;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 12px 16px;
+}
+
+.twitter-ad-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.twitter-ad-profile-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #f7f9fa;
+  margin-right: 12px;
+}
+
+.twitter-ad-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.twitter-verified {
+  color: #1d9bf0;
+  font-size: 0.9rem;
+  margin-left: 4px;
+}
+
+.twitter-ad-handle {
+  color: #536471;
+  font-size: 0.9rem;
+}
+
+.twitter-ad-options {
+  margin-left: auto;
+  color: #536471;
+}
+
+.twitter-ad-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.twitter-ad-image {
+  height: 250px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.twitter-ad-no-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #f7f9fa;
+  color: #536471;
+  border-radius: 16px;
+}
+
+.twitter-ad-no-image i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.twitter-ad-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #536471;
+  font-size: 0.9rem;
+}
+
+.twitter-ad-badge {
+  font-size: 0.75rem;
+  color: #536471;
+}
+
+.twitter-ad-actions {
+  display: flex;
+  gap: 16px;
+}
+
+/* Ad Templates */
+.ad-templates {
+  margin-top: 1.5rem;
+}
+
+.ad-template-item {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.ad-template-item:hover {
+  border-color: var(--bs-primary);
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.ad-template-preview {
+  height: 60px;
+  background-color: #f5f5f5;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.ad-template-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Character counter styling */
+.form-label span.text-muted {
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+/* Audience summary styling */
+.audience-summary-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.audience-details p {
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .nav-tabs .nav-link {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .platform-card .card-body {
+    padding: 1rem;
+  }
+  
+  .meta-ad-preview, .google-ad-preview, .twitter-ad-preview {
+    max-width: 100%;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .platform-icon {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .platform-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  
+  .image-upload-area {
+    border-color: var(--bs-border-color-translucent);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .meta-ad-preview, .google-ad-preview, .twitter-ad-preview {
+    border-color: var(--bs-border-color-translucent);
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+  }
+  
+  .meta-ad-header, .meta-ad-footer {
+    border-color: var(--bs-border-color-translucent);
+  }
+  
+  .meta-ad-metadata, .meta-ad-options {
+    color: var(--bs-secondary);
+  }
+  
+  .meta-ad-no-image, .twitter-ad-no-image {
+    background-color: var(--bs-dark);
+    color: var(--bs-secondary);
+  }
+  
+  .google-ad-badge, .google-ad-extensions-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bs-light);
+  }
+  
+  .google-ad-headline, .google-ad-extensions-item {
+    color: #8ab4f8;
+  }
+  
+  .twitter-ad-handle, .twitter-ad-options, .twitter-ad-footer {
+    color: var(--bs-secondary);
+  }
+}

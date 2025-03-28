@@ -1,0 +1,864 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Edit Documentation - MagnetoCursor{% endblock %}
+
+{% block styles %}
+<!-- Trix Editor -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.css">
+
+<style>
+  .trix-content {
+    min-height: 300px;
+  }
+  
+  .trix-button-group {
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    margin-bottom: 5px;
+  }
+  
+  .doc-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    background-color: #f8f9fa;
+  }
+  
+  .version-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .document-tree .list-group-item {
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  
+  .document-tree .list-group-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .document-tree .active {
+    border-left: 3px solid #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1) !important;
+  }
+  
+  .status-badge {
+    font-size: 0.8rem;
+  }
+  
+  .approval-card {
+    border-left: 5px solid #ffc107;
+  }
+  
+  .approval-card.approved {
+    border-left: 5px solid #198754;
+  }
+  
+  .approval-card.rejected {
+    border-left: 5px solid #dc3545;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Document Sidebar -->
+    <div class="col-md-3 col-lg-2 d-md-block sidebar">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Documents</h5>
+          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newDocumentModal">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+        <div class="document-tree list-group list-group-flush">
+          {% for doc_type, docs in documents_by_type.items() %}
+            <div class="list-group-item list-group-item-secondary">{{ doc_type|title }}</div>
+            {% for doc in docs %}
+              <a href="{{ url_for('docs.edit_documentation', doc_id=doc.id) }}" 
+                 class="list-group-item list-group-item-action {% if doc.id == document.id %}active{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="text-truncate">{{ doc.title }}</div>
+                  <span class="status-badge badge {% if doc.status == 'published' %}bg-success{% 
+                            elif doc.status == 'draft' %}bg-secondary{% 
+                            elif doc.status == 'pending_approval' %}bg-warning text-dark{% 
+                            elif doc.status == 'rejected' %}bg-danger{% 
+                            else %}bg-info{% endif %}">
+                    {{ doc.status|replace('_', ' ')|title }}
+                  </span>
+                </div>
+                {% if doc.children %}
+                  <div class="small text-muted mt-1">{{ doc.children|length }} sub-documents</div>
+                {% endif %}
+              </a>
+              {% for child in doc.children %}
+                <a href="{{ url_for('docs.edit_documentation', doc_id=child.id) }}" 
+                   class="list-group-item list-group-item-action ps-4 {% if child.id == document.id %}active{% endif %}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-truncate">{{ child.title }}</div>
+                    <span class="status-badge badge {% if child.status == 'published' %}bg-success{% 
+                              elif child.status == 'draft' %}bg-secondary{% 
+                              elif child.status == 'pending_approval' %}bg-warning text-dark{% 
+                              elif child.status == 'rejected' %}bg-danger{% 
+                              else %}bg-info{% endif %}">
+                      {{ child.status|replace('_', ' ')|title }}
+                    </span>
+                  </div>
+                </a>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Document Editor -->
+    <div class="col-md-9 col-lg-7 ms-sm-auto px-md-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>{{ document.title if document else 'Document Editor' }}</h1>
+        {% if document %}
+          <div>
+            <span class="badge {% if document.status == 'published' %}bg-success{% 
+                      elif document.status == 'draft' %}bg-secondary{% 
+                      elif document.status == 'pending_approval' %}bg-warning text-dark{% 
+                      elif document.status == 'rejected' %}bg-danger{% 
+                      else %}bg-info{% endif %} me-2">
+              {{ document.status|replace('_', ' ')|title }}
+            </span>
+            <div class="btn-group">
+              <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                Actions
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('docs.view_document', doc_slug=document.slug) }}" target="_blank">
+                  <i class="bi bi-eye me-2"></i>Preview
+                </a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#documentSettingsModal">
+                  <i class="bi bi-gear me-2"></i>Settings
+                </a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#documentHistoryModal">
+                  <i class="bi bi-clock-history me-2"></i>Version History
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% if document.status == 'draft' %}
+                  <li><button class="dropdown-item" type="button" id="submitForApprovalBtn">
+                    <i class="bi bi-check2-circle me-2"></i>Submit for Approval
+                  </button></li>
+                  <li><button class="dropdown-item" type="button" id="publishDirectlyBtn">
+                    <i class="bi bi-cloud-upload me-2"></i>Publish Directly
+                  </button></li>
+                {% elif document.status == 'pending_approval' %}
+                  <li><button class="dropdown-item disabled" type="button">
+                    <i class="bi bi-hourglass-split me-2"></i>Pending Approval
+                  </button></li>
+                {% elif document.status == 'published' %}
+                  <li><button class="dropdown-item" type="button" id="unpublishBtn">
+                    <i class="bi bi-cloud-slash me-2"></i>Unpublish
+                  </button></li>
+                {% elif document.status == 'rejected' %}
+                  <li><button class="dropdown-item" type="button" id="resubmitBtn">
+                    <i class="bi bi-arrow-repeat me-2"></i>Resubmit
+                  </button></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item text-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteDocumentModal">
+                  <i class="bi bi-trash me-2"></i>Delete
+                </button></li>
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if document %}
+        <!-- Active Approval Request Alert -->
+        {% if approval_request and approval_request.status == 'pending' %}
+          <div class="alert alert-warning">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-hourglass-split fs-4 me-2"></i>
+              <div>
+                <strong>Pending Approval:</strong> This document is waiting for approval from {{ approval_request.reviewer.username }}.
+                <div class="small">Requested on {{ approval_request.requested_at.strftime('%B %d, %Y') }}</div>
+              </div>
+            </div>
+          </div>
+        {% elif approval_request and approval_request.status == 'rejected' %}
+          <div class="alert alert-danger">
+            <div class="d-flex">
+              <i class="bi bi-x-circle fs-4 me-2"></i>
+              <div>
+                <strong>Changes Rejected:</strong> This document was rejected by {{ approval_request.reviewer.username }}.
+                <div class="mb-2 small">Reviewed on {{ approval_request.reviewed_at.strftime('%B %d, %Y') }}</div>
+                <strong>Feedback:</strong>
+                <p class="mb-0">{{ approval_request.feedback }}</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Document Form -->
+        <form id="documentForm" method="POST" action="{{ url_for('docs.save_document', doc_id=document.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="document_id" value="{{ document.id }}">
+          
+          <div class="form-group mb-3">
+            <label for="documentTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="documentTitle" name="title" value="{{ document.title }}" required>
+          </div>
+          
+          <div class="form-group mb-3">
+            <label for="documentSlug" class="form-label">Slug (URL path)</label>
+            <div class="input-group">
+              <span class="input-group-text">/docs/</span>
+              <input type="text" class="form-control" id="documentSlug" name="slug" value="{{ document.slug }}" required pattern="[a-z0-9-]+">
+            </div>
+            <div class="form-text">Use only lowercase letters, numbers, and hyphens.</div>
+          </div>
+          
+          <div class="form-group mb-3">
+            <label for="documentContent" class="form-label">Content</label>
+            <input id="documentContent" type="hidden" name="content" value="{{ current_version.content if current_version else '' }}">
+            <trix-editor input="documentContent" class="trix-content"></trix-editor>
+          </div>
+          
+          <div class="form-group mb-3">
+            <label for="changeSummary" class="form-label">Change Summary</label>
+            <input type="text" class="form-control" id="changeSummary" name="change_summary" placeholder="Brief description of changes made">
+            <div class="form-text">This will help others understand what you changed.</div>
+          </div>
+          
+          <div class="d-flex justify-content-between mb-4">
+            <div>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <a href="{{ url_for('docs.index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+            </div>
+            
+            <div>
+              <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#previewModal">
+                <i class="bi bi-eye me-1"></i> Preview
+              </button>
+            </div>
+          </div>
+        </form>
+        
+      {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          Select a document from the sidebar or create a new one to start editing.
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- Sidebar: Version History and Metadata -->
+    <div class="col-lg-3 d-none d-lg-block">
+      {% if document %}
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Version History</h5>
+          </div>
+          <div class="list-group list-group-flush version-list">
+            {% for version in document.versions.all() %}
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">Version {{ version.version_number }}</h6>
+                  {% if version.is_published %}
+                    <span class="badge bg-success">Published</span>
+                  {% endif %}
+                </div>
+                <div class="small text-muted">
+                  {{ version.created_at.strftime('%b %d, %Y, %I:%M %p') }} by {{ version.creator.username }}
+                </div>
+                {% if version.change_summary %}
+                  <div class="small mt-1">{{ version.change_summary }}</div>
+                {% endif %}
+                <div class="btn-group btn-group-sm mt-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm version-preview" data-version-id="{{ version.id }}">
+                    Preview
+                  </button>
+                  <button type="button" class="btn btn-outline-primary btn-sm version-restore" data-version-id="{{ version.id }}">
+                    Restore
+                  </button>
+                </div>
+              </div>
+            {% else %}
+              <div class="list-group-item text-center text-muted py-3">
+                No versions yet
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- Document Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Document Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label text-muted mb-1">Document Type</label>
+              <div>{{ document.doc_type|replace('_', ' ')|title }}</div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label text-muted mb-1">Created By</label>
+              <div>{{ document.creator.username }}</div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label text-muted mb-1">Created On</label>
+              <div>{{ document.created_at.strftime('%B %d, %Y') }}</div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label text-muted mb-1">Last Updated</label>
+              <div>{{ document.updated_at.strftime('%B %d, %Y, %I:%M %p') }}</div>
+            </div>
+            
+            <div>
+              <label class="form-label text-muted mb-1">Status</label>
+              <div>
+                <span class="badge {% if document.status == 'published' %}bg-success{% 
+                          elif document.status == 'draft' %}bg-secondary{% 
+                          elif document.status == 'pending_approval' %}bg-warning text-dark{% 
+                          elif document.status == 'rejected' %}bg-danger{% 
+                          else %}bg-info{% endif %}">
+                  {{ document.status|replace('_', ' ')|title }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Approval Requests -->
+        {% if document.approvals.count() > 0 %}
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Approval History</h5>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for approval in document.approvals.order_by(DocumentApproval.requested_at.desc()).all() %}
+                <div class="list-group-item approval-card {% if approval.status == 'approved' %}approved{% elif approval.status == 'rejected' %}rejected{% endif %}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Version {{ approval.version_number }}</h6>
+                    <span class="badge {% if approval.status == 'pending' %}bg-warning text-dark{% 
+                              elif approval.status == 'approved' %}bg-success{% 
+                              elif approval.status == 'rejected' %}bg-danger{% endif %}">
+                      {{ approval.status|title }}
+                    </span>
+                  </div>
+                  <div class="small text-muted">
+                    Requested: {{ approval.requested_at.strftime('%b %d') }} by {{ approval.requester.username }}<br>
+                    Reviewer: {{ approval.reviewer.username }}
+                  </div>
+                  {% if approval.reviewed_at %}
+                    <div class="small text-muted">
+                      Reviewed: {{ approval.reviewed_at.strftime('%b %d, %Y') }}
+                    </div>
+                  {% endif %}
+                  {% if approval.feedback %}
+                    <div class="small mt-2">
+                      <strong>Feedback:</strong> {{ approval.feedback }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Preview Document</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="previewTitle" class="mb-4"></div>
+        <div id="previewContent" class="doc-preview"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document Settings Modal -->
+<div class="modal fade" id="documentSettingsModal" tabindex="-1" aria-labelledby="documentSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="documentSettingsModalLabel">Document Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="documentSettingsForm">
+          <div class="mb-3">
+            <label for="documentType" class="form-label">Document Type</label>
+            <select class="form-select" id="documentType" name="doc_type">
+              <option value="general" {% if document and document.doc_type == 'general' %}selected{% endif %}>General</option>
+              <option value="api" {% if document and document.doc_type == 'api' %}selected{% endif %}>API</option>
+              <option value="tutorial" {% if document and document.doc_type == 'tutorial' %}selected{% endif %}>Tutorial</option>
+              <option value="faq" {% if document and document.doc_type == 'faq' %}selected{% endif %}>FAQ</option>
+              <option value="glossary" {% if document and document.doc_type == 'glossary' %}selected{% endif %}>Glossary</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="parentDocument" class="form-label">Parent Document</label>
+            <select class="form-select" id="parentDocument" name="parent_id">
+              <option value="">None (Top Level)</option>
+              {% for doc in all_documents %}
+                {% if doc.id != document.id %}
+                  <option value="{{ doc.id }}" {% if document and document.parent_id == doc.id %}selected{% endif %}>{{ doc.title }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="documentOrder" class="form-label">Display Order</label>
+            <input type="number" class="form-control" id="documentOrder" name="order" value="{{ document.order if document else 0 }}" min="0">
+            <div class="form-text">Lower numbers appear first in listings.</div>
+          </div>
+          
+          <h6 class="mt-4 mb-3">Metadata</h6>
+          
+          <div class="mb-3">
+            <label for="metaDescription" class="form-label">Meta Description</label>
+            <textarea class="form-control" id="metaDescription" name="meta_description" rows="2">{{ document.get_metadata().get('description', '') if document else '' }}</textarea>
+            <div class="form-text">Brief description for search engines (max 160 characters).</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="metaKeywords" class="form-label">Meta Keywords</label>
+            <input type="text" class="form-control" id="metaKeywords" name="meta_keywords" value="{{ document.get_metadata().get('keywords', '') if document else '' }}">
+            <div class="form-text">Comma-separated keywords.</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Document Modal -->
+<div class="modal fade" id="newDocumentModal" tabindex="-1" aria-labelledby="newDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newDocumentModalLabel">Create New Document</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="newDocumentForm" method="POST" action="{{ url_for('docs.create_document') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="mb-3">
+            <label for="newDocumentTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="newDocumentTitle" name="title" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newDocumentSlug" class="form-label">Slug (URL path)</label>
+            <div class="input-group">
+              <span class="input-group-text">/docs/</span>
+              <input type="text" class="form-control" id="newDocumentSlug" name="slug" required pattern="[a-z0-9-]+">
+            </div>
+            <div class="form-text">Use only lowercase letters, numbers, and hyphens.</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newDocumentType" class="form-label">Document Type</label>
+            <select class="form-select" id="newDocumentType" name="doc_type">
+              <option value="general">General</option>
+              <option value="api">API</option>
+              <option value="tutorial">Tutorial</option>
+              <option value="faq">FAQ</option>
+              <option value="glossary">Glossary</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="newParentDocument" class="form-label">Parent Document</label>
+            <select class="form-select" id="newParentDocument" name="parent_id">
+              <option value="">None (Top Level)</option>
+              {% for doc in all_documents %}
+                <option value="{{ doc.id }}">{{ doc.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="newDocumentForm" class="btn btn-primary">Create Document</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document History Modal -->
+<div class="modal fade" id="documentHistoryModal" tabindex="-1" aria-labelledby="documentHistoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="documentHistoryModalLabel">Version History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Date</th>
+                <th>Author</th>
+                <th>Changes</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if document %}
+                {% for version in document.versions.all() %}
+                  <tr>
+                    <td>{{ version.version_number }}</td>
+                    <td>{{ version.created_at.strftime('%b %d, %Y') }}</td>
+                    <td>{{ version.creator.username }}</td>
+                    <td>{{ version.change_summary or "No change summary" }}</td>
+                    <td>
+                      {% if version.is_published %}
+                        <span class="badge bg-success">Published</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Draft</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary btn-sm version-preview" data-version-id="{{ version.id }}">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm version-restore" data-version-id="{{ version.id }}">
+                          <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        {% if not version.is_published and current_user.is_admin() %}
+                          <button type="button" class="btn btn-outline-success btn-sm version-publish" data-version-id="{{ version.id }}">
+                            <i class="bi bi-cloud-upload"></i>
+                          </button>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="6" class="text-center">No version history available</td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approval Request Modal -->
+<div class="modal fade" id="approvalRequestModal" tabindex="-1" aria-labelledby="approvalRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="approvalRequestModalLabel">Request Approval</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="approvalRequestForm" method="POST" action="{{ url_for('docs.request_approval', doc_id=document.id if document else 0) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="mb-3">
+            <label for="reviewerId" class="form-label">Reviewer</label>
+            <select class="form-select" id="reviewerId" name="reviewer_id" required>
+              <option value="">Select a reviewer</option>
+              {% for user in admins %}
+                <option value="{{ user.id }}">{{ user.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="approvalNote" class="form-label">Note to Reviewer</label>
+            <textarea class="form-control" id="approvalNote" name="approval_note" rows="3"></textarea>
+            <div class="form-text">Optional message to explain what changes need approval.</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="approvalRequestForm" class="btn btn-primary">Submit for Approval</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Document Modal -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteDocumentModalLabel">Delete Document</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Warning:</strong> This action cannot be undone.
+        </div>
+        <p>Are you sure you want to delete "<strong>{{ document.title if document else '' }}</strong>"?</p>
+        <p>This will permanently remove the document and all its versions from the system.</p>
+        
+        {% if document and document.children|length > 0 %}
+          <div class="alert alert-warning">
+            <strong>Note:</strong> This document has {{ document.children|length }} sub-documents that will also be deleted.
+          </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteDocumentForm" method="POST" action="{{ url_for('docs.delete_document', doc_id=document.id if document else 0) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger">Delete Permanently</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Trix Editor -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate slug from title for new documents
+    const newTitleInput = document.getElementById('newDocumentTitle');
+    const newSlugInput = document.getElementById('newDocumentSlug');
+    
+    if (newTitleInput && newSlugInput) {
+      newTitleInput.addEventListener('input', function() {
+        // Only auto-generate if user hasn't manually edited the slug
+        if (!newSlugInput.dataset.userEdited) {
+          newSlugInput.value = generateSlug(this.value);
+        }
+      });
+      
+      newSlugInput.addEventListener('input', function() {
+        // Mark the slug as user-edited
+        newSlugInput.dataset.userEdited = 'true';
+      });
+    }
+    
+    // Preview functionality
+    const previewBtn = document.querySelector('[data-bs-target="#previewModal"]');
+    if (previewBtn) {
+      previewBtn.addEventListener('click', function() {
+        const title = document.getElementById('documentTitle').value;
+        const content = document.querySelector('trix-editor').innerHTML;
+        
+        document.getElementById('previewTitle').innerHTML = `<h1>${title}</h1>`;
+        document.getElementById('previewContent').innerHTML = content;
+      });
+    }
+    
+    // Version preview buttons
+    const versionPreviewButtons = document.querySelectorAll('.version-preview');
+    versionPreviewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const versionId = this.dataset.versionId;
+        
+        // Show loading state
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        this.disabled = true;
+        
+        // Fetch version content
+        fetch(`/docs/version/${versionId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Show preview modal
+              document.getElementById('previewTitle').innerHTML = `<h1>${data.data.document_title}</h1><div class="badge bg-secondary">Version ${data.data.version_number}</div>`;
+              document.getElementById('previewContent').innerHTML = data.data.content;
+              
+              const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+              previewModal.show();
+            } else {
+              alert('Error loading version: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading the version.');
+          })
+          .finally(() => {
+            // Reset button
+            this.innerHTML = 'Preview';
+            this.disabled = false;
+          });
+      });
+    });
+    
+    // Version restore buttons
+    const versionRestoreButtons = document.querySelectorAll('.version-restore');
+    versionRestoreButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (confirm('Are you sure you want to restore this version? Unsaved changes will be lost.')) {
+          const versionId = this.dataset.versionId;
+          
+          // Show loading state
+          this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+          this.disabled = true;
+          
+          // Fetch version content
+          fetch(`/docs/version/${versionId}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Update editor content
+                document.getElementById('documentContent').value = data.data.content;
+                const trixEditor = document.querySelector('trix-editor');
+                trixEditor.editor.loadHTML(data.data.content);
+                
+                // Add restore message to change summary
+                document.getElementById('changeSummary').value = `Restored from version ${data.data.version_number}`;
+                
+                // If modal is open, close it
+                const historyModal = bootstrap.Modal.getInstance(document.getElementById('documentHistoryModal'));
+                if (historyModal) {
+                  historyModal.hide();
+                }
+              } else {
+                alert('Error restoring version: ' + data.message);
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while restoring the version.');
+            })
+            .finally(() => {
+              // Reset button
+              this.innerHTML = 'Restore';
+              this.disabled = false;
+            });
+        }
+      });
+    });
+    
+    // Submit for approval button
+    const submitForApprovalBtn = document.getElementById('submitForApprovalBtn');
+    if (submitForApprovalBtn) {
+      submitForApprovalBtn.addEventListener('click', function() {
+        // Show approval request modal
+        const approvalModal = new bootstrap.Modal(document.getElementById('approvalRequestModal'));
+        approvalModal.show();
+      });
+    }
+    
+    // Publish directly button
+    const publishDirectlyBtn = document.getElementById('publishDirectlyBtn');
+    if (publishDirectlyBtn) {
+      publishDirectlyBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to publish this document? It will be immediately visible to all users.')) {
+          // Submit the form with publish parameter
+          const form = document.getElementById('documentForm');
+          const publishInput = document.createElement('input');
+          publishInput.type = 'hidden';
+          publishInput.name = 'publish';
+          publishInput.value = 'true';
+          form.appendChild(publishInput);
+          form.submit();
+        }
+      });
+    }
+    
+    // Document settings form
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', function() {
+        const form = document.getElementById('documentSettingsForm');
+        const formData = new FormData(form);
+        
+        // Prepare metadata
+        const metadata = {
+          description: formData.get('meta_description'),
+          keywords: formData.get('meta_keywords'),
+        };
+        
+        // Create a new form for submission
+        const submitForm = document.createElement('form');
+        submitForm.method = 'POST';
+        submitForm.action = `/docs/settings/{{ document.id if document else 0 }}`;
+        submitForm.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        submitForm.appendChild(csrfInput);
+        
+        // Add form fields
+        const docTypeInput = document.createElement('input');
+        docTypeInput.type = 'hidden';
+        docTypeInput.name = 'doc_type';
+        docTypeInput.value = formData.get('doc_type');
+        submitForm.appendChild(docTypeInput);
+        
+        const parentIdInput = document.createElement('input');
+        parentIdInput.type = 'hidden';
+        parentIdInput.name = 'parent_id';
+        parentIdInput.value = formData.get('parent_id');
+        submitForm.appendChild(parentIdInput);
+        
+        const orderInput = document.createElement('input');
+        orderInput.type = 'hidden';
+        orderInput.name = 'order';
+        orderInput.value = formData.get('order');
+        submitForm.appendChild(orderInput);
+        
+        const metadataInput = document.createElement('input');
+        metadataInput.type = 'hidden';
+        metadataInput.name = 'metadata';
+        metadataInput.value = JSON.stringify(metadata);
+        submitForm.appendChild(metadataInput);
+        
+        // Add form to document and submit
+        document.body.appendChild(submitForm);
+        submitForm.submit();
+      });
+    }
+    
+    // Helper functions
+    function generateSlug(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^\w ]+/g, '')
+        .replace(/ +/g, '-');
+    }
+  });
+</script>
+{% endblock %}

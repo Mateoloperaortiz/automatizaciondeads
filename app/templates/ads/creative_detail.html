@@ -1,0 +1,753 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}{{ campaign.ad_headline or campaign.title }} | Ad Creative{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Ad Creative Details</h1>
+            <p class="text-muted">{{ campaign.title }}</p>
+        </div>
+        <div class="content-actions">
+            <a href="{{ url_for('campaigns.get_campaign', campaign_id=campaign.id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Campaign
+            </a>
+            <a href="{{ url_for('ads.gallery') }}" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Back to Gallery
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Ad Preview -->
+    <div class="col-md-5">
+        <div class="card creative-card">
+            <div class="card-header">
+                <h5>Ad Preview</h5>
+                <div class="platform-badge platform-{{ campaign.platform_id }}">
+                    {% if campaign.platform_id == 1 %}
+                        <i class="fab fa-facebook"></i> Meta
+                    {% elif campaign.platform_id == 2 %}
+                        <i class="fab fa-google"></i> Google
+                    {% elif campaign.platform_id == 3 %}
+                        <i class="fab fa-twitter"></i> X
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="ad-preview">
+                    {% if campaign.platform_id == 1 %}
+                        <!-- Meta Ad Preview -->
+                        <div class="meta-preview">
+                            <div class="preview-header">
+                                <img src="{{ url_for('static', filename='img/avatar.png') }}" alt="Company" class="preview-logo">
+                                <div class="preview-meta">
+                                    <span class="company-name">Magneto365</span>
+                                    <span class="sponsored">Sponsored</span>
+                                </div>
+                            </div>
+                            
+                            <div class="preview-text">
+                                <p class="preview-headline">{{ campaign.ad_headline or campaign.title }}</p>
+                                <p class="preview-description">{{ campaign.ad_text or "No ad text available" }}</p>
+                            </div>
+                            
+                            <div class="preview-image">
+                                {% if campaign.ad_image_url %}
+                                    <img src="{{ campaign.ad_image_url }}" alt="Ad image">
+                                {% else %}
+                                    <div class="no-image"><i class="fas fa-image"></i></div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="preview-cta">
+                                <button class="btn btn-primary">
+                                    {% if campaign.ad_cta == 'apply_now' %}
+                                        Apply Now
+                                    {% elif campaign.ad_cta == 'learn_more' %}
+                                        Learn More
+                                    {% elif campaign.ad_cta == 'see_jobs' %}
+                                        See Jobs
+                                    {% elif campaign.ad_cta == 'sign_up' %}
+                                        Sign Up
+                                    {% else %}
+                                        Apply Now
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    {% elif campaign.platform_id == 2 %}
+                        <!-- Google Ad Preview -->
+                        <div class="google-preview">
+                            <div class="google-ad">
+                                <div class="google-ad-tag">Ad</div>
+                                <div class="google-headline">{{ campaign.ad_headline or campaign.title }}</div>
+                                <div class="google-url">www.magneto365.com/jobs</div>
+                                <div class="google-description">{{ (campaign.ad_text[:90] + '...') if campaign.ad_text and campaign.ad_text|length > 90 else campaign.ad_text or "No ad text available" }}</div>
+                            </div>
+                        </div>
+                    {% elif campaign.platform_id == 3 %}
+                        <!-- Twitter Ad Preview -->
+                        <div class="twitter-preview">
+                            <div class="tweet">
+                                <div class="tweet-header">
+                                    <img src="{{ url_for('static', filename='img/avatar.png') }}" alt="Company" class="tweet-avatar">
+                                    <div class="tweet-meta">
+                                        <span class="twitter-name">Magneto365</span>
+                                        <span class="twitter-handle">@magneto365</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="tweet-content">
+                                    <p class="tweet-text">{{ campaign.ad_headline or campaign.title }}: {{ campaign.ad_text or "No ad text available" }} #JobOpening #Hiring</p>
+                                </div>
+                                
+                                {% if campaign.ad_image_url %}
+                                <div class="tweet-image">
+                                    <img src="{{ campaign.ad_image_url }}" alt="Tweet image">
+                                </div>
+                                {% endif %}
+                                
+                                <div class="tweet-footer">
+                                    <span class="tweet-sponsored">Promoted</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card creative-card mt-4">
+            <div class="card-header">
+                <h5>Job Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="job-info">
+                    <h4 class="job-title">{{ job.title }}</h4>
+                    <div class="job-detail-row">
+                        <div class="job-detail-label">
+                            <i class="fas fa-building"></i> Company:
+                        </div>
+                        <div class="job-detail-value">{{ job.company }}</div>
+                    </div>
+                    <div class="job-detail-row">
+                        <div class="job-detail-label">
+                            <i class="fas fa-map-marker-alt"></i> Location:
+                        </div>
+                        <div class="job-detail-value">{{ job.location }}</div>
+                    </div>
+                    <div class="job-detail-row">
+                        <div class="job-detail-label">
+                            <i class="fas fa-clock"></i> Type:
+                        </div>
+                        <div class="job-detail-value">{{ job.job_type }}</div>
+                    </div>
+                    <div class="job-detail-row">
+                        <div class="job-detail-label">
+                            <i class="fas fa-briefcase"></i> Experience:
+                        </div>
+                        <div class="job-detail-value">{{ job.experience_level }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Ad Details -->
+    <div class="col-md-7">
+        <div class="card creative-card">
+            <div class="card-header">
+                <h5>Ad Content</h5>
+                <div class="status-badge status-{{ campaign.status }}">
+                    {{ campaign.status|capitalize }}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="content-section">
+                    <h6 class="content-section-title">Headline</h6>
+                    <div class="content-section-value">{{ campaign.ad_headline or campaign.title }}</div>
+                </div>
+                
+                <div class="content-section">
+                    <h6 class="content-section-title">Ad Text</h6>
+                    <div class="content-section-value">{{ campaign.ad_text or "No ad text available" }}</div>
+                </div>
+                
+                <div class="content-section">
+                    <h6 class="content-section-title">Call to Action</h6>
+                    <div class="content-section-value">
+                        {% if campaign.ad_cta == 'apply_now' %}
+                            Apply Now
+                        {% elif campaign.ad_cta == 'learn_more' %}
+                            Learn More
+                        {% elif campaign.ad_cta == 'see_jobs' %}
+                            See Jobs
+                        {% elif campaign.ad_cta == 'sign_up' %}
+                            Sign Up
+                        {% else %}
+                            Apply Now
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="content-section">
+                    <h6 class="content-section-title">Ad Image</h6>
+                    <div class="content-section-value">
+                        {% if campaign.ad_image_url %}
+                            <img src="{{ campaign.ad_image_url }}" alt="Ad image" class="content-image">
+                        {% else %}
+                            <div class="no-image content-image-placeholder">
+                                <i class="fas fa-image"></i>
+                                <span>No image available</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Campaign Stats -->
+        <div class="card creative-card mt-4">
+            <div class="card-header">
+                <h5>Campaign Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">--</div>
+                        <div class="stat-label">Impressions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">--</div>
+                        <div class="stat-label">Clicks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">--</div>
+                        <div class="stat-label">CTR</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">--</div>
+                        <div class="stat-label">Cost</div>
+                    </div>
+                </div>
+                
+                <div class="empty-state-small">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <p>Detailed campaign metrics will appear here once the campaign is active.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Campaign Details -->
+        <div class="card creative-card mt-4">
+            <div class="card-header">
+                <h5>Campaign Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Campaign Name</div>
+                        <div class="detail-value">{{ campaign.title }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Budget</div>
+                        <div class="detail-value">${{ campaign.budget }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value">
+                            {{ campaign.created_at.strftime('%B %d, %Y') if campaign.created_at else 'Unknown' }}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Last Updated</div>
+                        <div class="detail-value">
+                            {{ campaign.updated_at.strftime('%B %d, %Y') if campaign.updated_at else 'Unknown' }}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Platform ID</div>
+                        <div class="detail-value">
+                            {% if campaign.platform_ad_id %}
+                                {{ campaign.platform_ad_id }}
+                            {% else %}
+                                <span class="text-muted">Not yet published</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Creative Detail Page Styles */
+    .creative-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .creative-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .creative-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    .platform-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .platform-1 {
+        background-color: #E7F3FF;
+        color: #1877F2;
+    }
+    
+    .platform-2 {
+        background-color: #F1F3F4;
+        color: #4285F4;
+    }
+    
+    .platform-3 {
+        background-color: #E8F5FD;
+        color: #1DA1F2;
+    }
+    
+    .status-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .status-draft {
+        background-color: var(--gray-100);
+        color: var(--gray-600);
+    }
+    
+    .status-active {
+        background-color: var(--success-100);
+        color: var(--success-700);
+    }
+    
+    .status-paused {
+        background-color: var(--warning-100);
+        color: var(--warning-700);
+    }
+    
+    .status-completed {
+        background-color: var(--info-100);
+        color: var(--info-700);
+    }
+    
+    /* Ad Preview Styles */
+    .ad-preview {
+        padding: 20px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* Meta Ad Preview */
+    .meta-preview {
+        background-color: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .preview-header {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .preview-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .preview-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .company-name {
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .sponsored {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+    
+    .preview-text {
+        padding: 12px;
+    }
+    
+    .preview-headline {
+        font-weight: 600;
+        margin: 0 0 8px;
+        font-size: 15px;
+    }
+    
+    .preview-description {
+        font-size: 13px;
+        color: var(--gray-700);
+        margin: 0;
+    }
+    
+    .preview-image {
+        width: 100%;
+        height: 180px;
+    }
+    
+    .preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .preview-cta {
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .preview-cta button {
+        width: 100%;
+        font-size: 14px;
+        padding: 8px;
+    }
+    
+    /* Google Ad Preview */
+    .google-preview {
+        padding: 20px;
+    }
+    
+    .google-ad {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .google-ad-tag {
+        display: inline-block;
+        border: 1px solid #006621;
+        color: #006621;
+        font-size: 11px;
+        padding: 1px 3px;
+        margin-bottom: 4px;
+    }
+    
+    .google-headline {
+        color: #1a0dab;
+        font-size: 18px;
+        font-weight: normal;
+        margin: 0 0 3px;
+        cursor: pointer;
+    }
+    
+    .google-headline:hover {
+        text-decoration: underline;
+    }
+    
+    .google-url {
+        color: #006621;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .google-description {
+        font-size: 13px;
+        line-height: 1.4;
+        color: #545454;
+    }
+    
+    /* Twitter Ad Preview */
+    .twitter-preview {
+        padding: 20px;
+    }
+    
+    .tweet {
+        background-color: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .tweet-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+    }
+    
+    .tweet-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin-right: 12px;
+    }
+    
+    .tweet-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .twitter-name {
+        font-weight: 700;
+        font-size: 15px;
+    }
+    
+    .twitter-handle {
+        font-size: 13px;
+        color: var(--gray-500);
+    }
+    
+    .tweet-content {
+        padding: 0 16px 12px;
+    }
+    
+    .tweet-text {
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+    }
+    
+    .tweet-image {
+        width: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+    
+    .tweet-image img {
+        width: 100%;
+        display: block;
+    }
+    
+    .tweet-footer {
+        padding: 8px 16px;
+        border-top: 1px solid var(--gray-100);
+    }
+    
+    .tweet-sponsored {
+        font-size: 12px;
+        color: var(--gray-500);
+    }
+    
+    /* Job Info Styles */
+    .job-info {
+        padding: 10px 0;
+    }
+    
+    .job-title {
+        margin: 0 0 15px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .job-detail-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    
+    .job-detail-label {
+        width: 110px;
+        color: var(--gray-600);
+        font-size: 14px;
+    }
+    
+    .job-detail-label i {
+        width: 18px;
+        text-align: center;
+        margin-right: 5px;
+    }
+    
+    .job-detail-value {
+        flex: 1;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    /* Content Sections */
+    .content-section {
+        margin-bottom: 24px;
+    }
+    
+    .content-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .content-section-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        color: var(--gray-800);
+    }
+    
+    .content-section-value {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .content-image {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: var(--border-radius);
+    }
+    
+    .content-image-placeholder {
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+        color: var(--gray-400);
+    }
+    
+    .content-image-placeholder i {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+    
+    /* Stats Styles */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: 15px;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: var(--primary);
+    }
+    
+    .stat-label {
+        font-size: 13px;
+        color: var(--gray-600);
+    }
+    
+    /* Details Grid */
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .detail-item {
+        border-bottom: 1px solid var(--gray-100);
+        padding-bottom: 10px;
+    }
+    
+    .detail-label {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    /* Empty States */
+    .no-image {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--gray-100);
+    }
+    
+    .no-image i {
+        font-size: 32px;
+        color: var(--gray-400);
+    }
+    
+    .empty-state-small {
+        text-align: center;
+        padding: 15px;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+        margin-top: 20px;
+    }
+    
+    .empty-state-small .empty-state-icon {
+        font-size: 24px;
+        color: var(--gray-400);
+        margin-bottom: 10px;
+    }
+    
+    .empty-state-small p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--gray-600);
+    }
+    
+    /* Spacing Utilities */
+    .mt-4 {
+        margin-top: 1.5rem;
+    }
+    
+    .ml-2 {
+        margin-left: 0.5rem;
+    }
+    
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

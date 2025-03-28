@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagnetoCursor WebSocket Test Client</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message-list {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .message.incoming {
+            background-color: #e6f7ff;
+        }
+        .message.outgoing {
+            background-color: #f0f0f0;
+        }
+        .message-time {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .stat-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stat-item {
+            flex: 1;
+            min-width: 100px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        .tab.active {
+            border-bottom: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>MagnetoCursor WebSocket Test Client</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Connection</h2>
+            <div class="form-group">
+                <label for="server-url">Server URL:</label>
+                <input type="text" id="server-url" value="http://localhost:5000">
+            </div>
+            <div class="form-group">
+                <label for="authentication">Authentication Token:</label>
+                <input type="text" id="authentication" placeholder="Optional authentication token">
+            </div>
+            <button id="connect-btn">Connect</button>
+            <button id="disconnect-btn" disabled>Disconnect</button>
+        </div>
+        
+        <div class="panel">
+            <h2>Connection Status</h2>
+            <div class="stat-box">
+                <div class="stat-item">
+                    <div class="stat-value" id="connection-status">Disconnected</div>
+                    <div class="stat-label">Status</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="session-id">-</div>
+                    <div class="stat-label">Session ID</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="message-count">0</div>
+                    <div class="stat-label">Messages</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="latency">-</div>
+                    <div class="stat-label">Latency (ms)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="subscriptions">Subscriptions</div>
+        <div class="tab" data-tab="messages">Messages</div>
+        <div class="tab" data-tab="stats">Statistics</div>
+    </div>
+    
+    <div class="tab-content active" id="subscriptions">
+        <div class="container">
+            <div class="panel">
+                <h2>Basic Subscription</h2>
+                <div class="form-group">
+                    <label for="entity-type">Entity Type:</label>
+                    <select id="entity-type">
+                        <option value="campaign">Campaign</option>
+                        <option value="segment">Segment</option>
+                        <option value="job_opening">Job Opening</option>
+                        <option value="candidate">Candidate</option>
+                        <option value="user">User</option>
+                        <option value="team">Team</option>
+                        <option value="alert">Alert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="entity-id">Entity ID:</label>
+                    <input type="text" id="entity-id" placeholder="Entity ID">
+                </div>
+                <button id="subscribe-btn" disabled>Subscribe</button>
+                <button id="unsubscribe-btn" disabled>Unsubscribe</button>
+            </div>
+            
+            <div class="panel">
+                <h2>Filtered Subscription</h2>
+                <div class="form-group">
+                    <label for="filter-entity-type">Entity Type:</label>
+                    <select id="filter-entity-type">
+                        <option value="campaign">Campaign</option>
+                        <option value="segment">Segment</option>
+                        <option value="job_opening">Job Opening</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filter-expression">Filter Expression (JSON):</label>
+                    <textarea id="filter-expression" rows="5">{
+  "operator": "AND",
+  "conditions": [
+    {"field": "status", "op": "eq", "value": "active"},
+    {"field": "budget", "op": "gt", "value": 1000}
+  ]
+}</textarea>
+                </div>
+                <button id="filter-subscribe-btn" disabled>Subscribe with Filter</button>
+                <button id="filter-unsubscribe-btn" disabled>Unsubscribe</button>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div class="panel">
+                <h2>Multi-Entity Subscription</h2>
+                <div class="form-group">
+                    <label for="multi-entity-types">Entity Types (comma-separated):</label>
+                    <input type="text" id="multi-entity-types" value="campaign,segment,job_opening">
+                </div>
+                <div class="form-group">
+                    <label for="multi-filter-expression">Filter Expression (JSON, optional):</label>
+                    <textarea id="multi-filter-expression" rows="5">{
+  "operator": "OR",
+  "conditions": [
+    {"field": "status", "op": "eq", "value": "active"},
+    {"field": "priority", "op": "gt", "value": 5}
+  ]
+}</textarea>
+                </div>
+                <button id="multi-subscribe-btn" disabled>Subscribe to Multiple</button>
+                <button id="multi-unsubscribe-btn" disabled>Unsubscribe</button>
+            </div>
+            
+            <div class="panel">
+                <h2>Active Subscriptions</h2>
+                <div id="subscription-list" class="message-list"></div>
+                <button id="unsubscribe-all-btn" disabled>Unsubscribe All</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="messages">
+        <div class="container">
+            <div class="panel">
+                <h2>Messages</h2>
+                <div id="message-list" class="message-list"></div>
+                <button id="clear-messages-btn">Clear Messages</button>
+            </div>
+            
+            <div class="panel">
+                <h2>Message Details</h2>
+                <pre id="message-details" style="white-space: pre-wrap; height: 300px; overflow-y: auto; background-color: #f9f9f9; padding: 10px; border-radius: 4px;"></pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="stats">
+        <div class="container">
+            <div class="panel">
+                <h2>WebSocket Statistics</h2>
+                <div class="stat-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-total-messages">-</div>
+                        <div class="stat-label">Total Messages</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-compressed-messages">-</div>
+                        <div class="stat-label">Compressed Messages</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-batched-messages">-</div>
+                        <div class="stat-label">Batched Messages</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-messages-per-second">-</div>
+                        <div class="stat-label">Messages/Second</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-bytes-sent">-</div>
+                        <div class="stat-label">Bytes Sent</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-bytes-saved">-</div>
+                        <div class="stat-label">Bytes Saved</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-compression-ratio">-</div>
+                        <div class="stat-label">Compression Ratio</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-batching-efficiency">-</div>
+                        <div class="stat-label">Batching Efficiency</div>
+                    </div>
+                </div>
+                <button id="refresh-stats-btn" disabled>Refresh Statistics</button>
+            </div>
+            
+            <div class="panel">
+                <h2>Subscription Statistics</h2>
+                <div class="stat-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-active-sessions">-</div>
+                        <div class="stat-label">Active Sessions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-total-subscriptions">-</div>
+                        <div class="stat-label">Total Subscriptions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-direct-subscriptions">-</div>
+                        <div class="stat-label">Direct Subscriptions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-filtered-subscriptions">-</div>
+                        <div class="stat-label">Filtered Subscriptions</div>
+                    </div>
+                </div>
+                <div id="subscription-stats" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let socket = null;
+        let connected = false;
+        let messageCount = 0;
+        let activeSubscriptions = {};
+        let pingInterval = null;
+        let lastPingTime = 0;
+        let selectedMessage = null;
+        let filterSubscription = null;
+        let multiEntitySubscription = null;
+        
+        // DOM Elements
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        const unsubscribeBtn = document.getElementById('unsubscribe-btn');
+        const filterSubscribeBtn = document.getElementById('filter-subscribe-btn');
+        const filterUnsubscribeBtn = document.getElementById('filter-unsubscribe-btn');
+        const multiSubscribeBtn = document.getElementById('multi-subscribe-btn');
+        const multiUnsubscribeBtn = document.getElementById('multi-unsubscribe-btn');
+        const unsubscribeAllBtn = document.getElementById('unsubscribe-all-btn');
+        const refreshStatsBtn = document.getElementById('refresh-stats-btn');
+        const clearMessagesBtn = document.getElementById('clear-messages-btn');
+        
+        // Tab handling
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Deactivate all tabs
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Activate selected tab
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Connect to WebSocket
+        connectBtn.addEventListener('click', () => {
+            const serverUrl = document.getElementById('server-url').value;
+            const auth = document.getElementById('authentication').value;
+            
+            // Initialize Socket.IO client
+            socket = io(serverUrl, {
+                auth: auth ? { token: auth } : undefined,
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 5
+            });
+            
+            // Connection event handlers
+            socket.on('connect', () => {
+                connected = true;
+                document.getElementById('connection-status').textContent = 'Connected';
+                document.getElementById('session-id').textContent = socket.id.substring(0, 6) + '...';
+                
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeBtn.disabled = false;
+                filterSubscribeBtn.disabled = false;
+                multiSubscribeBtn.disabled = false;
+                unsubscribeAllBtn.disabled = false;
+                refreshStatsBtn.disabled = false;
+                
+                logMessage('Connected to server', 'system');
+                
+                // Start ping interval for latency measurement
+                lastPingTime = Date.now();
+                pingInterval = setInterval(() => {
+                    lastPingTime = Date.now();
+                    socket.emit('ping', { timestamp: lastPingTime });
+                }, 5000);
+                
+                // Fetch initial statistics
+                fetchStatistics();
+            });
+            
+            socket.on('disconnect', () => {
+                connected = false;
+                document.getElementById('connection-status').textContent = 'Disconnected';
+                
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                unsubscribeBtn.disabled = true;
+                filterSubscribeBtn.disabled = true;
+                filterUnsubscribeBtn.disabled = true;
+                multiSubscribeBtn.disabled = true;
+                multiUnsubscribeBtn.disabled = true;
+                unsubscribeAllBtn.disabled = true;
+                refreshStatsBtn.disabled = true;
+                
+                clearInterval(pingInterval);
+                
+                logMessage('Disconnected from server', 'system');
+            });
+            
+            // Connection status message
+            socket.on('connection_status', (data) => {
+                logMessage(`Connection status: ${data.status}`, 'system');
+                if (data.session_id) {
+                    document.getElementById('session-id').textContent = data.session_id.substring(0, 6) + '...';
+                }
+            });
+            
+            // Subscription status messages
+            socket.on('subscription_status', (data) => {
+                if (data.status === 'subscribed') {
+                    if (data.multi_entity) {
+                        // Handle multi-entity subscription
+                        multiEntitySubscription = data.subscription_id;
+                        multiUnsubscribeBtn.disabled = false;
+                        logMessage(`Subscribed to multiple entities: ${data.entity_types.join(', ')}`, 'system');
+                        updateSubscriptionList();
+                    } else if (data.filter) {
+                        // Handle filtered subscription
+                        filterSubscription = {
+                            entity_type: data.entity_type,
+                            filter: data.filter,
+                            subscription_id: data.subscription_id
+                        };
+                        filterUnsubscribeBtn.disabled = false;
+                        logMessage(`Subscribed to ${data.entity_type} with filter`, 'system');
+                        updateSubscriptionList();
+                    } else {
+                        // Handle direct entity subscription
+                        const key = `${data.entity_type}:${data.entity_id}`;
+                        activeSubscriptions[key] = true;
+                        unsubscribeBtn.disabled = false;
+                        logMessage(`Subscribed to ${data.entity_type}:${data.entity_id}`, 'system');
+                        updateSubscriptionList();
+                    }
+                } else if (data.status === 'unsubscribed') {
+                    if (data.multi_entity) {
+                        // Handle multi-entity unsubscription
+                        multiEntitySubscription = null;
+                        multiUnsubscribeBtn.disabled = true;
+                        logMessage('Unsubscribed from multiple entities', 'system');
+                    } else if (data.filter_hash) {
+                        // Handle filtered unsubscription
+                        filterSubscription = null;
+                        filterUnsubscribeBtn.disabled = true;
+                        logMessage(`Unsubscribed from filtered ${data.entity_type}`, 'system');
+                    } else {
+                        // Handle direct entity unsubscription
+                        const key = `${data.entity_type}:${data.entity_id}`;
+                        delete activeSubscriptions[key];
+                        // If no more subscriptions, disable unsubscribe button
+                        if (Object.keys(activeSubscriptions).length === 0) {
+                            unsubscribeBtn.disabled = true;
+                        }
+                        logMessage(`Unsubscribed from ${data.entity_type}:${data.entity_id}`, 'system');
+                    }
+                    updateSubscriptionList();
+                } else if (data.status === 'unsubscribed_all') {
+                    activeSubscriptions = {};
+                    filterSubscription = null;
+                    multiEntitySubscription = null;
+                    unsubscribeBtn.disabled = true;
+                    filterUnsubscribeBtn.disabled = true;
+                    multiUnsubscribeBtn.disabled = true;
+                    logMessage(`Unsubscribed from all entities (${data.count})`, 'system');
+                    updateSubscriptionList();
+                }
+            });
+            
+            // Error messages
+            socket.on('error', (data) => {
+                logMessage(`Error: ${data.message} - ${data.details || ''}`, 'error');
+            });
+            
+            // Ping response for latency measurement
+            socket.on('pong', (data) => {
+                const latency = Date.now() - data.timestamp;
+                document.getElementById('latency').textContent = latency;
+            });
+            
+            // Handle individual entity updates
+            socket.on('message', (data) => {
+                messageCount++;
+                document.getElementById('message-count').textContent = messageCount;
+                
+                if (data.type === 'entity_update') {
+                    const badge = getBadgeForUpdateType(data.update_type);
+                    logMessage(
+                        `${badge} ${data.entity_type}:${data.entity_id} - ${data.update_type}`,
+                        'incoming',
+                        data
+                    );
+                } else {
+                    logMessage(`Message: ${JSON.stringify(data).substring(0, 100)}...`, 'incoming', data);
+                }
+            });
+            
+            // Handle batch messages
+            socket.on('batch', (batch) => {
+                // Check if batch is compressed
+                if (batch.compressed) {
+                    try {
+                        // Decode base64
+                        const compressedData = atob(batch.data);
+                        // Convert to Uint8Array
+                        const charData = compressedData.split('').map(c => c.charCodeAt(0));
+                        const uint8Array = new Uint8Array(charData);
+                        // Decompress
+                        const decompressedData = pako.inflate(uint8Array, { to: 'string' });
+                        // Parse JSON
+                        const decompressedBatch = JSON.parse(decompressedData);
+                        // Process batch
+                        processBatch(decompressedBatch);
+                    } catch (error) {
+                        logMessage(`Error decompressing batch: ${error.message}`, 'error');
+                    }
+                } else {
+                    // Process uncompressed batch
+                    processBatch(batch);
+                }
+            });
+        });
+        
+        // Process batch messages
+        function processBatch(batch) {
+            logMessage(`Received batch with ${batch.count} messages`, 'system');
+            
+            // Process each message in the batch
+            batch.messages.forEach(message => {
+                // Handle based on event type
+                if (message.event === 'message') {
+                    const data = message.data;
+                    messageCount++;
+                    
+                    if (data.type === 'entity_update') {
+                        const badge = getBadgeForUpdateType(data.update_type);
+                        logMessage(
+                            `${badge} ${data.entity_type}:${data.entity_id} - ${data.update_type}`,
+                            'incoming batch',
+                            data
+                        );
+                    } else {
+                        logMessage(`Batch message: ${JSON.stringify(data).substring(0, 100)}...`, 'incoming batch', data);
+                    }
+                } else {
+                    // Handle other event types
+                    logMessage(`Batch event: ${message.event}`, 'incoming batch', message.data);
+                }
+            });
+            
+            // Update message count
+            document.getElementById('message-count').textContent = messageCount;
+        }
+        
+        // Disconnect from WebSocket
+        disconnectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.disconnect();
+                clearInterval(pingInterval);
+            }
+        });
+        
+        // Subscribe to entity
+        subscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected) return;
+            
+            const entityType = document.getElementById('entity-type').value;
+            const entityId = document.getElementById('entity-id').value;
+            
+            if (!entityId) {
+                alert('Please enter an entity ID');
+                return;
+            }
+            
+            socket.emit('subscribe', {
+                entity_type: entityType,
+                entity_id: entityId
+            });
+            
+            logMessage(`Requesting subscription to ${entityType}:${entityId}`, 'outgoing');
+        });
+        
+        // Unsubscribe from entity
+        unsubscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected) return;
+            
+            const entityType = document.getElementById('entity-type').value;
+            const entityId = document.getElementById('entity-id').value;
+            
+            if (!entityId) {
+                alert('Please enter an entity ID');
+                return;
+            }
+            
+            socket.emit('unsubscribe', {
+                entity_type: entityType,
+                entity_id: entityId
+            });
+            
+            logMessage(`Requesting unsubscription from ${entityType}:${entityId}`, 'outgoing');
+        });
+        
+        // Subscribe with filter
+        filterSubscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected) return;
+            
+            const entityType = document.getElementById('filter-entity-type').value;
+            let filterExpression;
+            
+            try {
+                filterExpression = JSON.parse(document.getElementById('filter-expression').value);
+            } catch (error) {
+                alert('Invalid JSON filter expression');
+                return;
+            }
+            
+            socket.emit('subscribe', {
+                entity_type: entityType,
+                filter: filterExpression
+            });
+            
+            logMessage(`Requesting filtered subscription to ${entityType}`, 'outgoing');
+        });
+        
+        // Unsubscribe from filtered subscription
+        filterUnsubscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected || !filterSubscription) return;
+            
+            if (filterSubscription.subscription_id) {
+                const parts = filterSubscription.subscription_id.split('_');
+                if (parts.length >= 3) {
+                    const filterHash = parts[2];
+                    
+                    socket.emit('unsubscribe', {
+                        entity_type: filterSubscription.entity_type,
+                        filter_hash: filterHash
+                    });
+                    
+                    logMessage(`Requesting unsubscription from filtered ${filterSubscription.entity_type}`, 'outgoing');
+                }
+            }
+        });
+        
+        // Subscribe to multiple entity types
+        multiSubscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected) return;
+            
+            const entityTypes = document.getElementById('multi-entity-types').value.split(',').map(t => t.trim());
+            let filterExpression = null;
+            
+            try {
+                const filterText = document.getElementById('multi-filter-expression').value.trim();
+                if (filterText) {
+                    filterExpression = JSON.parse(filterText);
+                }
+            } catch (error) {
+                alert('Invalid JSON filter expression');
+                return;
+            }
+            
+            socket.emit('subscribe', {
+                multi_entity: true,
+                entity_types: entityTypes,
+                filter: filterExpression
+            });
+            
+            logMessage(`Requesting multi-entity subscription: ${entityTypes.join(', ')}`, 'outgoing');
+        });
+        
+        // Unsubscribe from multi-entity subscription
+        multiUnsubscribeBtn.addEventListener('click', () => {
+            if (!socket || !connected || !multiEntitySubscription) return;
+            
+            socket.emit('unsubscribe', {
+                multi_entity: true,
+                subscription_id: multiEntitySubscription
+            });
+            
+            logMessage('Requesting unsubscription from multi-entity subscription', 'outgoing');
+        });
+        
+        // Unsubscribe from all
+        unsubscribeAllBtn.addEventListener('click', () => {
+            if (!socket || !connected) return;
+            
+            socket.emit('unsubscribe_all');
+            
+            logMessage('Requesting unsubscription from all entities', 'outgoing');
+        });
+        
+        // Refresh statistics
+        refreshStatsBtn.addEventListener('click', () => {
+            if (!connected) return;
+            
+            fetchStatistics();
+        });
+        
+        // Clear messages
+        clearMessagesBtn.addEventListener('click', () => {
+            document.getElementById('message-list').innerHTML = '';
+            messageCount = 0;
+            document.getElementById('message-count').textContent = messageCount;
+        });
+        
+        // Fetch WebSocket statistics
+        function fetchStatistics() {
+            // Get server URL
+            const serverUrl = document.getElementById('server-url').value;
+            const baseUrl = serverUrl.replace(/^ws:\/\//, 'http://').replace(/^wss:\/\//, 'https://');
+            
+            // Fetch message statistics
+            fetch(`${baseUrl}/api/websocket/message-stats`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'active' && data.message_stats) {
+                        const stats = data.message_stats;
+                        
+                        // Update stat boxes
+                        document.getElementById('stat-total-messages').textContent = formatNumber(stats.total_messages_sent);
+                        document.getElementById('stat-compressed-messages').textContent = formatNumber(stats.compressed_messages);
+                        document.getElementById('stat-batched-messages').textContent = formatNumber(stats.batched_messages);
+                        document.getElementById('stat-messages-per-second').textContent = formatNumber(stats.messages_per_second, 2);
+                        document.getElementById('stat-bytes-sent').textContent = formatBytes(stats.total_bytes_sent);
+                        document.getElementById('stat-bytes-saved').textContent = formatBytes(stats.total_bytes_saved);
+                        document.getElementById('stat-compression-ratio').textContent = formatNumber(stats.compression_ratio, 2) + 'x';
+                        document.getElementById('stat-batching-efficiency').textContent = formatPercent(stats.batching_efficiency);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching message stats:', error);
+                });
+            
+            // Fetch subscription statistics
+            fetch(`${baseUrl}/api/websocket/status`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'active') {
+                        // Update stat boxes
+                        document.getElementById('stat-active-sessions').textContent = formatNumber(data.active_sessions);
+                        document.getElementById('stat-total-subscriptions').textContent = formatNumber(data.total_subscriptions);
+                        
+                        if (data.subscription_stats) {
+                            const stats = data.subscription_stats;
+                            
+                            document.getElementById('stat-direct-subscriptions').textContent = 
+                                formatNumber(stats.direct_subscriptions?.count || 0);
+                            document.getElementById('stat-filtered-subscriptions').textContent = 
+                                formatNumber(stats.filtered_subscriptions?.count || 0);
+                            
+                            // Create detailed stats HTML
+                            let statsHtml = '<h3>Entity Type Distribution</h3>';
+                            
+                            // Direct subscriptions by entity type
+                            if (stats.direct_subscriptions?.by_entity_type) {
+                                statsHtml += '<p><strong>Direct subscriptions:</strong> ';
+                                const entities = Object.entries(stats.direct_subscriptions.by_entity_type)
+                                    .map(([type, count]) => `${type}: ${count}`)
+                                    .join(', ');
+                                statsHtml += entities + '</p>';
+                            }
+                            
+                            // Filtered subscriptions by entity type
+                            if (stats.filtered_subscriptions?.by_entity_type) {
+                                statsHtml += '<p><strong>Filtered subscriptions:</strong> ';
+                                const entities = Object.entries(stats.filtered_subscriptions.by_entity_type)
+                                    .map(([type, count]) => `${type}: ${count}`)
+                                    .join(', ');
+                                statsHtml += entities + '</p>';
+                            }
+                            
+                            document.getElementById('subscription-stats').innerHTML = statsHtml;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching subscription stats:', error);
+                });
+        }
+        
+        // Update subscription list display
+        function updateSubscriptionList() {
+            const list = document.getElementById('subscription-list');
+            list.innerHTML = '';
+            
+            // Add direct subscriptions
+            Object.keys(activeSubscriptions).forEach(key => {
+                const [entityType, entityId] = key.split(':');
+                const item = document.createElement('div');
+                item.className = 'message';
+                item.innerHTML = `<span class="badge badge-info">Direct</span> ${entityType}:${entityId}`;
+                list.appendChild(item);
+            });
+            
+            // Add filtered subscription if active
+            if (filterSubscription) {
+                const item = document.createElement('div');
+                item.className = 'message';
+                item.innerHTML = `<span class="badge badge-success">Filtered</span> ${filterSubscription.entity_type}`;
+                list.appendChild(item);
+            }
+            
+            // Add multi-entity subscription if active
+            if (multiEntitySubscription) {
+                const item = document.createElement('div');
+                item.className = 'message';
+                item.innerHTML = `<span class="badge badge-warning">Multi-Entity</span> ${multiEntitySubscription}`;
+                list.appendChild(item);
+            }
+        }
+        
+        // Log a message to the message list
+        function logMessage(message, type, data) {
+            const list = document.getElementById('message-list');
+            const item = document.createElement('div');
+            item.className = `message ${type}`;
+            
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { hour12: false });
+            
+            item.innerHTML = `
+                <div class="message-time">${time}</div>
+                <div>${message}</div>
+            `;
+            
+            // Store message data for details view
+            if (data) {
+                item.addEventListener('click', () => {
+                    selectedMessage = data;
+                    document.getElementById('message-details').textContent = JSON.stringify(data, null, 2);
+                    
+                    // Highlight selected message
+                    document.querySelectorAll('.message').forEach(m => {
+                        m.style.backgroundColor = '';
+                    });
+                    item.style.backgroundColor = '#fffde7';
+                });
+            }
+            
+            list.appendChild(item);
+            list.scrollTop = list.scrollHeight;
+        }
+        
+        // Helper function to get badge for update type
+        function getBadgeForUpdateType(updateType) {
+            let badgeClass = 'badge-info';
+            
+            if (updateType === 'created' || updateType === 'published') {
+                badgeClass = 'badge-success';
+            } else if (updateType === 'deleted' || updateType === 'cancelled') {
+                badgeClass = 'badge-warning';
+            } else if (updateType === 'error' || updateType === 'failed') {
+                badgeClass = 'badge-error';
+            }
+            
+            return `<span class="badge ${badgeClass}">${updateType}</span>`;
+        }
+        
+        // Helper function to format numbers
+        function formatNumber(num, decimals = 0) {
+            if (num === undefined || num === null) return '-';
+            return parseFloat(num).toFixed(decimals);
+        }
+        
+        // Helper function to format bytes
+        function formatBytes(bytes) {
+            if (bytes === undefined || bytes === null) return '-';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        
+        // Helper function to format percentages
+        function formatPercent(value) {
+            if (value === undefined || value === null) return '-';
+            return (value * 100).toFixed(1) + '%';
+        }
+    </script>
+</body>
+</html>

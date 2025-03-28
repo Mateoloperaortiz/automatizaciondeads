@@ -1,0 +1,488 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Campaign Details | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Campaign: {{ campaign.title }}{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-primary">
+    <i class="fas fa-arrow-left"></i> Back to Campaigns
+</a>
+{% if campaign.status == 'draft' %}
+<a href="{{ url_for('publish.publish_campaign', campaign_id=campaign.id) }}" class="btn btn-success">
+    <i class="fas fa-paper-plane"></i> Publish Campaign
+</a>
+{% elif campaign.status == 'active' %}
+<a href="{{ url_for('campaigns.pause_campaign', campaign_id=campaign.id) }}" class="btn btn-warning">
+    <i class="fas fa-pause"></i> Pause Campaign
+</a>
+{% elif campaign.status == 'paused' %}
+<a href="{{ url_for('campaigns.resume_campaign', campaign_id=campaign.id) }}" class="btn btn-success">
+    <i class="fas fa-play"></i> Resume Campaign
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Campaign Overview -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Campaign Overview</h2>
+    </div>
+    <div class="card-body">
+        <div class="campaign-overview">
+            <div class="campaign-info">
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if campaign.status == 'active' %}
+                        <span class="badge badge-success">Active</span>
+                        {% elif campaign.status == 'draft' %}
+                        <span class="badge badge-warning">Draft</span>
+                        {% elif campaign.status == 'completed' %}
+                        <span class="badge badge-dark">Completed</span>
+                        {% elif campaign.status == 'paused' %}
+                        <span class="badge badge-secondary">Paused</span>
+                        {% else %}
+                        <span class="badge badge-danger">{{ campaign.status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Job Opening:</span>
+                    <span class="info-value">{{ campaign.job_opening.title }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Budget:</span>
+                    <span class="info-value">${{ campaign.budget }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Created:</span>
+                    <span class="info-value">{{ campaign.created_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Updated:</span>
+                    <span class="info-value">{{ campaign.updated_at.strftime('%b %d, %Y') }}</span>
+                </div>
+            </div>
+            <div class="campaign-description">
+                <h3>Description</h3>
+                <p>{{ campaign.description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Performance -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Performance Metrics</h2>
+    </div>
+    <div class="card-body">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="metric-value">{{ metrics.impressions|default(0)|number_format }}</div>
+                <div class="metric-label">Impressions</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-mouse-pointer"></i>
+                </div>
+                <div class="metric-value">{{ metrics.clicks|default(0)|number_format }}</div>
+                <div class="metric-label">Clicks</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-percent"></i>
+                </div>
+                <div class="metric-value">{{ metrics.ctr|default(0)|number_format(2) }}%</div>
+                <div class="metric-label">CTR</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="metric-value">{{ metrics.applications|default(0)|number_format }}</div>
+                <div class="metric-label">Applications</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="metric-value">${{ metrics.spend|default(0)|number_format(2) }}</div>
+                <div class="metric-label">Spend</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">${{ metrics.cpa|default(0)|number_format(2) }}</div>
+                <div class="metric-label">Cost per Application</div>
+            </div>
+        </div>
+        
+        <div class="performance-chart">
+            <canvas id="performanceChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Performance -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Platform Performance</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Impressions</th>
+                        <th>Clicks</th>
+                        <th>CTR</th>
+                        <th>Applications</th>
+                        <th>Spend</th>
+                        <th>Cost per App</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for platform in platform_metrics %}
+                    <tr>
+                        <td>
+                            {% if platform.platform_id == 1 %}
+                            <i class="fab fa-facebook text-primary"></i> Meta
+                            {% elif platform.platform_id == 2 %}
+                            <i class="fab fa-twitter text-info"></i> X
+                            {% elif platform.platform_id == 3 %}
+                            <i class="fab fa-google text-danger"></i> Google
+                            {% elif platform.platform_id == 4 %}
+                            <i class="fab fa-tiktok"></i> TikTok
+                            {% elif platform.platform_id == 5 %}
+                            <i class="fab fa-snapchat text-warning"></i> Snapchat
+                            {% else %}
+                            Unknown
+                            {% endif %}
+                        </td>
+                        <td>{{ platform.impressions|default(0)|number_format }}</td>
+                        <td>{{ platform.clicks|default(0)|number_format }}</td>
+                        <td>{{ platform.ctr|default(0)|number_format(2) }}%</td>
+                        <td>{{ platform.applications|default(0)|number_format }}</td>
+                        <td>${{ platform.spend|default(0)|number_format(2) }}</td>
+                        <td>${{ platform.cpa|default(0)|number_format(2) }}</td>
+                        <td>
+                            {% if platform.status == 'active' %}
+                            <span class="badge badge-success">Active</span>
+                            {% elif platform.status == 'draft' %}
+                            <span class="badge badge-warning">Draft</span>
+                            {% elif platform.status == 'completed' %}
+                            <span class="badge badge-dark">Completed</span>
+                            {% elif platform.status == 'paused' %}
+                            <span class="badge badge-secondary">Paused</span>
+                            {% else %}
+                            <span class="badge badge-danger">{{ platform.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Ad Content -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Ad Content</h2>
+    </div>
+    <div class="card-body">
+        <div class="ad-content">
+            <div class="ad-preview">
+                <h3>{{ campaign.ad_content.headline }}</h3>
+                <p>{{ campaign.ad_content.text }}</p>
+                <button class="ad-cta">{{ campaign.ad_content.cta }}</button>
+            </div>
+            
+            <div class="ad-details">
+                <h3>Targeting Details</h3>
+                <div class="targeting-item">
+                    <span class="targeting-label">Audience Segments:</span>
+                    <div class="targeting-value">
+                        {% for segment in campaign.segments %}
+                        <span class="segment-tag">{{ segment.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="targeting-item">
+                    <span class="targeting-label">Platforms:</span>
+                    <div class="targeting-value">
+                        {% for platform in campaign.platforms %}
+                        <span class="platform-tag">
+                            {% if platform.platform_id == 1 %}
+                            <i class="fab fa-facebook"></i> Meta
+                            {% elif platform.platform_id == 2 %}
+                            <i class="fab fa-twitter"></i> X
+                            {% elif platform.platform_id == 3 %}
+                            <i class="fab fa-google"></i> Google
+                            {% elif platform.platform_id == 4 %}
+                            <i class="fab fa-tiktok"></i> TikTok
+                            {% elif platform.platform_id == 5 %}
+                            <i class="fab fa-snapchat"></i> Snapchat
+                            {% else %}
+                            Unknown
+                            {% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .campaign-overview {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1rem;
+        display: flex;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        width: 120px;
+        color: var(--dark);
+    }
+    
+    .info-value {
+        flex: 1;
+    }
+    
+    .campaign-description h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: var(--dark);
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background-color: var(--white);
+        border-radius: 8px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .metric-icon {
+        font-size: 1.75rem;
+        color: var(--secondary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--dark);
+    }
+    
+    .metric-label {
+        color: var(--gray);
+        font-size: 0.875rem;
+    }
+    
+    .performance-chart {
+        margin-top: 2rem;
+        padding: 1rem;
+        background-color: var(--white);
+        border-radius: 8px;
+    }
+    
+    .ad-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    .ad-preview {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #eaedf3;
+    }
+    
+    .ad-preview h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--dark);
+    }
+    
+    .ad-preview p {
+        color: #4a4a4a;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ad-cta {
+        background-color: var(--secondary);
+        color: var(--white);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .ad-details h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: var(--dark);
+    }
+    
+    .targeting-item {
+        margin-bottom: 1rem;
+    }
+    
+    .targeting-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--dark);
+    }
+    
+    .targeting-value {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .segment-tag, .platform-tag {
+        background-color: rgba(52, 152, 219, 0.15);
+        color: var(--dark);
+        padding: 0.35rem 0.65rem;
+        border-radius: 50rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .platform-tag {
+        background-color: rgba(46, 204, 113, 0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .campaign-overview,
+        .ad-content {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Performance Over Time Chart
+        var ctx = document.getElementById('performanceChart').getContext('2d');
+        var performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ dates|tojson }},
+                datasets: [
+                    {
+                        label: 'Impressions',
+                        data: {{ daily_impressions|tojson }},
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y-impressions'
+                    },
+                    {
+                        label: 'Clicks',
+                        data: {{ daily_clicks|tojson }},
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y-interactions'
+                    },
+                    {
+                        label: 'Applications',
+                        data: {{ daily_applications|tojson }},
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y-interactions'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    'y-impressions': {
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Impressions'
+                        },
+                        beginAtZero: true
+                    },
+                    'y-interactions': {
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Clicks & Applications'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

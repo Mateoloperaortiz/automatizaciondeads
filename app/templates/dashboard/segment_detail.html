@@ -1,0 +1,1967 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}{{ segment.name }} Segment | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Segments{% endblock %}
+
+{% block page_title_content %}{{ segment.name }}{% endblock %}
+{% block page_subtitle %}Detailed view of audience segment and candidates{% endblock %}
+
+{% block page_actions %}
+<div class="page-actions">
+    <a href="{{ url_for('segments.edit_segment', segment_id=segment.id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-edit"></i> Edit Segment
+    </a>
+    <a href="{{ url_for('campaigns.create_campaign_form') }}?segment_id={{ segment.id }}" class="btn btn-primary">
+        <i class="fas fa-bullhorn"></i> Create Campaign
+    </a>
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="moreActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-ellipsis-h"></i> More Actions
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="moreActionsDropdown">
+            <li><a class="dropdown-item" href="#" id="compareSegmentBtn"><i class="fas fa-balance-scale"></i> Compare with Other Segments</a></li>
+            <li><a class="dropdown-item" href="#" id="duplicateSegmentBtn"><i class="fas fa-copy"></i> Duplicate Segment</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#" id="deleteSegmentBtn"><i class="fas fa-trash"></i> Delete Segment</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Segment Overview -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Segment Overview</h2>
+        <div class="card-actions">
+            <button class="btn btn-sm btn-outline-secondary" id="showRadarBtn" data-bs-toggle="tooltip" data-bs-title="Toggle Radar View">
+                <i class="fas fa-chart-radar"></i> Show Profile
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="segment-details">
+            <div class="segment-info">
+                <div class="info-item">
+                    <span class="info-label">Segment Name:</span>
+                    <span class="info-value">{{ segment.name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Description:</span>
+                    <span class="info-value">{{ segment.description }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Segment Type:</span>
+                    <span class="info-value badge {% if 'MANUAL' in segment.segment_code %}bg-info{% else %}bg-primary{% endif %}">
+                        {% if 'MANUAL' in segment.segment_code %}Manually Created{% else %}ML Generated{% endif %}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Candidates:</span>
+                    <span class="info-value">{{ candidates|length }} total</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Created:</span>
+                    <span class="info-value">{{ segment.created_at.strftime('%B %d, %Y') }}</span>
+                </div>
+            </div>
+            
+            <div class="segment-profile" id="segmentRadarProfile" style="display:none;">
+                <h3>Segment Profile</h3>
+                <div class="radar-chart-container">
+                    <canvas id="segmentRadarChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Segment Characteristics -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Segment Characteristics</h2>
+        <div class="card-actions">
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" id="editCharacteristicsBtn">
+                    <i class="fas fa-edit"></i> Fine-tune
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="exportCharacteristicsBtn">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+            <div class="view-switcher ms-2">
+                <button class="btn btn-sm btn-outline-secondary active" data-view="cards">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" data-view="chart">
+                    <i class="fas fa-chart-bar"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" data-view="table">
+                    <i class="fas fa-table"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Cards View (Default) -->
+        <div class="characteristic-view cards-view">
+            <div class="characteristics-panels">
+                <div class="characteristics-container">
+                    {% if segment_criteria %}
+                        {% for key, value in segment_criteria.items() %}
+                            <div class="characteristic-card">
+                                <div class="characteristic-title">
+                                    {{ key|replace('_', ' ')|title }}
+                                </div>
+                                <div class="characteristic-value">
+                                    {% if value is number %}
+                                        <div class="value-with-gauge">
+                                            <span class="numeric-value">{{ value|round(1) }}</span>
+                                            {% if key.endswith('_avg') or key.endswith('_average') %}
+                                                {% if key.startswith('age') %}
+                                                    <span class="unit">years</span>
+                                                {% elif key.startswith('experience') %}
+                                                    <span class="unit">years</span>
+                                                {% elif key.startswith('salary') %}
+                                                    <span class="unit">K</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            <div class="gauge-container">
+                                                {% set gauge_percent = (value / 100) * 100 if value <= 100 else 100 %}
+                                                <div class="gauge-fill" style="width: {{ gauge_percent }}%"></div>
+                                            </div>
+                                            <div class="gauge-labels">
+                                                <span class="min-label">Min</span>
+                                                <span class="max-label">Max</span>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-value">{{ value }}</div>
+                                        {% if key == 'education_level' %}
+                                            <div class="education-icon">
+                                                {% if value == 'High School' %}
+                                                    <i class="fas fa-graduation-cap text-secondary"></i>
+                                                {% elif value == 'Bachelor' %}
+                                                    <i class="fas fa-graduation-cap text-primary"></i>
+                                                {% elif value == 'Master' %}
+                                                    <i class="fas fa-graduation-cap text-info"></i>
+                                                {% elif value == 'PhD' %}
+                                                    <i class="fas fa-graduation-cap text-success"></i>
+                                                {% endif %}
+                                            </div>
+                                        {% elif key == 'primary_location' or key == 'location' %}
+                                            <div class="location-icon">
+                                                <i class="fas fa-map-marker-alt text-danger"></i>
+                                            </div>
+                                        {% elif key == 'industry_focus' or key == 'industry' %}
+                                            <div class="industry-icon">
+                                                <i class="fas fa-industry text-warning"></i>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="characteristic-trend">
+                                    {% if key in segment_benchmark %}
+                                        {% set benchmark = segment_benchmark[key] %}
+                                        {% if value is number and benchmark is number %}
+                                            {% set diff = ((value - benchmark) / benchmark * 100)|round|int %}
+                                            {% if diff > 0 %}
+                                                <div class="trend up" data-bs-toggle="tooltip" title="{{ diff }}% above average">
+                                                    <i class="fas fa-arrow-up"></i> {{ diff }}%
+                                                </div>
+                                            {% elif diff < 0 %}
+                                                <div class="trend down" data-bs-toggle="tooltip" title="{{ diff|abs }}% below average">
+                                                    <i class="fas fa-arrow-down"></i> {{ diff|abs }}%
+                                                </div>
+                                            {% else %}
+                                                <div class="trend neutral" data-bs-toggle="tooltip" title="Equal to average">
+                                                    <i class="fas fa-equals"></i> 0%
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-criteria">No detailed characteristics available for this segment.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="characteristics-chart">
+                    <canvas id="characteristicsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart View -->
+        <div class="characteristic-view chart-view" style="display:none;">
+            <div class="chart-container-large">
+                <div class="chart-options mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="chartType" id="barChartOption" value="bar" checked>
+                        <label class="form-check-label" for="barChartOption">Bar Chart</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="chartType" id="radarChartOption" value="radar">
+                        <label class="form-check-label" for="radarChartOption">Radar Chart</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="chartType" id="polarChartOption" value="polar">
+                        <label class="form-check-label" for="polarChartOption">Polar Chart</label>
+                    </div>
+                </div>
+                <canvas id="characteristicsChartLarge" height="400"></canvas>
+            </div>
+            <div class="benchmark-info mt-3">
+                <div class="benchmark-label">
+                    <i class="fas fa-info-circle"></i> The charts show this segment's characteristics compared to the average across all segments
+                </div>
+                <div class="benchmark-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(67, 97, 238, 0.7)"></div>
+                        <span>This Segment</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(152, 152, 152, 0.5)"></div>
+                        <span>Segment Average</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Table View -->
+        <div class="characteristic-view table-view" style="display:none;">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Characteristic</th>
+                            <th>Value</th>
+                            <th>Segment Average</th>
+                            <th>Difference</th>
+                            <th>Percentile</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if segment_criteria %}
+                            {% for key, value in segment_criteria.items() %}
+                                <tr>
+                                    <td>{{ key|replace('_', ' ')|title }}</td>
+                                    <td>
+                                        {% if value is number %}
+                                            {% if key.endswith('_avg') or key.endswith('_average') %}
+                                                {% if key.startswith('age') or key.startswith('experience') %}
+                                                    {{ value|round(1) }} years
+                                                {% elif key.startswith('salary') %}
+                                                    {{ value|round(1) }}K
+                                                {% else %}
+                                                    {{ value|round(1) }}
+                                                {% endif %}
+                                            {% else %}
+                                                {{ value|round(1) }}
+                                            {% endif %}
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if key in segment_benchmark %}
+                                            {% set benchmark = segment_benchmark[key] %}
+                                            {% if benchmark is number %}
+                                                {% if key.endswith('_avg') or key.endswith('_average') %}
+                                                    {% if key.startswith('age') or key.startswith('experience') %}
+                                                        {{ benchmark|round(1) }} years
+                                                    {% elif key.startswith('salary') %}
+                                                        {{ benchmark|round(1) }}K
+                                                    {% else %}
+                                                        {{ benchmark|round(1) }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {{ benchmark|round(1) }}
+                                                {% endif %}
+                                            {% else %}
+                                                {{ benchmark }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if key in segment_benchmark %}
+                                            {% set benchmark = segment_benchmark[key] %}
+                                            {% if value is number and benchmark is number %}
+                                                {% set diff = ((value - benchmark) / benchmark * 100)|round|int %}
+                                                {% if diff > 0 %}
+                                                    <span class="text-success">+{{ diff }}%</span>
+                                                {% elif diff < 0 %}
+                                                    <span class="text-danger">{{ diff }}%</span>
+                                                {% else %}
+                                                    <span class="text-muted">0%</span>
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if key in segment_percentiles %}
+                                            <div class="percentile-bar" data-bs-toggle="tooltip" title="{{ segment_percentiles[key] }}th percentile">
+                                                <div class="percentile-fill" style="width: {{ segment_percentiles[key] }}%"></div>
+                                                <span class="percentile-text">{{ segment_percentiles[key] }}</span>
+                                            </div>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No detailed characteristics available for this segment.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Candidates in Segment -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Candidates in this Segment</h2>
+        <div class="card-actions">
+            <button class="btn btn-sm btn-outline-secondary" id="exportCandidatesBtn">
+                <i class="fas fa-download"></i> Export Candidates
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Location</th>
+                        <th>Desired Role</th>
+                        <th>Experience</th>
+                        <th>Education</th>
+                        <th>Skills</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if candidates %}
+                        {% for candidate in candidates %}
+                            <tr>
+                                <td>{{ candidate.name }}</td>
+                                <td>{{ candidate.age }}</td>
+                                <td>{{ candidate.location }}</td>
+                                <td>{{ candidate.desired_role }}</td>
+                                <td>{{ candidate.experience }}</td>
+                                <td>{{ candidate.education }}</td>
+                                <td>
+                                    <div class="skills-list">
+                                        {% for skill in candidate.skills.split(',')[:3] %}
+                                            <span class="skill-badge">{{ skill }}</span>
+                                        {% endfor %}
+                                        {% if candidate.skills.split(',')|length > 3 %}
+                                            <span class="more-skills">+{{ candidate.skills.split(',')|length - 3 }} more</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('candidates.view_candidate', candidate_id=candidate.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No candidates in this segment</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Demographics Visualization -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Segment Demographics</h2>
+        <div class="card-actions">
+            <div class="btn-group chart-view-toggle" role="group">
+                <button class="btn btn-sm btn-outline-secondary active" data-view="charts">
+                    <i class="fas fa-chart-pie"></i> Charts
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" data-view="distributions">
+                    <i class="fas fa-chart-bar"></i> Distributions
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="demographics-view charts-view">
+            <div class="demographics-grid">
+                <div class="demographic-chart">
+                    <h3>Age Distribution</h3>
+                    <canvas id="ageChart" height="250"></canvas>
+                </div>
+                <div class="demographic-chart">
+                    <h3>Education Level</h3>
+                    <canvas id="educationChart" height="250"></canvas>
+                </div>
+                <div class="demographic-chart">
+                    <h3>Experience Level</h3>
+                    <canvas id="experienceChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demographics-view distributions-view" style="display:none;">
+            <div class="demo-stats-grid">
+                <!-- Age Distribution -->
+                <div class="demo-stat-card">
+                    <div class="stat-header">
+                        <h3>Age Distribution</h3>
+                        <div class="stat-summary">
+                            <span class="stat-value">{{ (candidates|selectattr('age')|map(attribute='age')|sum / candidates|length)|round(1) }}</span>
+                            <span class="stat-label">Avg Age</span>
+                        </div>
+                    </div>
+                    <div class="distribution-bar age-distribution">
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('age')|selectattr('age', 'le', 24)|list|length }}; background-color: rgba(52, 152, 219, 0.7);" data-bs-toggle="tooltip" title="18-24 years: {{ candidates|selectattr('age')|selectattr('age', 'le', 24)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('age')|selectattr('age', 'gt', 24)|selectattr('age', 'le', 34)|list|length }}; background-color: rgba(46, 204, 113, 0.7);" data-bs-toggle="tooltip" title="25-34 years: {{ candidates|selectattr('age')|selectattr('age', 'gt', 24)|selectattr('age', 'le', 34)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('age')|selectattr('age', 'gt', 34)|selectattr('age', 'le', 44)|list|length }}; background-color: rgba(155, 89, 182, 0.7);" data-bs-toggle="tooltip" title="35-44 years: {{ candidates|selectattr('age')|selectattr('age', 'gt', 34)|selectattr('age', 'le', 44)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('age')|selectattr('age', 'gt', 44)|list|length }}; background-color: rgba(230, 126, 34, 0.7);" data-bs-toggle="tooltip" title="45+ years: {{ candidates|selectattr('age')|selectattr('age', 'gt', 44)|list|length }} candidates"></div>
+                    </div>
+                    <div class="dist-labels">
+                        <span>18-24</span>
+                        <span>25-34</span>
+                        <span>35-44</span>
+                        <span>45+</span>
+                    </div>
+                </div>
+                
+                <!-- Experience Distribution -->
+                <div class="demo-stat-card">
+                    <div class="stat-header">
+                        <h3>Experience Distribution</h3>
+                        <div class="stat-summary">
+                            <span class="stat-value">{{ (candidates|selectattr('experience')|map(attribute='experience')|sum / candidates|length)|round(1) }}</span>
+                            <span class="stat-label">Avg Years</span>
+                        </div>
+                    </div>
+                    <div class="distribution-bar experience-distribution">
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('experience')|selectattr('experience', 'le', 2)|list|length }}; background-color: rgba(52, 152, 219, 0.7);" data-bs-toggle="tooltip" title="Entry Level (0-2 years): {{ candidates|selectattr('experience')|selectattr('experience', 'le', 2)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 2)|selectattr('experience', 'le', 5)|list|length }}; background-color: rgba(46, 204, 113, 0.7);" data-bs-toggle="tooltip" title="Mid Level (3-5 years): {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 2)|selectattr('experience', 'le', 5)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 5)|selectattr('experience', 'le', 10)|list|length }}; background-color: rgba(155, 89, 182, 0.7);" data-bs-toggle="tooltip" title="Senior (6-10 years): {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 5)|selectattr('experience', 'le', 10)|list|length }} candidates"></div>
+                        <div class="dist-section" style="flex-grow: {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 10)|list|length }}; background-color: rgba(230, 126, 34, 0.7);" data-bs-toggle="tooltip" title="Executive (10+ years): {{ candidates|selectattr('experience')|selectattr('experience', 'gt', 10)|list|length }} candidates"></div>
+                    </div>
+                    <div class="dist-labels">
+                        <span>Entry</span>
+                        <span>Mid</span>
+                        <span>Senior</span>
+                        <span>Exec</span>
+                    </div>
+                </div>
+                
+                <!-- Education and Location grid -->
+                <div class="sub-demo-grid">
+                    <!-- Education Distribution -->
+                    <div class="demo-stat-card small-card">
+                        <h3>Education</h3>
+                        <div class="top-items-list">
+                            {% set education_count = {} %}
+                            {% for candidate in candidates %}
+                                {% if education_count.update({candidate.education: education_count.get(candidate.education, 0) + 1}) %}{% endif %}
+                            {% endfor %}
+                            
+                            {% for education, count in education_count|dictsort(by='value', reverse=true) %}
+                                <div class="list-item">
+                                    <span class="item-label">{{ education }}</span>
+                                    <div class="item-bar-container">
+                                        <div class="item-bar" style="width: {{ (count / candidates|length * 100)|round }}%"></div>
+                                        <span class="item-value">{{ count }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Location Distribution -->
+                    <div class="demo-stat-card small-card">
+                        <h3>Location</h3>
+                        <div class="top-items-list">
+                            {% set location_count = {} %}
+                            {% for candidate in candidates %}
+                                {% if location_count.update({candidate.location: location_count.get(candidate.location, 0) + 1}) %}{% endif %}
+                            {% endfor %}
+                            
+                            {% for location, count in location_count|dictsort(by='value', reverse=true)[:5] %}
+                                <div class="list-item">
+                                    <span class="item-label">{{ location }}</span>
+                                    <div class="item-bar-container">
+                                        <div class="item-bar" style="width: {{ (count / candidates|length * 100)|round }}%"></div>
+                                        <span class="item-value">{{ count }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Targeting Suggestions -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Targeting Suggestions</h2>
+        <div class="card-actions">
+            <button class="btn btn-sm btn-outline-primary" id="refreshSuggestionsBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="targeting-grid">
+            <!-- Platform Targeting -->
+            <div class="targeting-card">
+                <div class="targeting-header">
+                    <h3><i class="fas fa-bullseye"></i> Recommended Platforms</h3>
+                </div>
+                <div class="targeting-body">
+                    <div class="platform-suggestions">
+                        <div class="platform-suggestion-item">
+                            <div class="platform-icon facebook">
+                                <i class="fab fa-facebook"></i>
+                            </div>
+                            <div class="platform-info">
+                                <div class="platform-name">Facebook</div>
+                                <div class="match-score" data-score="87">
+                                    <div class="match-bar" style="width: 87%"></div>
+                                    <span class="match-value">87%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="platform-suggestion-item">
+                            <div class="platform-icon linkedin">
+                                <i class="fab fa-linkedin"></i>
+                            </div>
+                            <div class="platform-info">
+                                <div class="platform-name">LinkedIn</div>
+                                <div class="match-score" data-score="92">
+                                    <div class="match-bar" style="width: 92%"></div>
+                                    <span class="match-value">92%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="platform-suggestion-item">
+                            <div class="platform-icon twitter">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                            <div class="platform-info">
+                                <div class="platform-name">Twitter</div>
+                                <div class="match-score" data-score="64">
+                                    <div class="match-bar" style="width: 64%"></div>
+                                    <span class="match-value">64%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="platform-suggestion-item">
+                            <div class="platform-icon google">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div class="platform-info">
+                                <div class="platform-name">Google</div>
+                                <div class="match-score" data-score="79">
+                                    <div class="match-bar" style="width: 79%"></div>
+                                    <span class="match-value">79%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Suggestions -->
+            <div class="targeting-card">
+                <div class="targeting-header">
+                    <h3><i class="fas fa-file-alt"></i> Content Recommendations</h3>
+                </div>
+                <div class="targeting-body">
+                    <div class="content-suggestions">
+                        <div class="content-suggestion-item">
+                            <div class="suggestion-tag">Key Message</div>
+                            <div class="suggestion-content">Emphasize career growth and professional development opportunities</div>
+                        </div>
+                        
+                        <div class="content-suggestion-item">
+                            <div class="suggestion-tag">Visual Theme</div>
+                            <div class="suggestion-content">Collaborative and modern workplace imagery</div>
+                        </div>
+                        
+                        <div class="content-suggestion-item">
+                            <div class="suggestion-tag">Headline</div>
+                            <div class="suggestion-content">Focus on innovation and impact of work</div>
+                        </div>
+                        
+                        <div class="content-suggestion-item">
+                            <div class="suggestion-tag">Emphasis</div>
+                            <div class="suggestion-content">Highlight work-life balance and company culture</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="targeting-grid mt-4">
+            <!-- Keyword Tags -->
+            <div class="targeting-card">
+                <div class="targeting-header">
+                    <h3><i class="fas fa-tags"></i> Targeting Keywords</h3>
+                </div>
+                <div class="targeting-body">
+                    <div class="keyword-tags">
+                        <span class="keyword-tag high">professional development</span>
+                        <span class="keyword-tag high">career growth</span>
+                        <span class="keyword-tag medium">work-life balance</span>
+                        <span class="keyword-tag medium">innovative workplace</span>
+                        <span class="keyword-tag medium">tech industry</span>
+                        <span class="keyword-tag low">competitive salary</span>
+                        <span class="keyword-tag high">remote work</span>
+                        <span class="keyword-tag medium">flexible hours</span>
+                        <span class="keyword-tag medium">learning opportunities</span>
+                        <span class="keyword-tag low">mentorship</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Call to Action -->
+            <div class="targeting-card">
+                <div class="targeting-header">
+                    <h3><i class="fas fa-play-circle"></i> Next Steps</h3>
+                </div>
+                <div class="targeting-body cta-container">
+                    <div class="cta-content">
+                        <p>Ready to reach this audience with targeted job ads?</p>
+                        <div class="cta-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?segment_id={{ segment.id }}" class="btn btn-primary">
+                                <i class="fas fa-bullhorn"></i> Create Campaign
+                            </a>
+                            <button class="btn btn-outline-secondary" id="exportDataBtn">
+                                <i class="fas fa-file-export"></i> Export Insights
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page actions at the top */
+    .page-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Segment overview */
+    .segment-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 992px) {
+        .segment-details {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .segment-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-600);
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+    }
+    
+    .segment-criteria h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .segment-profile {
+        padding: 1rem;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+    }
+    
+    .segment-profile h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: var(--gray-700);
+    }
+    
+    .radar-chart-container {
+        width: 100%;
+        height: 300px;
+        position: relative;
+    }
+    
+    /* Characteristics section */
+    .characteristics-panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 992px) {
+        .characteristics-panels {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .characteristics-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+    
+    .characteristic-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--gray-200);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .characteristic-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--gray-700);
+    }
+    
+    .characteristic-value {
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+    
+    .value-with-gauge {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .numeric-value {
+        font-weight: 600;
+        color: var(--primary-600);
+        display: inline-block;
+    }
+    
+    .unit {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        margin-left: 0.25rem;
+    }
+    
+    .gauge-container {
+        width: 100%;
+        height: 6px;
+        background-color: var(--gray-200);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .gauge-fill {
+        height: 100%;
+        background-color: var(--primary-500);
+        border-radius: 3px;
+    }
+    
+    .gauge-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+    }
+    
+    .text-value {
+        margin-bottom: 0.5rem;
+    }
+    
+    .education-icon, .location-icon, .industry-icon {
+        font-size: 1.25rem;
+        margin-top: 0.25rem;
+    }
+    
+    .characteristic-trend {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .trend {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    
+    .trend i {
+        margin-right: 0.25rem;
+    }
+    
+    .trend.up {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: rgb(6, 95, 70);
+    }
+    
+    .trend.down {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: rgb(185, 28, 28);
+    }
+    
+    .trend.neutral {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: rgb(55, 65, 81);
+    }
+    
+    /* View switcher styles */
+    .view-switcher {
+        display: flex;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .view-switcher button {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0;
+        border-right: 1px solid var(--gray-200);
+    }
+    
+    .view-switcher button:last-child {
+        border-right: none;
+    }
+    
+    .ms-2 {
+        margin-left: 0.5rem;
+    }
+    
+    /* Chart view styles */
+    .chart-container-large {
+        height: 400px;
+        position: relative;
+    }
+    
+    .chart-options {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .form-check-inline {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 1rem;
+    }
+    
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+    
+    .benchmark-info {
+        background-color: var(--gray-50);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-top: 1rem;
+    }
+    
+    .benchmark-label {
+        margin-bottom: 0.75rem;
+        color: var(--gray-600);
+        font-size: 0.9rem;
+    }
+    
+    .benchmark-legend {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+    
+    /* Table view styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        color: var(--gray-700);
+        border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .table th {
+        font-weight: 600;
+        background-color: var(--gray-50);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+    
+    .text-success {
+        color: rgb(16, 185, 129);
+    }
+    
+    .text-danger {
+        color: rgb(239, 68, 68);
+    }
+    
+    .text-muted {
+        color: var(--gray-500);
+    }
+    
+    .percentile-bar {
+        width: 100%;
+        height: 8px;
+        background-color: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .percentile-fill {
+        height: 100%;
+        background-color: var(--primary-500);
+        border-radius: 4px;
+    }
+    
+    .percentile-text {
+        position: absolute;
+        right: 0;
+        top: -1.2rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .mt-3 {
+        margin-top: 1rem;
+    }
+    
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group {
+        display: flex;
+    }
+    
+    .btn-group > .btn:not(:last-child) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .btn-group > .btn:not(:first-child) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        margin-left: -1px;
+    }
+    
+    /* Basic demographics section */
+    .demographics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .demographic-chart {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+    }
+    
+    .demographic-chart h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-size: 1.1rem;
+        color: var(--gray-700);
+    }
+    
+    /* Enhanced demographics views */
+    .demo-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 1.5rem;
+    }
+    
+    @media (max-width: 992px) {
+        .demo-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .sub-demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-column: span 2;
+        gap: 1.5rem;
+    }
+    
+    @media (max-width: 992px) {
+        .sub-demo-grid {
+            grid-column: span 1;
+        }
+    }
+    
+    .demo-stat-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--gray-200);
+        padding: 1.5rem;
+    }
+    
+    .demo-stat-card.small-card {
+        padding: 1rem;
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--gray-700);
+    }
+    
+    .stat-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-600);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+    }
+    
+    .distribution-bar {
+        display: flex;
+        height: 30px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+    
+    .dist-section {
+        height: 100%;
+    }
+    
+    .dist-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--gray-600);
+    }
+    
+    .top-items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .list-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .item-label {
+        font-size: 0.9rem;
+        color: var(--gray-700);
+    }
+    
+    .item-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .item-bar {
+        height: 8px;
+        background-color: var(--primary-400);
+        border-radius: 4px;
+    }
+    
+    .item-value {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        font-weight: 500;
+    }
+    
+    /* Targeting suggestions */
+    .targeting-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    @media (max-width: 992px) {
+        .targeting-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .targeting-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .targeting-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .targeting-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .targeting-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+    }
+    
+    .platform-suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .platform-suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .platform-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .platform-icon.facebook {
+        background-color: #1877F2;
+    }
+    
+    .platform-icon.linkedin {
+        background-color: #0A66C2;
+    }
+    
+    .platform-icon.twitter {
+        background-color: #1DA1F2;
+    }
+    
+    .platform-icon.google {
+        background-color: #EA4335;
+    }
+    
+    .platform-info {
+        flex-grow: 1;
+    }
+    
+    .platform-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .match-score {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .match-bar {
+        height: 6px;
+        background-color: var(--primary-500);
+        border-radius: 3px;
+        flex-grow: 1;
+    }
+    
+    .match-value {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary-700);
+        min-width: 35px;
+        text-align: right;
+    }
+    
+    .content-suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .content-suggestion-item {
+        padding: 0.75rem;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+        border-left: 3px solid var(--primary-500);
+    }
+    
+    .suggestion-tag {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--primary-700);
+        margin-bottom: 0.25rem;
+    }
+    
+    .suggestion-content {
+        font-size: 0.95rem;
+        color: var(--gray-800);
+    }
+    
+    .keyword-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .keyword-tag {
+        padding: 0.5rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .keyword-tag.high {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: rgb(6, 95, 70);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .keyword-tag.medium {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: rgb(55, 48, 163);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    
+    .keyword-tag.low {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: rgb(146, 64, 14);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .cta-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cta-content {
+        text-align: center;
+    }
+    
+    .cta-content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .mt-4 {
+        margin-top: 1.5rem;
+    }
+    
+    /* Candidate skills and table */
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .skill-badge {
+        background-color: var(--primary-50);
+        color: var(--primary);
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .more-skills {
+        color: var(--gray-600);
+        font-size: 0.8rem;
+    }
+    
+    /* Compare segments modal */
+    .segment-selection-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate demo charts based on the candidates data
+        const candidates = {{ candidates|tojson }};
+        const segmentCriteria = {{ segment_criteria|tojson }};
+        
+        // Basic charts from existing code
+        initBasicCharts(candidates);
+        
+        // Initialize radar chart if there's segment criteria
+        if (Object.keys(segmentCriteria).length > 0) {
+            initRadarChart(segmentCriteria);
+        }
+        
+        // Initialize characteristics chart
+        initCharacteristicsChart(segmentCriteria);
+        
+        // Initialize comparison modal
+        initComparisonModal();
+        
+        // Initialize UI interactions
+        initUIInteractions();
+    });
+    
+    function initBasicCharts(candidates) {
+        // Age distribution chart
+        const ageGroups = {
+            '18-24': 0,
+            '25-34': 0,
+            '35-44': 0,
+            '45-54': 0,
+            '55+': 0
+        };
+        
+        candidates.forEach(candidate => {
+            const age = candidate.age;
+            if (age >= 18 && age <= 24) ageGroups['18-24']++;
+            else if (age >= 25 && age <= 34) ageGroups['25-34']++;
+            else if (age >= 35 && age <= 44) ageGroups['35-44']++;
+            else if (age >= 45 && age <= 54) ageGroups['45-54']++;
+            else if (age >= 55) ageGroups['55+']++;
+        });
+        
+        new Chart(document.getElementById('ageChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(ageGroups),
+                datasets: [{
+                    label: 'Candidates',
+                    data: Object.values(ageGroups),
+                    backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Education chart
+        const educationGroups = {};
+        candidates.forEach(candidate => {
+            const education = candidate.education;
+            educationGroups[education] = (educationGroups[education] || 0) + 1;
+        });
+        
+        new Chart(document.getElementById('educationChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(educationGroups),
+                datasets: [{
+                    data: Object.values(educationGroups),
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(241, 196, 15, 0.7)',
+                        'rgba(230, 126, 34, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(241, 196, 15, 1)',
+                        'rgba(230, 126, 34, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Experience chart
+        const experienceGroups = {
+            'Entry Level': 0,
+            'Mid Level': 0,
+            'Senior': 0,
+            'Executive': 0
+        };
+        
+        candidates.forEach(candidate => {
+            const exp = parseInt(candidate.experience) || 0;
+            if (exp < 2) experienceGroups['Entry Level']++;
+            else if (exp >= 2 && exp < 5) experienceGroups['Mid Level']++;
+            else if (exp >= 5 && exp < 10) experienceGroups['Senior']++;
+            else experienceGroups['Executive']++;
+        });
+        
+        new Chart(document.getElementById('experienceChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(experienceGroups),
+                datasets: [{
+                    data: Object.values(experienceGroups),
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(230, 126, 34, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(230, 126, 34, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+    
+    function initRadarChart(segmentCriteria) {
+        // Convert segment criteria to radar chart data
+        const radarData = [];
+        const radarLabels = [];
+        
+        // Process numeric criteria only
+        for (const [key, value] of Object.entries(segmentCriteria)) {
+            if (!isNaN(parseFloat(value))) {
+                radarLabels.push(key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+                
+                // Normalize values to 0-100 range for consistency
+                let normalizedValue = value;
+                if (key.includes('age') && value > 0) {
+                    normalizedValue = Math.min(100, value * 2); // age scaling
+                } else if (key.includes('experience') && value > 0) {
+                    normalizedValue = Math.min(100, value * 10); // experience scaling
+                } else if (value > 100) {
+                    normalizedValue = 100; // cap at 100
+                }
+                
+                radarData.push(normalizedValue);
+            }
+        }
+        
+        // Create radar chart if we have data
+        if (radarLabels.length > 0) {
+            const ctx = document.getElementById('segmentRadarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: [{
+                        label: 'Segment Profile',
+                        data: radarData,
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        pointBackgroundColor: 'rgba(67, 97, 238, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(67, 97, 238, 1)'
+                    }]
+                },
+                options: {
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scale: {
+                        ticks: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    function initCharacteristicsChart(segmentCriteria) {
+        // Convert segment criteria to chart data
+        const chartData = [];
+        const chartLabels = [];
+        const benchmarkData = [];
+        
+        // Use segment_benchmark data if available, otherwise use defaults
+        const benchmarks = {{ segment_benchmark|default({})|tojson }};
+        
+        // Process numeric criteria only
+        for (const [key, value] of Object.entries(segmentCriteria)) {
+            if (!isNaN(parseFloat(value))) {
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                chartLabels.push(formattedKey);
+                chartData.push(value);
+                
+                // Add benchmark data if available
+                if (benchmarks[key] && !isNaN(parseFloat(benchmarks[key]))) {
+                    benchmarkData.push(benchmarks[key]);
+                } else {
+                    // Default benchmark (can be adjusted based on domain knowledge)
+                    if (key.includes('age')) {
+                        benchmarkData.push(35); // default average age
+                    } else if (key.includes('experience')) {
+                        benchmarkData.push(5); // default average experience
+                    } else {
+                        benchmarkData.push(value * 0.9); // arbitrary default
+                    }
+                }
+            }
+        }
+        
+        // Create charts if we have data
+        if (chartLabels.length > 0) {
+            // Small chart for the cards view
+            const smallCtx = document.getElementById('characteristicsChart').getContext('2d');
+            const smallChart = new Chart(smallCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Segment Values',
+                        data: chartData,
+                        backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Large chart for the chart view
+            const largeCtx = document.getElementById('characteristicsChartLarge').getContext('2d');
+            
+            // Initialize with bar chart
+            const largeChart = createComparisonChart(largeCtx, 'bar', chartLabels, chartData, benchmarkData);
+            
+            // Handle chart type changes
+            document.querySelectorAll('input[name="chartType"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    if (largeChart) {
+                        largeChart.destroy();
+                    }
+                    createComparisonChart(largeCtx, this.value, chartLabels, chartData, benchmarkData);
+                });
+            });
+        }
+        
+        // Initialize view switcher
+        initViewSwitcher();
+        
+        // Add tooltips initialization for new elements
+        initTooltips();
+    }
+    
+    // Helper function to create comparison charts of different types
+    function createComparisonChart(ctx, type, labels, segmentData, benchmarkData) {
+        // Common dataset properties
+        const segmentDataset = {
+            label: 'This Segment',
+            data: segmentData,
+            backgroundColor: 'rgba(67, 97, 238, 0.7)',
+            borderColor: 'rgba(67, 97, 238, 1)',
+            borderWidth: 1
+        };
+        
+        const benchmarkDataset = {
+            label: 'Segment Average',
+            data: benchmarkData,
+            backgroundColor: 'rgba(152, 152, 152, 0.5)',
+            borderColor: 'rgba(152, 152, 152, 0.8)',
+            borderWidth: 1
+        };
+        
+        // Create appropriate chart based on type
+        if (type === 'radar') {
+            segmentDataset.backgroundColor = 'rgba(67, 97, 238, 0.2)';
+            segmentDataset.pointBackgroundColor = 'rgba(67, 97, 238, 1)';
+            benchmarkDataset.backgroundColor = 'rgba(152, 152, 152, 0.2)';
+            benchmarkDataset.pointBackgroundColor = 'rgba(152, 152, 152, 0.8)';
+            
+            return new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [segmentDataset, benchmarkDataset]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0
+                        }
+                    }
+                }
+            });
+        } else if (type === 'polar') {
+            return new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: segmentData,
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(14, 165, 233, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(147, 51, 234, 0.7)',
+                            'rgba(20, 184, 166, 0.7)',
+                            'rgba(236, 72, 153, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(99, 102, 241, 1)',
+                            'rgba(14, 165, 233, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(147, 51, 234, 1)',
+                            'rgba(20, 184, 166, 1)',
+                            'rgba(236, 72, 153, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        } else {
+            // Default to bar chart
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [segmentDataset, benchmarkDataset]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Function to handle view switching between cards, chart, and table
+    function initViewSwitcher() {
+        const viewButtons = document.querySelectorAll('.view-switcher button');
+        const views = document.querySelectorAll('.characteristic-view');
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button state
+                viewButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show selected view, hide others
+                const viewToShow = this.getAttribute('data-view');
+                views.forEach(view => {
+                    if (view.classList.contains(viewToShow + '-view')) {
+                        view.style.display = '';
+                    } else {
+                        view.style.display = 'none';
+                    }
+                });
+            });
+        });
+    }
+    
+    // Function to initialize tooltips
+    function initTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+    
+    function initComparisonModal() {
+        // Create modal for segment comparison
+        const modalHTML = `
+            <div class="modal fade" id="compareSegmentModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Compare with Other Segments</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="compareSegmentsForm" action="{{ url_for('segments.compare_segments') }}" method="get">
+                                <input type="hidden" name="segment_ids" value="{{ segment.id }}">
+                                <div class="mb-3">
+                                    <label class="form-label">Select segments to compare:</label>
+                                    <div class="segment-selection-list">
+                                        {% for other_segment in all_segments %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="segment_ids" value="{{ other_segment.id }}" id="segment{{ other_segment.id }}">
+                                            <label class="form-check-label" for="segment{{ other_segment.id }}">
+                                                {{ other_segment.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="startCompareBtn">Compare Segments</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Initialize modal functionality
+        const compareModal = new bootstrap.Modal(document.getElementById('compareSegmentModal'));
+        
+        // Compare button event handler
+        document.getElementById('compareSegmentBtn').addEventListener('click', function() {
+            compareModal.show();
+        });
+        
+        // Start comparison button
+        document.getElementById('startCompareBtn').addEventListener('click', function() {
+            const form = document.getElementById('compareSegmentsForm');
+            const checkedSegments = form.querySelectorAll('input[name="segment_ids"]:checked');
+            
+            if (checkedSegments.length < 1) {
+                alert('Please select at least one segment to compare with.');
+                return;
+            }
+            
+            form.submit();
+        });
+    }
+    
+    function initUIInteractions() {
+        // Export functionality
+        document.getElementById('exportCandidatesBtn')?.addEventListener('click', function() {
+            alert('Exporting candidates data. This would download a CSV file in a real implementation.');
+        });
+        
+        document.getElementById('exportDataBtn')?.addEventListener('click', function() {
+            alert('Exporting segment data. This would download a JSON file in a real implementation.');
+        });
+        
+        // Toggle radar view
+        document.getElementById('showRadarBtn')?.addEventListener('click', function() {
+            const radarProfile = document.getElementById('segmentRadarProfile');
+            if (radarProfile.style.display === 'none') {
+                radarProfile.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-chart-radar"></i> Hide Profile';
+            } else {
+                radarProfile.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-chart-radar"></i> Show Profile';
+            }
+        });
+        
+        // Charts/Distribution view toggle
+        const viewToggleButtons = document.querySelectorAll('.chart-view-toggle button');
+        viewToggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                viewToggleButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding view
+                const viewToShow = this.getAttribute('data-view');
+                document.querySelectorAll('.demographics-view').forEach(view => {
+                    view.style.display = 'none';
+                });
+                document.querySelector(`.${viewToShow}-view`).style.display = 'block';
+            });
+        });
+        
+        // Edit characteristics button
+        document.getElementById('editCharacteristicsBtn')?.addEventListener('click', function() {
+            window.location.href = "{{ url_for('segments.edit_segment', segment_id=segment.id) }}";
+        });
+        
+        // Duplicate segment button
+        document.getElementById('duplicateSegmentBtn')?.addEventListener('click', function() {
+            if (confirm('Do you want to create a copy of this segment?')) {
+                alert('This would duplicate the segment in a real implementation.');
+            }
+        });
+        
+        // Delete segment button
+        document.getElementById('deleteSegmentBtn')?.addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this segment? This action cannot be undone.')) {
+                alert('This would delete the segment in a real implementation.');
+            }
+        });
+        
+        // Refresh suggestions button
+        document.getElementById('refreshSuggestionsBtn')?.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            
+            setTimeout(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                alert('Targeting suggestions refreshed.');
+            }, 1500);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Candidates - Ad Automation P-01{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Candidates</h1>
+    <p class="lead">Manage and view candidate profiles for audience segmentation</p>
+    
+    <div class="mb-4">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCandidateModal">
+            Add New Candidate
+        </button>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Candidate Profiles</h5>
+                </div>
+                <div class="card-body">
+                    {% if candidates %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                    <th>Location</th>
+                                    <th>Education</th>
+                                    <th>Desired Role</th>
+                                    <th>Segment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for candidate in candidates %}
+                                <tr>
+                                    <td>{{ candidate.id }}</td>
+                                    <td>{{ candidate.age }}</td>
+                                    <td>{{ candidate.gender }}</td>
+                                    <td>{{ candidate.location }}</td>
+                                    <td>{{ candidate.education_level }}</td>
+                                    <td>{{ candidate.desired_role }}</td>
+                                    <td>{{ candidate.segment_id or 'Not assigned' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('candidates.get_candidate', candidate_id=candidate.id) }}" class="btn btn-sm btn-info">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No candidates available. Add some candidates to get started.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Candidate Modal -->
+<div class="modal fade" id="addCandidateModal" tabindex="-1" aria-labelledby="addCandidateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCandidateModalLabel">Add New Candidate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="candidateForm">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="age" name="age" required min="18" max="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="education_level" class="form-label">Education Level</label>
+                            <select class="form-select" id="education_level" name="education_level" required>
+                                <option value="">Select...</option>
+                                <option value="High School">High School</option>
+                                <option value="Associate's Degree">Associate's Degree</option>
+                                <option value="Bachelor's Degree">Bachelor's Degree</option>
+                                <option value="Master's Degree">Master's Degree</option>
+                                <option value="Doctorate">Doctorate</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="field_of_study" class="form-label">Field of Study</label>
+                            <input type="text" class="form-control" id="field_of_study" name="field_of_study">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="years_of_experience" class="form-label">Years of Experience</label>
+                            <input type="number" class="form-control" id="years_of_experience" name="years_of_experience" min="0" max="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="desired_job_type" class="form-label">Desired Job Type</label>
+                            <select class="form-select" id="desired_job_type" name="desired_job_type">
+                                <option value="">Select...</option>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Freelance">Freelance</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="desired_salary" class="form-label">Desired Salary ($)</label>
+                            <input type="number" class="form-control" id="desired_salary" name="desired_salary" min="0">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="desired_industry" class="form-label">Desired Industry</label>
+                            <input type="text" class="form-control" id="desired_industry" name="desired_industry">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="desired_role" class="form-label">Desired Role</label>
+                            <input type="text" class="form-control" id="desired_role" name="desired_role">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitCandidate">Save Candidate</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle form submission
+        document.getElementById('submitCandidate').addEventListener('click', function() {
+            const form = document.getElementById('candidateForm');
+            const formData = new FormData(form);
+            const candidateData = {};
+            
+            // Convert FormData to JSON object
+            formData.forEach((value, key) => {
+                candidateData[key] = value;
+            });
+            
+            // Convert numeric fields to numbers
+            if (candidateData.age) candidateData.age = parseInt(candidateData.age);
+            if (candidateData.years_of_experience) candidateData.years_of_experience = parseInt(candidateData.years_of_experience);
+            if (candidateData.desired_salary) candidateData.desired_salary = parseInt(candidateData.desired_salary);
+            
+            // Submit the data via API
+            fetch('/candidates/api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(candidateData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset the form and close the modal
+                    form.reset();
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('addCandidateModal'));
+                    modal.hide();
+                    
+                    // Reload the page to show the new candidate
+                    window.location.reload();
+                } else {
+                    alert('Error creating candidate: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the candidate');
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,70 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Create Job Opening | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="mb-1">Create Job Opening</h1>
+        <p class="text-muted">Add a new job opening to your account</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form>
+                <div class="mb-3">
+                    <label for="job-title" class="form-label">Job Title</label>
+                    <input type="text" class="form-control" id="job-title" placeholder="e.g. Senior Software Engineer">
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="company" class="form-label">Company</label>
+                        <input type="text" class="form-control" id="company" placeholder="e.g. Tech Solutions Inc">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" placeholder="e.g. Remote, New York, NY">
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="job-type" class="form-label">Job Type</label>
+                        <select class="form-select" id="job-type">
+                            <option>Full-time</option>
+                            <option>Part-time</option>
+                            <option>Contract</option>
+                            <option>Internship</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="salary-range" class="form-label">Salary Range</label>
+                        <input type="text" class="form-control" id="salary-range" placeholder="e.g. $100,000 - $130,000">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Job Description</label>
+                    <textarea class="form-control" id="description" rows="6" placeholder="Enter job description..."></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="requirements" class="form-label">Requirements</label>
+                    <textarea class="form-control" id="requirements" rows="4" placeholder="Enter job requirements..."></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="benefits" class="form-label">Benefits</label>
+                    <textarea class="form-control" id="benefits" rows="4" placeholder="Enter job benefits..."></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('job_openings_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create Job Opening</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

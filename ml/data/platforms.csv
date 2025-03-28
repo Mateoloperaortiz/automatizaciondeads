@@ -1,0 +1,10 @@
+name,api_key,api_secret,access_token,active
+Meta,27cb6f2a-8da0-4097-be0f-051b1b66b5a9,35ebd32d-9ad6-40ab-8821-2ddb45b89cd9,afffcfd2-341e-440b-97c7-00aab7b56ea7,True
+Facebook,81627cf1-4394-42e6-9a58-7e8aa25d6b29,e87d1c78-e7c4-41c7-8049-7b717d106c60,a2607723-17a0-4f49-8d01-280fd89a40c0,True
+Instagram,0b49452d-46d4-43f3-9450-281c6c6f7633,217d65a0-c568-41cd-9563-f61600e85ece,295d6fbf-430f-401d-bad4-09e2a319dcb4,True
+Twitter,b4a69f3c-8d3a-4d99-b11c-21c9bdc14f1f,1ca3c448-0279-46a6-8f97-97b06d7ce3c9,b0e6a969-e213-42b0-b1ee-dba313432e61,True
+X,093923de-8bab-4e3b-a628-6bfbe767dcea,8d7248e2-951f-48d0-9e84-f058d5a804eb,0ab54bde-20a0-4502-ae06-809725e97977,True
+Google,eededb07-e623-4689-9d59-cd2a4eea04e7,0a368ce7-dc57-4131-b8e1-daa7cbceabde,ae9bec36-35c7-436c-9b99-62c6e61fecc0,True
+LinkedIn,5a8aaeca-1a50-4ec3-aabc-25fa3fe12e47,dfed2c43-e256-46dc-8f54-86b7c7b5b2bc,bfddc3d9-9ee3-4c2a-b94d-62046808593f,True
+TikTok,3c9ad14c-ee0c-4eb5-acfe-db992790cebd,ccc56569-f9e8-4369-a999-b735dd56cc94,698c206f-e1a4-4e10-ad53-4dd0cf8ebc5a,True
+Snapchat,ecab3301-bc8f-4d29-adea-94930658663a,696608aa-ee49-4329-884a-7b28550a1b46,bc2cbb0d-dd33-4cc7-ab7f-089acd5f4822,True

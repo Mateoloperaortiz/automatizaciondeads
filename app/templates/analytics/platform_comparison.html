@@ -1,0 +1,603 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Platform Performance Comparison{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .platform-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+        margin-bottom: 1.5rem;
+    }
+    
+    .platform-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .metrics-table th {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .metrics-chart {
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .metric-pill {
+        cursor: pointer;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        background-color: #e9ecef;
+        color: #495057;
+        transition: all 0.2s;
+    }
+    
+    .metric-pill.active {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+    
+    .platform-icon {
+        width: 32px;
+        height: 32px;
+        margin-right: 0.5rem;
+    }
+    
+    .performance-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .good {
+        background-color: #28a745;
+    }
+    
+    .average {
+        background-color: #ffc107;
+    }
+    
+    .poor {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h1 class="h3">Platform Performance Comparison</h1>
+            <p class="text-muted">Compare advertising metrics across different platforms</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button class="btn btn-outline-secondary me-2" id="exportCsv">
+                <i class="fas fa-file-csv"></i> Export CSV
+            </button>
+            <button class="btn btn-primary" id="refreshData">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card filter-card">
+                <h5>Filters</h5>
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label for="dateRange" class="form-label">Date Range</label>
+                        <select class="form-select" id="dateRange">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 date-range-custom d-none">
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="dateFrom" class="form-label">From</label>
+                                <input type="date" class="form-control" id="dateFrom">
+                            </div>
+                            <div class="col-6">
+                                <label for="dateTo" class="form-label">To</label>
+                                <input type="date" class="form-control" id="dateTo">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="segmentFilter" class="form-label">Segment</label>
+                        <select class="form-select" id="segmentFilter">
+                            <option value="">All Segments</option>
+                            {% for segment in segments %}
+                            <option value="{{ segment.id }}">{{ segment.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            </div>
+            
+            <div class="card filter-card mt-3">
+                <h5>Metrics to Display</h5>
+                <div class="metric-pills">
+                    <div class="metric-pill active" data-metric="impressions">Impressions</div>
+                    <div class="metric-pill" data-metric="clicks">Clicks</div>
+                    <div class="metric-pill" data-metric="ctr">CTR</div>
+                    <div class="metric-pill" data-metric="cpc">CPC</div>
+                    <div class="metric-pill" data-metric="conversions">Conversions</div>
+                    <div class="metric-pill" data-metric="cpa">CPA</div>
+                    <div class="metric-pill" data-metric="roi">ROI</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Performance Comparison</h5>
+                    <div class="metrics-chart" id="performanceChart"></div>
+                </div>
+            </div>
+            
+            <div class="row" id="platformCards">
+                <!-- Platform cards will be dynamically generated here -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading platform data...</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Detailed Metrics</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Platform</th>
+                                    <th>Impressions</th>
+                                    <th>Clicks</th>
+                                    <th>CTR</th>
+                                    <th>Spend</th>
+                                    <th>CPC</th>
+                                    <th>Conversions</th>
+                                    <th>CPA</th>
+                                    <th>ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="metricsTableBody">
+                                <!-- Table rows will be dynamically generated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Platform colors for consistent visualization
+        const platformColors = {
+            'Meta': '#1877F2',
+            'X': '#1DA1F2',
+            'Google': '#4285F4',
+            'TikTok': '#000000',
+            'Snapchat': '#FFFC00',
+            'Default': '#6c757d'
+        };
+        
+        // Platform icons
+        const platformIcons = {
+            'Meta': 'fa-facebook',
+            'X': 'fa-twitter',
+            'Google': 'fa-google',
+            'TikTok': 'fa-tiktok',
+            'Snapchat': 'fa-snapchat',
+            'Default': 'fa-ad'
+        };
+        
+        let performanceChart = null;
+        let currentMetric = 'impressions';
+        
+        // Load initial data
+        loadData();
+        
+        // Event listeners
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadData();
+        });
+        
+        document.getElementById('dateRange').addEventListener('change', function() {
+            const customRange = document.querySelector('.date-range-custom');
+            if (this.value === 'custom') {
+                customRange.classList.remove('d-none');
+            } else {
+                customRange.classList.add('d-none');
+            }
+        });
+        
+        document.getElementById('refreshData').addEventListener('click', loadData);
+        
+        document.getElementById('exportCsv').addEventListener('click', exportCsv);
+        
+        // Metric pill selection
+        document.querySelectorAll('.metric-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.metric-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                currentMetric = this.dataset.metric;
+                updateChart();
+            });
+        });
+        
+        // Function to load data from API
+        function loadData() {
+            const segmentId = document.getElementById('segmentFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            let dateFrom = '';
+            let dateTo = '';
+            
+            if (dateRange === 'custom') {
+                dateFrom = document.getElementById('dateFrom').value;
+                dateTo = document.getElementById('dateTo').value;
+            } else {
+                // Calculate date range
+                const today = new Date();
+                dateTo = today.toISOString().split('T')[0];
+                
+                const fromDate = new Date();
+                fromDate.setDate(today.getDate() - parseInt(dateRange));
+                dateFrom = fromDate.toISOString().split('T')[0];
+            }
+            
+            // Construct API URL with parameters
+            let url = '/analytics/performance-data?';
+            if (segmentId) url += `segment_id=${segmentId}&`;
+            if (dateFrom) url += `date_from=${dateFrom}&`;
+            if (dateTo) url += `date_to=${dateTo}&`;
+            
+            // Show loading state
+            document.getElementById('platformCards').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading platform data...</p>
+                </div>
+            `;
+            
+            // Fetch data
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    renderData(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('platformCards').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="alert alert-danger">
+                                Error loading data. Please try again.
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Function to render data
+        function renderData(data) {
+            // Generate platform cards
+            let cardsHtml = '';
+            let tableRows = '';
+            
+            // Get all platforms and sort by performance (impressions by default)
+            const platforms = Object.keys(data).sort((a, b) => {
+                return data[b].impressions - data[a].impressions;
+            });
+            
+            if (platforms.length === 0) {
+                document.getElementById('platformCards').innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <div class="alert alert-info">
+                            No data available for the selected filters.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate platform cards
+            platforms.forEach(platform => {
+                const metrics = data[platform];
+                const color = platformColors[platform] || platformColors.Default;
+                const icon = platformIcons[platform] || platformIcons.Default;
+                
+                // Determine performance indicator
+                let performanceClass = 'average';
+                if (metrics.ctr > 2) performanceClass = 'good';
+                else if (metrics.ctr < 0.5) performanceClass = 'poor';
+                
+                cardsHtml += `
+                    <div class="col-md-4">
+                        <div class="card platform-card" style="border-top: 4px solid ${color}">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fab ${icon} fa-2x" style="color: ${color}"></i>
+                                    <div class="ms-3">
+                                        <h5 class="card-title mb-0">${platform}</h5>
+                                        <div>
+                                            <span class="performance-indicator ${performanceClass}"></span>
+                                            <small>${metrics.campaigns} campaigns</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="h4">${metrics.impressions.toLocaleString()}</div>
+                                        <div class="small text-muted">Impressions</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="h4">${metrics.clicks.toLocaleString()}</div>
+                                        <div class="small text-muted">Clicks</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="h4">${metrics.ctr.toFixed(2)}%</div>
+                                        <div class="small text-muted">CTR</div>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="h5">$${metrics.spend.toFixed(2)}</div>
+                                        <div class="small text-muted">Spend</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="h5">$${metrics.cpc.toFixed(2)}</div>
+                                        <div class="small text-muted">CPC</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="h5">${metrics.conversions}</div>
+                                        <div class="small text-muted">Conversions</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add table row
+                tableRows += `
+                    <tr>
+                        <td>
+                            <i class="fab ${icon}" style="color: ${color}"></i>
+                            ${platform}
+                        </td>
+                        <td>${metrics.impressions.toLocaleString()}</td>
+                        <td>${metrics.clicks.toLocaleString()}</td>
+                        <td>${metrics.ctr.toFixed(2)}%</td>
+                        <td>$${metrics.spend.toFixed(2)}</td>
+                        <td>$${metrics.cpc.toFixed(2)}</td>
+                        <td>${metrics.conversions}</td>
+                        <td>${metrics.cpa ? '$' + metrics.cpa.toFixed(2) : 'N/A'}</td>
+                        <td>${metrics.roi ? metrics.roi.toFixed(2) + '%' : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('platformCards').innerHTML = cardsHtml;
+            document.getElementById('metricsTableBody').innerHTML = tableRows;
+            
+            // Initialize or update chart
+            createOrUpdateChart(data);
+        }
+        
+        // Create or update the performance chart
+        function createOrUpdateChart(data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            const platforms = Object.keys(data);
+            const chartData = platforms.map(platform => {
+                return {
+                    label: platform,
+                    data: [data[platform][currentMetric]],
+                    backgroundColor: platformColors[platform] || platformColors.Default,
+                    borderColor: platformColors[platform] || platformColors.Default,
+                    borderWidth: 1
+                };
+            });
+            
+            // Format for different metrics
+            let yAxisFormat = value => value.toLocaleString();
+            let title = currentMetric.toUpperCase();
+            
+            if (currentMetric === 'ctr' || currentMetric === 'roi') {
+                yAxisFormat = value => value.toFixed(2) + '%';
+            } else if (currentMetric === 'cpc' || currentMetric === 'cpa' || currentMetric === 'spend') {
+                yAxisFormat = value => '$' + value.toFixed(2);
+            }
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+            
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platforms,
+                    datasets: [{
+                        label: title,
+                        data: platforms.map(platform => data[platform][currentMetric]),
+                        backgroundColor: platforms.map(platform => platformColors[platform] || platformColors.Default),
+                        borderColor: platforms.map(platform => platformColors[platform] || platformColors.Default),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: title + ' by Platform'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return yAxisFormat(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return yAxisFormat(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update chart when metric changes
+        function updateChart() {
+            const segmentId = document.getElementById('segmentFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            let dateFrom = '';
+            let dateTo = '';
+            
+            if (dateRange === 'custom') {
+                dateFrom = document.getElementById('dateFrom').value;
+                dateTo = document.getElementById('dateTo').value;
+            } else {
+                // Calculate date range
+                const today = new Date();
+                dateTo = today.toISOString().split('T')[0];
+                
+                const fromDate = new Date();
+                fromDate.setDate(today.getDate() - parseInt(dateRange));
+                dateFrom = fromDate.toISOString().split('T')[0];
+            }
+            
+            // Construct API URL with parameters
+            let url = '/analytics/performance-data?';
+            if (segmentId) url += `segment_id=${segmentId}&`;
+            if (dateFrom) url += `date_from=${dateFrom}&`;
+            if (dateTo) url += `date_to=${dateTo}&`;
+            
+            // Fetch data again for the chart update
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    createOrUpdateChart(data);
+                })
+                .catch(error => {
+                    console.error('Error updating chart:', error);
+                });
+        }
+        
+        // Export data as CSV
+        function exportCsv() {
+            const segmentId = document.getElementById('segmentFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            let dateFrom = '';
+            let dateTo = '';
+            
+            if (dateRange === 'custom') {
+                dateFrom = document.getElementById('dateFrom').value;
+                dateTo = document.getElementById('dateTo').value;
+            } else {
+                // Calculate date range
+                const today = new Date();
+                dateTo = today.toISOString().split('T')[0];
+                
+                const fromDate = new Date();
+                fromDate.setDate(today.getDate() - parseInt(dateRange));
+                dateFrom = fromDate.toISOString().split('T')[0];
+            }
+            
+            // Construct API URL with parameters
+            let url = '/analytics/performance-data?';
+            if (segmentId) url += `segment_id=${segmentId}&`;
+            if (dateFrom) url += `date_from=${dateFrom}&`;
+            if (dateTo) url += `date_to=${dateTo}&`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Create CSV content
+                    let csvContent = "Platform,Impressions,Clicks,CTR,Spend,CPC,Conversions,CPA,ROI\n";
+                    
+                    Object.keys(data).forEach(platform => {
+                        const metrics = data[platform];
+                        csvContent += `${platform},`;
+                        csvContent += `${metrics.impressions},`;
+                        csvContent += `${metrics.clicks},`;
+                        csvContent += `${metrics.ctr.toFixed(2)}%,`;
+                        csvContent += `$${metrics.spend.toFixed(2)},`;
+                        csvContent += `$${metrics.cpc.toFixed(2)},`;
+                        csvContent += `${metrics.conversions},`;
+                        csvContent += `${metrics.cpa ? '$' + metrics.cpa.toFixed(2) : 'N/A'},`;
+                        csvContent += `${metrics.roi ? metrics.roi.toFixed(2) + '%' : 'N/A'}\n`;
+                    });
+                    
+                    // Create download link
+                    const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', 'platform_performance.csv');
+                    document.body.appendChild(link);
+                    
+                    // Download CSV
+                    link.click();
+                    
+                    // Clean up
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Error exporting CSV:', error);
+                    alert('Error exporting data. Please try again.');
+                });
+        }
+    });
+</script>
+{% endblock %}

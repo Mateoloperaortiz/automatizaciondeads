@@ -1,0 +1,753 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Ad Templates | Ad Automation P-01{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Ad Templates</h1>
+            <p class="text-muted">Browse and use pre-designed ad templates</p>
+        </div>
+        <div class="content-actions">
+            <a href="{{ url_for('campaigns.create_campaign_form') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Ad
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filters-bar card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" placeholder="Search templates...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select class="form-control" id="template-category">
+                    <option value="all">All Categories</option>
+                    <option value="tech">Tech Recruitment</option>
+                    <option value="creative">Creative Talent</option>
+                    <option value="marketing">Marketing & Sales</option>
+                    <option value="entry">Entry Level</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates Grid -->
+<div class="templates-container">
+    <div class="row">
+        <!-- Tech Recruitment Templates -->
+        <div class="col-12 mb-4">
+            <h3 class="template-category-title">Tech Recruitment</h3>
+            <div class="templates-grid">
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/tech-1.jpg') }}" alt="Tech Template 1">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-1">
+                                <i class="fab fa-facebook"></i> Meta
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Software Engineer</h5>
+                        <p>Join Our Engineering Team. We're looking for talented software engineers to help build the future.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=tech_1" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="tech_1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/tech-2.jpg') }}" alt="Tech Template 2">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-2">
+                                <i class="fab fa-google"></i> Google
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>DevOps Engineer</h5>
+                        <p>Build Infrastructure That Scales. Join our DevOps team and solve complex infrastructure challenges.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=tech_2" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="tech_2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/tech-1.jpg') }}" alt="Tech Template 3">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-3">
+                                <i class="fab fa-twitter"></i> X
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Data Scientist</h5>
+                        <p>Turn Data Into Insights. Looking for data scientists passionate about solving real-world problems.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=tech_3" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="tech_3">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Creative Talent Templates -->
+        <div class="col-12 mb-4">
+            <h3 class="template-category-title">Creative Talent</h3>
+            <div class="templates-grid">
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/creative-1.jpg') }}" alt="Creative Template 1">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-1">
+                                <i class="fab fa-facebook"></i> Meta
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>UX/UI Designer</h5>
+                        <p>Design Experiences That Matter. Seeking UX/UI designers who transform complex problems into elegant solutions.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=creative_1" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="creative_1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/creative-1.jpg') }}" alt="Creative Template 2">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-2">
+                                <i class="fab fa-google"></i> Google
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Content Writer</h5>
+                        <p>Words That Inspire Action. Join our content team and craft compelling stories that connect with audiences.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=creative_2" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="creative_2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/creative-1.jpg') }}" alt="Creative Template 3">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-3">
+                                <i class="fab fa-twitter"></i> X
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Graphic Designer</h5>
+                        <p>Bring Ideas to Life. We're looking for graphic designers who can create stunning visuals for diverse projects.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=creative_3" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="creative_3">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Marketing Templates -->
+        <div class="col-12 mb-4">
+            <h3 class="template-category-title">Marketing & Sales</h3>
+            <div class="templates-grid">
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/office-1.jpg') }}" alt="Marketing Template 1">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-1">
+                                <i class="fab fa-facebook"></i> Meta
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Marketing Manager</h5>
+                        <p>Lead Growth Strategies. Join our marketing team to develop and execute innovative marketing campaigns.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=marketing_1" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="marketing_1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Entry Level Templates -->
+        <div class="col-12 mb-4">
+            <h3 class="template-category-title">Entry Level</h3>
+            <div class="templates-grid">
+                <div class="template-card">
+                    <div class="template-preview">
+                        <img src="{{ url_for('static', filename='img/ad-templates/entry-1.jpg') }}" alt="Entry Level Template 1">
+                        <div class="template-overlay">
+                            <span class="platform-badge platform-1">
+                                <i class="fab fa-facebook"></i> Meta
+                            </span>
+                        </div>
+                    </div>
+                    <div class="template-content">
+                        <h5>Junior Developer</h5>
+                        <p>Start Your Career Here. Perfect for recent graduates looking to gain experience in a supportive environment.</p>
+                        <div class="template-actions">
+                            <a href="{{ url_for('campaigns.create_campaign_form') }}?template=entry_1" class="btn btn-sm btn-primary">Use Template</a>
+                            <button class="btn btn-sm btn-outline-secondary preview-template" data-id="entry_1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Preview Modal -->
+<div class="template-preview-modal" id="templatePreviewModal">
+    <div class="template-preview-content">
+        <div class="template-preview-header">
+            <h4>Template Preview</h4>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="template-preview-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="preview-image-container">
+                        <img src="{{ url_for('static', filename='img/ad-templates/tech-1.jpg') }}" id="previewImage" alt="Template Preview">
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="preview-details">
+                        <h5 id="previewTitle">Template Title</h5>
+                        <p id="previewDescription">Template description goes here.</p>
+                        
+                        <div class="preview-specs">
+                            <div class="spec-item">
+                                <span class="spec-label">Platform:</span>
+                                <span class="spec-value" id="previewPlatform">Meta</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Category:</span>
+                                <span class="spec-value" id="previewCategory">Tech Recruitment</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Image Size:</span>
+                                <span class="spec-value">1200 x 628 px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-content-sample">
+                            <h6>Sample Content:</h6>
+                            <div class="content-sample">
+                                <div class="sample-item">
+                                    <span class="sample-label">Headline:</span>
+                                    <span class="sample-value" id="previewHeadline">Join Our Engineering Team</span>
+                                </div>
+                                <div class="sample-item">
+                                    <span class="sample-label">Text:</span>
+                                    <span class="sample-value" id="previewText">We're looking for talented software engineers to help build the future of technology.</span>
+                                </div>
+                                <div class="sample-item">
+                                    <span class="sample-label">CTA:</span>
+                                    <span class="sample-value" id="previewCta">Apply Now</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="template-preview-footer">
+            <a href="#" id="useTemplateBtn" class="btn btn-primary">Use This Template</a>
+            <button class="btn btn-outline-secondary cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Template preview functionality
+        const previewButtons = document.querySelectorAll('.preview-template');
+        const modal = document.getElementById('templatePreviewModal');
+        const closeModalBtn = modal.querySelector('.close-modal');
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        const useTemplateBtn = document.getElementById('useTemplateBtn');
+        
+        // Template data (in a real application, this would come from an API)
+        const templateData = {
+            'tech_1': {
+                title: 'Software Engineer',
+                description: 'A clean, professional template for software engineering positions, highlighting technical skills and innovation.',
+                platform: 'Meta',
+                category: 'Tech Recruitment',
+                headline: 'Join Our Engineering Team',
+                text: 'We\'re looking for talented software engineers to help build the future of technology. Competitive salary, flexible schedule, and great benefits.',
+                cta: 'Apply Now',
+                image: '/static/img/ad-templates/tech-1.jpg'
+            },
+            'tech_2': {
+                title: 'DevOps Engineer',
+                description: 'Template focused on infrastructure and operations roles, emphasizing scalability and reliability.',
+                platform: 'Google',
+                category: 'Tech Recruitment',
+                headline: 'Build Infrastructure That Scales',
+                text: 'Join our DevOps team and solve complex infrastructure challenges. Work with cutting-edge cloud technologies.',
+                cta: 'Learn More',
+                image: '/static/img/ad-templates/tech-2.jpg'
+            },
+            'tech_3': {
+                title: 'Data Scientist',
+                description: 'Data-focused template for recruiting analysts and data scientists with modern, clean visuals.',
+                platform: 'X',
+                category: 'Tech Recruitment',
+                headline: 'Turn Data Into Insights',
+                text: 'Looking for data scientists passionate about solving real-world problems with machine learning and analytics.',
+                cta: 'Apply Now',
+                image: '/static/img/ad-templates/tech-1.jpg'
+            },
+            'creative_1': {
+                title: 'UX/UI Designer',
+                description: 'Visual template for design roles, showcasing creativity and user-focused design principles.',
+                platform: 'Meta',
+                category: 'Creative Talent',
+                headline: 'Design Experiences That Matter',
+                text: 'Seeking UX/UI designers who transform complex problems into elegant solutions. Join our creative team.',
+                cta: 'See Jobs',
+                image: '/static/img/ad-templates/creative-1.jpg'
+            }
+        };
+        
+        // Open modal with template preview
+        previewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const templateId = this.getAttribute('data-id');
+                const template = templateData[templateId];
+                
+                if (template) {
+                    // Update modal content
+                    document.getElementById('previewTitle').textContent = template.title;
+                    document.getElementById('previewDescription').textContent = template.description;
+                    document.getElementById('previewPlatform').textContent = template.platform;
+                    document.getElementById('previewCategory').textContent = template.category;
+                    document.getElementById('previewHeadline').textContent = template.headline;
+                    document.getElementById('previewText').textContent = template.text;
+                    document.getElementById('previewCta').textContent = template.cta;
+                    document.getElementById('previewImage').src = template.image;
+                    
+                    // Update use template button link
+                    useTemplateBtn.href = `/campaigns/create?template=${templateId}`;
+                }
+                
+                // Show modal
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+        
+        // Close modal functions
+        function closeModal() {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Filter by category
+        const categorySelect = document.getElementById('template-category');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const category = this.value;
+                const templateSections = document.querySelectorAll('.template-category-title');
+                
+                if (category === 'all') {
+                    // Show all categories
+                    templateSections.forEach(section => {
+                        section.parentElement.style.display = 'block';
+                    });
+                } else {
+                    // Filter by selected category
+                    templateSections.forEach(section => {
+                        const sectionTitle = section.textContent.toLowerCase();
+                        if (category === 'tech' && sectionTitle.includes('tech')) {
+                            section.parentElement.style.display = 'block';
+                        } else if (category === 'creative' && sectionTitle.includes('creative')) {
+                            section.parentElement.style.display = 'block';
+                        } else if (category === 'marketing' && sectionTitle.includes('marketing')) {
+                            section.parentElement.style.display = 'block';
+                        } else if (category === 'entry' && sectionTitle.includes('entry')) {
+                            section.parentElement.style.display = 'block';
+                        } else {
+                            section.parentElement.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Search functionality
+        const searchInput = document.querySelector('.search-box input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const templateCards = document.querySelectorAll('.template-card');
+                
+                templateCards.forEach(card => {
+                    const title = card.querySelector('h5').textContent.toLowerCase();
+                    const description = card.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Check if any cards are visible in each section
+                document.querySelectorAll('.template-category-title').forEach(section => {
+                    const sectionCards = section.nextElementSibling.querySelectorAll('.template-card');
+                    const hasVisibleCards = Array.from(sectionCards).some(card => card.style.display !== 'none');
+                    
+                    // Hide section if no cards are visible
+                    section.parentElement.style.display = hasVisibleCards ? 'block' : 'none';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Template Page Styles */
+    .filters-bar {
+        background-color: white;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+    }
+    
+    .search-box input {
+        padding-left: 35px;
+    }
+    
+    /* Template Category Sections */
+    .template-category-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    /* Templates Grid */
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .template-card {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: all 0.2s ease;
+        background-color: white;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .template-preview {
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .template-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .template-card:hover .template-preview img {
+        transform: scale(1.05);
+    }
+    
+    .template-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .template-content {
+        padding: 16px;
+    }
+    
+    .template-content h5 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .template-content p {
+        margin: 0 0 16px;
+        font-size: 14px;
+        color: var(--gray-600);
+        line-height: 1.4;
+        height: 60px;
+        overflow: hidden;
+    }
+    
+    .template-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Platform Badge */
+    .platform-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .platform-1 {
+        background-color: #E7F3FF;
+        color: #1877F2;
+    }
+    
+    .platform-2 {
+        background-color: #F1F3F4;
+        color: #4285F4;
+    }
+    
+    .platform-3 {
+        background-color: #E8F5FD;
+        color: #1DA1F2;
+    }
+    
+    /* Template Preview Modal */
+    .template-preview-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .template-preview-modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .template-preview-content {
+        background-color: white;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .template-preview-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .template-preview-header h4 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--gray-500);
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .close-modal:hover {
+        color: var(--gray-700);
+    }
+    
+    .template-preview-body {
+        padding: 24px;
+    }
+    
+    .preview-image-container {
+        width: 100%;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .preview-image-container img {
+        width: 100%;
+        display: block;
+    }
+    
+    .preview-details {
+        padding-left: 20px;
+    }
+    
+    .preview-details h5 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+    
+    .preview-details p {
+        margin: 0 0 20px;
+        color: var(--gray-600);
+        line-height: 1.5;
+    }
+    
+    .preview-specs {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .spec-item {
+        margin-bottom: 8px;
+    }
+    
+    .spec-label {
+        font-weight: 500;
+        display: inline-block;
+        width: 80px;
+    }
+    
+    .preview-content-sample h6 {
+        margin: 0 0 10px;
+        font-weight: 600;
+    }
+    
+    .content-sample {
+        background-color: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 16px;
+    }
+    
+    .sample-item {
+        margin-bottom: 10px;
+    }
+    
+    .sample-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .sample-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: var(--gray-700);
+    }
+    
+    .sample-value {
+        display: block;
+        line-height: 1.4;
+    }
+    
+    .template-preview-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .templates-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+        
+        .template-preview-body .row {
+            flex-direction: column;
+        }
+        
+        .preview-details {
+            padding-left: 0;
+            margin-top: 20px;
+        }
+    }
+</style>
+{% endblock %}

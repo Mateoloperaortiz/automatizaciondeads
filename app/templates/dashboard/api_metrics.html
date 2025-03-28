@@ -1,0 +1,483 @@
+{% extends "simple_base.html" %}
+
+{% block title %}API Metrics | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">API Metrics Dashboard</h1>
+            <p class="text-muted">Monitor API usage, performance, and quotas across platforms</p>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="dropdown me-2">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar me-2"></i> Last 24 Hours
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Last 24 Hours</a></li>
+                    <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                    <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                    <li><a class="dropdown-item" href="#">Custom Range</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-download me-2"></i> Export
+            </button>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-primary-light">
+                                <i class="fas fa-exchange-alt text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted">Total API Requests</h6>
+                        </div>
+                    </div>
+                    <h2 class="card-title mb-1">{{ "{:,}".format(total_requests) }}</h2>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> 8.3% from yesterday
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-warning-light">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted">Avg. Error Rate</h6>
+                        </div>
+                    </div>
+                    <h2 class="card-title mb-1">{{ "%.1f"|format(avg_error_rate) }}%</h2>
+                    <div class="text-danger small">
+                        <i class="fas fa-arrow-up me-1"></i> 0.2% from yesterday
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-info-light">
+                                <i class="fas fa-clock text-info"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted">Avg. Response Time</h6>
+                        </div>
+                    </div>
+                    <h2 class="card-title mb-1">{{ "%.0f"|format(avg_response_time) }} ms</h2>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-down me-1"></i> 5.3% from yesterday
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-success-light">
+                                <i class="fas fa-chart-pie text-success"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted">Avg. Quota Usage</h6>
+                        </div>
+                    </div>
+                    <h2 class="card-title mb-1">{{ "%.1f"|format(avg_quota_usage) }}%</h2>
+                    <div class="text-warning small">
+                        <i class="fas fa-arrow-up me-1"></i> 3.1% from yesterday
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Request Volume Chart -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">API Request Volume</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active">Hourly</button>
+                    <button class="btn btn-outline-secondary">Daily</button>
+                    <button class="btn btn-outline-secondary">Weekly</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="requestVolumeChart" height="300"></canvas>
+        </div>
+    </div>
+    
+    <!-- Response Time Chart -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">API Response Time</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active">Hourly</button>
+                    <button class="btn btn-outline-secondary">Daily</button>
+                    <button class="btn btn-outline-secondary">Weekly</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="responseTimeChart" height="300"></canvas>
+        </div>
+    </div>
+    
+    <!-- Platform-specific metrics table -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Platform-specific Metrics</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Platform</th>
+                            <th>Daily Requests</th>
+                            <th>Error Rate</th>
+                            <th>Avg Response Time</th>
+                            <th>Quota Usage</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="platform-icon bg-primary-light me-2">
+                                        <i class="fab fa-facebook text-primary"></i>
+                                    </div>
+                                    <span>Meta</span>
+                                </div>
+                            </td>
+                            <td>{{ "{:,}".format(api_metrics.meta.daily_requests) }}</td>
+                            <td>{{ "%.1f"|format(api_metrics.meta.error_rate) }}%</td>
+                            <td>{{ api_metrics.meta.avg_response_time }} ms</td>
+                            <td>
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ api_metrics.meta.quota_usage }}%;" aria-valuenow="{{ api_metrics.meta.quota_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="small">{{ "%.1f"|format(api_metrics.meta.quota_usage) }}%</span>
+                            </td>
+                            <td><span class="badge bg-success">Healthy</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary">Details</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="platform-icon bg-danger-light me-2">
+                                        <i class="fab fa-google text-danger"></i>
+                                    </div>
+                                    <span>Google</span>
+                                </div>
+                            </td>
+                            <td>{{ "{:,}".format(api_metrics.google.daily_requests) }}</td>
+                            <td>{{ "%.1f"|format(api_metrics.google.error_rate) }}%</td>
+                            <td>{{ api_metrics.google.avg_response_time }} ms</td>
+                            <td>
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ api_metrics.google.quota_usage }}%;" aria-valuenow="{{ api_metrics.google.quota_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="small">{{ "%.1f"|format(api_metrics.google.quota_usage) }}%</span>
+                            </td>
+                            <td><span class="badge bg-success">Healthy</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary">Details</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="platform-icon bg-info-light me-2">
+                                        <i class="fab fa-twitter text-info"></i>
+                                    </div>
+                                    <span>Twitter</span>
+                                </div>
+                            </td>
+                            <td>{{ "{:,}".format(api_metrics.twitter.daily_requests) }}</td>
+                            <td>{{ "%.1f"|format(api_metrics.twitter.error_rate) }}%</td>
+                            <td>{{ api_metrics.twitter.avg_response_time }} ms</td>
+                            <td>
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ api_metrics.twitter.quota_usage }}%;" aria-valuenow="{{ api_metrics.twitter.quota_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="small">{{ "%.1f"|format(api_metrics.twitter.quota_usage) }}%</span>
+                            </td>
+                            <td><span class="badge bg-success">Healthy</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary">Details</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rate Limits & Quotas -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Rate Limits & Quotas</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Platform</th>
+                            <th>Endpoint</th>
+                            <th>Daily Limit</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
+                            <th>Reset Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Meta</td>
+                            <td>/insights</td>
+                            <td>5,000</td>
+                            <td>1,873</td>
+                            <td>3,127</td>
+                            <td>Midnight UTC</td>
+                            <td><span class="badge bg-success">OK</span></td>
+                        </tr>
+                        <tr>
+                            <td>Meta</td>
+                            <td>/adaccounts</td>
+                            <td>1,000</td>
+                            <td>782</td>
+                            <td>218</td>
+                            <td>Midnight UTC</td>
+                            <td><span class="badge bg-warning">Monitor</span></td>
+                        </tr>
+                        <tr>
+                            <td>Google</td>
+                            <td>/customers/*/campaigns</td>
+                            <td>10,000</td>
+                            <td>3,245</td>
+                            <td>6,755</td>
+                            <td>Midnight PST</td>
+                            <td><span class="badge bg-success">OK</span></td>
+                        </tr>
+                        <tr>
+                            <td>Twitter</td>
+                            <td>/stats/accounts</td>
+                            <td>3,000</td>
+                            <td>2,640</td>
+                            <td>360</td>
+                            <td>3:45 PM UTC</td>
+                            <td><span class="badge bg-danger">Alert</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Request Volume Chart
+        const requestVolumeCtx = document.getElementById('requestVolumeChart').getContext('2d');
+        new Chart(requestVolumeCtx, {
+            type: 'line',
+            data: {
+                labels: {{ time_labels|tojson }},
+                datasets: [
+                    {% for platform in requests_data %}
+                    {
+                        label: '{{ platform.platform }}',
+                        data: {{ platform.data|tojson }},
+                        borderColor: {% if platform.platform == 'Meta' %}'#4267B2'{% elif platform.platform == 'Google' %}'#DB4437'{% elif platform.platform == 'Twitter' %}'#1DA1F2'{% else %}'#999999'{% endif %},
+                        backgroundColor: {% if platform.platform == 'Meta' %}'rgba(66, 103, 178, 0.1)'{% elif platform.platform == 'Google' %}'rgba(219, 68, 55, 0.1)'{% elif platform.platform == 'Twitter' %}'rgba(29, 161, 242, 0.1)'{% else %}'rgba(153, 153, 153, 0.1)'{% endif %},
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Response Time Chart
+        const responseTimeCtx = document.getElementById('responseTimeChart').getContext('2d');
+        new Chart(responseTimeCtx, {
+            type: 'line',
+            data: {
+                labels: {{ time_labels|tojson }},
+                datasets: [
+                    {% for platform in response_time_data %}
+                    {
+                        label: '{{ platform.platform }}',
+                        data: {{ platform.data|tojson }},
+                        borderColor: {% if platform.platform == 'Meta' %}'#4267B2'{% elif platform.platform == 'Google' %}'#DB4437'{% elif platform.platform == 'Twitter' %}'#1DA1F2'{% else %}'#999999'{% endif %},
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' ms';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .bg-primary-light {
+        background-color: rgba(66, 103, 178, 0.1);
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(219, 68, 55, 0.1);
+    }
+    
+    .bg-info-light {
+        background-color: rgba(29, 161, 242, 0.1);
+    }
+    
+    .bg-success-light {
+        background-color: rgba(46, 196, 182, 0.1);
+    }
+    
+    .bg-warning-light {
+        background-color: rgba(255, 159, 28, 0.1);
+    }
+    
+    .text-primary {
+        color: #4267B2 !important;
+    }
+    
+    .text-danger {
+        color: #DB4437 !important;
+    }
+    
+    .text-info {
+        color: #1DA1F2 !important;
+    }
+    
+    .text-success {
+        color: #2EC4B6 !important;
+    }
+    
+    .text-warning {
+        color: #FF9F1C !important;
+    }
+    
+    .platform-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+</style>
+{% endblock %}

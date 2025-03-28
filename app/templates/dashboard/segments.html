@@ -1,0 +1,1727 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Audience Segments | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="segments-dashboard">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Audience Segments</h1>
+            <p class="text-muted">Discover and manage your machine learning-generated audience segments</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt"></i> Last 30 Days
+                </button>
+            </div>
+            <button class="btn btn-primary create-segment-btn" data-bs-toggle="modal" data-bs-target="#createSegmentModal">
+                <i class="fas fa-plus"></i> New Segment
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Stats Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-users text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Segments</div>
+                <div class="stats-value">{{ segments|length }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 12% from previous month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-user-check text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Audience Size</div>
+                <div class="stats-value">{{ segment_counts|sum }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 8.5% from previous month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-chart-pie text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Avg. Segment Size</div>
+                <div class="stats-value">{{ (segment_counts|sum / segments|length)|round|int if segments|length > 0 else 0 }}</div>
+                <div class="stats-change negative">
+                    <i class="fas fa-arrow-down"></i> 3.2% from previous month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-bullseye text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Segment Quality</div>
+                <div class="stats-value">76<span class="percent">%</span></div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 5.3% from previous month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Charts -->
+        <div class="dashboard-main">
+            <!-- Segment Distribution Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Segment Distribution</h2>
+                    <div class="header-actions">
+                        <div class="btn-group chart-view-toggle" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="doughnut">Doughnut</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">Bar</button>
+                        </div>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" data-bs-toggle="tooltip" title="Download Chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="segmentDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Demographics Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Segment Demographics</h2>
+                    <div class="header-actions">
+                        <select class="form-select form-select-sm demographic-select">
+                            <option value="age">Age Distribution</option>
+                            <option value="education">Education Level</option>
+                            <option value="experience">Years of Experience</option>
+                            <option value="location">Geographic Location</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="demographicsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engagement Metrics Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Engagement Metrics by Segment</h2>
+                    <div class="header-actions">
+                        <select class="form-select form-select-sm metric-select">
+                            <option value="ctr">Click-Through Rate</option>
+                            <option value="conversion">Conversion Rate</option>
+                            <option value="cpa">Cost Per Acquisition</option>
+                            <option value="roi">Return on Investment</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="engagementChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Performance Table -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Segment Performance</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search segments..." id="segmentSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover segment-performance-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Segment Name</th>
+                                    <th scope="col">Audience Size</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">Conv. Rate</th>
+                                    <th scope="col">CPA</th>
+                                    <th scope="col">ROI</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for segment in segments %}
+                                <tr>
+                                    <td>
+                                        <div class="segment-name">
+                                            <div class="segment-icon">{{ segment.name[:2]|upper }}</div>
+                                            <div>
+                                                <div class="name">{{ segment.name }}</div>
+                                                <div class="segment-type">
+                                                    {% if 'MANUAL' in segment.segment_code|default('') %}
+                                                    <span class="badge bg-info">Manual</span>
+                                                    {% else %}
+                                                    <span class="badge bg-primary">ML-Generated</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ segment.candidate_count|default(12000 + loop.index * 3500) }}</td>
+                                    <td>
+                                        <div class="metric">
+                                            {{ (3 + (loop.index / 20))|round(1) }}%
+                                            <div class="trend-indicator {% if loop.index is divisibleby(2) %}up{% else %}down{% endif %}">
+                                                <i class="fas fa-caret-{% if loop.index is divisibleby(2) %}up{% else %}down{% endif %}"></i>
+                                                {{ (0.1 + (loop.index / 100))|round(1) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="metric">
+                                            {{ (2 + (loop.index / 25))|round(1) }}%
+                                            <div class="trend-indicator {% if loop.index is divisibleby(3) %}up{% else %}down{% endif %}">
+                                                <i class="fas fa-caret-{% if loop.index is divisibleby(3) %}up{% else %}down{% endif %}"></i>
+                                                {{ (0.2 + (loop.index / 110))|round(1) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="metric">
+                                            ${{ (35 - loop.index)|round(2) }}
+                                            <div class="trend-indicator {% if not loop.index is divisibleby(2) %}up{% else %}down{% endif %}">
+                                                <i class="fas fa-caret-{% if not loop.index is divisibleby(2) %}up{% else %}down{% endif %}"></i>
+                                                ${{ (1 + (loop.index / 20))|round(2) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="metric">
+                                            {{ (120 + (loop.index * 5))|round(0) }}%
+                                            <div class="trend-indicator up">
+                                                <i class="fas fa-caret-up"></i>
+                                                {{ (5 + (loop.index / 3))|round(1) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('segment_detail', segment_id=segment.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Create Campaign">
+                                                <i class="fas fa-bullhorn"></i>
+                                            </button>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Analytics</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <nav aria-label="Segment pagination">
+                        <ul class="pagination pagination-sm justify-content-end mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Insights & Tools -->
+        <div class="dashboard-sidebar">
+            <!-- Segment Quality -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Segment Quality Metrics</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Silhouette Score</span>
+                                <span class="metric-value">0.72</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 72%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Measures how well-defined your clusters are
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Data Completeness</span>
+                                <span class="metric-value">89%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 89%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of complete profiles in segments
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Feature Coverage</span>
+                                <span class="metric-value">78%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 78%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Ratio of used features to available features
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Segment Stability</span>
+                                <span class="metric-value">94%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 94%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Consistency of segments over time
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audience Insights -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>AI-Powered Audience Insights</h2>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Tech Professionals Segment Growth</h3>
+                                <p>Technical professionals segment has grown by 15% in the last month, consider expanding ad reach.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Adjust Targeting</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-success-light">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Engagement Opportunity</h3>
+                                <p>Remote Workers segment shows 34% higher engagement on weekday evenings (6-9 PM).</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Optimize Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-warning-light">
+                                <i class="fas fa-bullseye text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Audience Overlap Detected</h3>
+                                <p>42% overlap between "Recent Graduates" and "Entry-Level Professionals" segments.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Review Segments</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Comparison -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Quick Segment Comparison</h2>
+                </div>
+                <div class="card-body">
+                    <div class="comparison-tool">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Select Segments to Compare</label>
+                            <select class="form-select mb-2" id="segmentCompare1">
+                                <option value="">Select first segment...</option>
+                                {% for segment in segments %}
+                                <option value="{{ segment.id }}">{{ segment.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-select" id="segmentCompare2">
+                                <option value="">Select second segment...</option>
+                                {% for segment in segments %}
+                                <option value="{{ segment.id }}">{{ segment.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="text-center mb-3">
+                            <button class="btn btn-primary" id="compareBtn" disabled>
+                                <i class="fas fa-exchange-alt"></i> Compare Segments
+                            </button>
+                        </div>
+                        <div class="comparison-metrics" id="comparisonResults" style="display: none;">
+                            <div class="comparison-header">
+                                <div>Metrics</div>
+                                <div>Segment A</div>
+                                <div>Segment B</div>
+                            </div>
+                            <div class="comparison-row">
+                                <div>Audience Size</div>
+                                <div>24,350</div>
+                                <div>18,720</div>
+                            </div>
+                            <div class="comparison-row">
+                                <div>CTR</div>
+                                <div class="higher">4.2%</div>
+                                <div>3.5%</div>
+                            </div>
+                            <div class="comparison-row">
+                                <div>Conversion Rate</div>
+                                <div>2.1%</div>
+                                <div class="higher">2.8%</div>
+                            </div>
+                            <div class="comparison-row">
+                                <div>Avg. CPA</div>
+                                <div>$32.15</div>
+                                <div class="higher-negative">$28.40</div>
+                            </div>
+                            <div class="comparison-row">
+                                <div>ROI</div>
+                                <div>124%</div>
+                                <div class="higher">142%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Creation Process -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>ML Segmentation Process</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="process-steps">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Data Collection</h3>
+                                <p>Candidate profiles and behavior data are collected and aggregated</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Feature Processing</h3>
+                                <p>Data is normalized and transformed into usable features</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>K-Means Clustering</h3>
+                                <p>Machine learning identifies natural groupings among candidates</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h3>Segment Characterization</h3>
+                                <p>Each cluster is analyzed to identify defining traits</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h3>Targeting Optimization</h3>
+                                <p>Segments are refined for platform-specific targeting options</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Segment Modal -->
+<div class="modal fade" id="createSegmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Segment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="segmentCreationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ml-tab" data-bs-toggle="tab" data-bs-target="#ml-panel" type="button" role="tab">
+                            <i class="fas fa-robot me-2"></i>ML-Generated
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-panel" type="button" role="tab">
+                            <i class="fas fa-sliders-h me-2"></i>Manual Definition
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="segmentCreationContent">
+                    <div class="tab-pane fade show active" id="ml-panel" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            ML-generated segments use machine learning to identify natural groupings in your candidate data.
+                        </div>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Data Source</label>
+                                <select class="form-select">
+                                    <option>All Candidates (45,230)</option>
+                                    <option>Active Candidates (28,145)</option>
+                                    <option>Recently Active (12,350)</option>
+                                    <option>Custom Dataset</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Number of Segments</label>
+                                <select class="form-select">
+                                    <option>Auto-detect (Recommended)</option>
+                                    <option>3 Segments</option>
+                                    <option>5 Segments</option>
+                                    <option>8 Segments</option>
+                                    <option>Custom</option>
+                                </select>
+                                <div class="form-text">Let the algorithm determine the optimal number of segments based on data patterns.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Feature Importance</label>
+                                <div class="feature-sliders">
+                                    <div class="feature-slider">
+                                        <div class="feature-name">Demographics</div>
+                                        <input type="range" class="form-range" min="0" max="10" value="7">
+                                        <div class="range-values">
+                                            <span>Less Important</span>
+                                            <span>More Important</span>
+                                        </div>
+                                    </div>
+                                    <div class="feature-slider">
+                                        <div class="feature-name">Skills & Experience</div>
+                                        <input type="range" class="form-range" min="0" max="10" value="9">
+                                        <div class="range-values">
+                                            <span>Less Important</span>
+                                            <span>More Important</span>
+                                        </div>
+                                    </div>
+                                    <div class="feature-slider">
+                                        <div class="feature-name">Education</div>
+                                        <input type="range" class="form-range" min="0" max="10" value="5">
+                                        <div class="range-values">
+                                            <span>Less Important</span>
+                                            <span>More Important</span>
+                                        </div>
+                                    </div>
+                                    <div class="feature-slider">
+                                        <div class="feature-name">Engagement History</div>
+                                        <input type="range" class="form-range" min="0" max="10" value="8">
+                                        <div class="range-values">
+                                            <span>Less Important</span>
+                                            <span>More Important</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Advanced Options</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="excludeOutliers" checked>
+                                    <label class="form-check-label" for="excludeOutliers">
+                                        Exclude outliers for more concentrated segments
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="normalizeData" checked>
+                                    <label class="form-check-label" for="normalizeData">
+                                        Apply feature normalization
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="generateNames">
+                                    <label class="form-check-label" for="generateNames">
+                                        Auto-generate descriptive segment names
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="manual-panel" role="tabpanel">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Segment Name</label>
+                                <input type="text" class="form-control" placeholder="Enter segment name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Segment Description</label>
+                                <textarea class="form-control" rows="2" placeholder="Enter description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Segment Criteria</label>
+                                <div class="criteria-builder">
+                                    <div class="criteria-group">
+                                        <div class="criteria-row">
+                                            <select class="form-select">
+                                                <option>Age</option>
+                                                <option>Location</option>
+                                                <option>Experience</option>
+                                                <option>Education</option>
+                                                <option>Skills</option>
+                                                <option>Job Title</option>
+                                                <option>Industry</option>
+                                            </select>
+                                            <select class="form-select">
+                                                <option>is between</option>
+                                                <option>equals</option>
+                                                <option>does not equal</option>
+                                                <option>greater than</option>
+                                                <option>less than</option>
+                                                <option>contains</option>
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="25">
+                                            <input type="text" class="form-control" placeholder="40">
+                                            <button class="btn btn-outline-danger btn-sm">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="criteria-row">
+                                            <select class="form-select">
+                                                <option>Skills</option>
+                                                <option>Age</option>
+                                                <option>Location</option>
+                                                <option>Experience</option>
+                                                <option>Education</option>
+                                                <option>Job Title</option>
+                                                <option>Industry</option>
+                                            </select>
+                                            <select class="form-select">
+                                                <option>contains any of</option>
+                                                <option>equals</option>
+                                                <option>does not equal</option>
+                                                <option>contains</option>
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="JavaScript, React, Angular">
+                                            <button class="btn btn-outline-danger btn-sm">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="criteria-actions">
+                                            <button class="btn btn-sm btn-link">
+                                                <i class="fas fa-plus"></i> Add condition
+                                            </button>
+                                            <span class="text-muted">All conditions must match (AND)</span>
+                                        </div>
+                                    </div>
+                                    <div class="criteria-connector">
+                                        <span>OR</span>
+                                    </div>
+                                    <div class="criteria-group">
+                                        <div class="criteria-row">
+                                            <select class="form-select">
+                                                <option>Job Title</option>
+                                                <option>Age</option>
+                                                <option>Location</option>
+                                                <option>Experience</option>
+                                                <option>Education</option>
+                                                <option>Skills</option>
+                                                <option>Industry</option>
+                                            </select>
+                                            <select class="form-select">
+                                                <option>contains any of</option>
+                                                <option>equals</option>
+                                                <option>does not equal</option>
+                                                <option>contains</option>
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="Developer, Engineer, Programmer">
+                                            <button class="btn btn-outline-danger btn-sm">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="criteria-actions">
+                                            <button class="btn btn-sm btn-link">
+                                                <i class="fas fa-plus"></i> Add condition
+                                            </button>
+                                            <span class="text-muted">All conditions must match (AND)</span>
+                                        </div>
+                                    </div>
+                                    <div class="criteria-group-actions">
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-plus"></i> Add Rule Group (OR)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="saveAudienceSize">
+                                    <label class="form-check-label" for="saveAudienceSize">
+                                        Save current audience size (estimated at 15,420 candidates)
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Create Segment</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --card-border-radius: 0.5rem;
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        --card-header-bg: rgba(248, 250, 252, 0.5);
+        --sidebar-width: 320px;
+        --grid-gap: 1.5rem;
+        --primary: #4361ee;
+        --success: #2ec4b6;
+        --warning: #ff9f1c;
+        --danger: #e71d36;
+        --info: #4cc9f0;
+        --card-padding: 1.25rem;
+        --text-muted: #6c757d;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --success-light: rgba(46, 196, 182, 0.1);
+        --warning-light: rgba(255, 159, 28, 0.1);
+        --danger-light: rgba(231, 29, 54, 0.1);
+        --info-light: rgba(76, 201, 240, 0.1);
+        --transition-speed: 0.2s;
+    }
+
+    /* Dashboard Layout */
+    .segments-dashboard {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--grid-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr var(--sidebar-width);
+        gap: var(--grid-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--grid-gap);
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--card-shadow);
+        transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .percent {
+        font-size: 1rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success);
+    }
+
+    .stats-change.negative {
+        color: var(--danger);
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+
+    .dashboard-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .dashboard-card .card-body {
+        padding: var(--card-padding);
+    }
+
+    .dashboard-card .card-footer {
+        padding: 0.75rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .progress {
+        height: 0.5rem;
+        border-radius: 1rem;
+    }
+
+    /* Insights */
+    .insights-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-content h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Segment Comparison */
+    .comparison-metrics {
+        margin-top: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .comparison-header {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        background-color: var(--card-header-bg);
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .comparison-row:last-child {
+        border-bottom: none;
+    }
+
+    .higher {
+        color: var(--success);
+        font-weight: 500;
+    }
+
+    .higher-negative {
+        color: var(--danger);
+        font-weight: 500;
+    }
+
+    /* Process Steps */
+    .process-steps {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .process-step {
+        display: flex;
+        padding: 1.25rem var(--card-padding);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .process-step:last-child {
+        border-bottom: none;
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .step-content h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .step-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    /* Segment Performance Table */
+    .segment-performance-table thead th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        background-color: var(--card-header-bg);
+    }
+
+    .segment-performance-table td {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+    }
+
+    .segment-name {
+        display: flex;
+        align-items: center;
+    }
+
+    .segment-icon {
+        width: 36px;
+        height: 36px;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .segment-name .name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .segment-type {
+        font-size: 0.75rem;
+    }
+
+    .segment-type .badge {
+        font-weight: normal;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .metric {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .trend-indicator {
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .trend-indicator.up {
+        color: var(--success);
+    }
+
+    .trend-indicator.down {
+        color: var(--danger);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: flex-end;
+    }
+
+    /* Feature Sliders */
+    .feature-sliders {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .feature-slider {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feature-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .range-values {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Criteria Builder */
+    .criteria-builder {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    .criteria-group {
+        margin-bottom: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .criteria-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .criteria-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .criteria-connector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }
+
+    .criteria-connector span {
+        background-color: var(--warning-light);
+        color: var(--warning);
+        font-weight: 600;
+        padding: 0.25rem 1rem;
+        border-radius: 1rem;
+    }
+
+    .criteria-group-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    /* Background Colors */
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-info-light { background-color: var(--info-light); }
+
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-info { color: var(--info) !important; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1199px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize ChartJS
+    Chart.defaults.font.family = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.color = '#6c757d';
+    
+    // Initialize all charts
+    initializeSegmentDistributionChart();
+    initializeDemographicsChart();
+    initializeEngagementChart();
+    
+    // Initialize segment comparison functionality
+    initializeSegmentComparison();
+    
+    // Toggle between chart types
+    initializeChartToggle();
+});
+
+function initializeSegmentDistributionChart() {
+    const ctx = document.getElementById('segmentDistributionChart').getContext('2d');
+    
+    // This would be replaced with real data in production
+    const segmentNames = [
+        'Tech Professionals', 
+        'Recent Graduates', 
+        'Creative Professionals', 
+        'Remote Workers', 
+        'Mid-Career Professionals'
+    ];
+    
+    const segmentCounts = [
+        24500, 
+        18000, 
+        15800, 
+        28400, 
+        22300
+    ];
+    
+    const segmentColors = [
+        'rgba(67, 97, 238, 0.8)',
+        'rgba(46, 196, 182, 0.8)',
+        'rgba(255, 159, 28, 0.8)',
+        'rgba(76, 201, 240, 0.8)',
+        'rgba(147, 51, 234, 0.8)'
+    ];
+    
+    window.segmentDistributionChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: segmentNames,
+            datasets: [{
+                data: segmentCounts,
+                backgroundColor: segmentColors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: ${value.toLocaleString()} candidates (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+function initializeDemographicsChart() {
+    const ctx = document.getElementById('demographicsChart').getContext('2d');
+    
+    // Age distribution data
+    const ageData = {
+        labels: ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'],
+        datasets: [
+            {
+                label: 'Tech Professionals',
+                data: [15, 45, 25, 10, 4, 1],
+                backgroundColor: 'rgba(67, 97, 238, 0.6)',
+                borderColor: 'rgba(67, 97, 238, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Recent Graduates',
+                data: [65, 30, 3, 1, 1, 0],
+                backgroundColor: 'rgba(46, 196, 182, 0.6)',
+                borderColor: 'rgba(46, 196, 182, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'All Segments',
+                data: [25, 38, 22, 10, 4, 1],
+                backgroundColor: 'rgba(155, 89, 182, 0.6)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 1
+            }
+        ]
+    };
+    
+    window.demographicsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: ageData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 70,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle demographic select change
+    const demographicSelect = document.querySelector('.demographic-select');
+    if (demographicSelect) {
+        demographicSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            let newData;
+            
+            if (selectedValue === 'education') {
+                newData = {
+                    labels: ['High School', 'Associate', 'Bachelor', 'Master', 'PhD', 'Other'],
+                    datasets: [
+                        {
+                            label: 'Tech Professionals',
+                            data: [5, 15, 50, 25, 5, 0],
+                            backgroundColor: 'rgba(67, 97, 238, 0.6)',
+                            borderColor: 'rgba(67, 97, 238, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Recent Graduates',
+                            data: [2, 8, 70, 20, 0, 0],
+                            backgroundColor: 'rgba(46, 196, 182, 0.6)',
+                            borderColor: 'rgba(46, 196, 182, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'All Segments',
+                            data: [12, 18, 45, 20, 3, 2],
+                            backgroundColor: 'rgba(155, 89, 182, 0.6)',
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+            } else if (selectedValue === 'experience') {
+                newData = {
+                    labels: ['<1 Year', '1-3 Years', '3-5 Years', '5-10 Years', '10+ Years'],
+                    datasets: [
+                        {
+                            label: 'Tech Professionals',
+                            data: [5, 20, 30, 35, 10],
+                            backgroundColor: 'rgba(67, 97, 238, 0.6)',
+                            borderColor: 'rgba(67, 97, 238, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Recent Graduates',
+                            data: [55, 40, 5, 0, 0],
+                            backgroundColor: 'rgba(46, 196, 182, 0.6)',
+                            borderColor: 'rgba(46, 196, 182, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'All Segments',
+                            data: [15, 25, 25, 25, 10],
+                            backgroundColor: 'rgba(155, 89, 182, 0.6)',
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+            } else if (selectedValue === 'location') {
+                newData = {
+                    labels: ['Urban', 'Suburban', 'Rural', 'Remote'],
+                    datasets: [
+                        {
+                            label: 'Tech Professionals',
+                            data: [65, 25, 5, 5],
+                            backgroundColor: 'rgba(67, 97, 238, 0.6)',
+                            borderColor: 'rgba(67, 97, 238, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Recent Graduates',
+                            data: [70, 25, 5, 0],
+                            backgroundColor: 'rgba(46, 196, 182, 0.6)',
+                            borderColor: 'rgba(46, 196, 182, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'All Segments',
+                            data: [55, 30, 10, 5],
+                            backgroundColor: 'rgba(155, 89, 182, 0.6)',
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+            } else {
+                newData = ageData;
+            }
+            
+            // Update chart data
+            window.demographicsChartInstance.data.labels = newData.labels;
+            window.demographicsChartInstance.data.datasets = newData.datasets;
+            window.demographicsChartInstance.update();
+        });
+    }
+}
+
+function initializeEngagementChart() {
+    const ctx = document.getElementById('engagementChart').getContext('2d');
+    
+    // CTR data
+    const ctrData = {
+        labels: ['Tech Professionals', 'Recent Graduates', 'Creative Professionals', 'Remote Workers', 'Mid-Career Professionals'],
+        datasets: [{
+            label: 'Click-Through Rate (%)',
+            data: [4.8, 3.5, 5.2, 4.1, 3.9],
+            backgroundColor: 'rgba(67, 97, 238, 0.6)',
+            borderColor: 'rgba(67, 97, 238, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    window.engagementChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: ctrData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 6,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle metric select change
+    const metricSelect = document.querySelector('.metric-select');
+    if (metricSelect) {
+        metricSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            let newData = {
+                labels: ctrData.labels,
+                datasets: [{
+                    borderWidth: 1
+                }]
+            };
+            
+            if (selectedValue === 'conversion') {
+                newData.datasets[0].label = 'Conversion Rate (%)';
+                newData.datasets[0].data = [2.4, 1.8, 2.7, 3.0, 1.9];
+                newData.datasets[0].backgroundColor = 'rgba(46, 196, 182, 0.6)';
+                newData.datasets[0].borderColor = 'rgba(46, 196, 182, 1)';
+                window.engagementChartInstance.options.scales.x.max = 4;
+            } else if (selectedValue === 'cpa') {
+                newData.datasets[0].label = 'Cost Per Acquisition ($)';
+                newData.datasets[0].data = [32.50, 28.75, 34.20, 25.80, 30.60];
+                newData.datasets[0].backgroundColor = 'rgba(255, 159, 28, 0.6)';
+                newData.datasets[0].borderColor = 'rgba(255, 159, 28, 1)';
+                window.engagementChartInstance.options.scales.x.max = 40;
+                window.engagementChartInstance.options.scales.x.ticks.callback = function(value) {
+                    return '$' + value;
+                };
+            } else if (selectedValue === 'roi') {
+                newData.datasets[0].label = 'Return on Investment (%)';
+                newData.datasets[0].data = [145, 125, 180, 210, 135];
+                newData.datasets[0].backgroundColor = 'rgba(76, 201, 240, 0.6)';
+                newData.datasets[0].borderColor = 'rgba(76, 201, 240, 1)';
+                window.engagementChartInstance.options.scales.x.max = 250;
+                window.engagementChartInstance.options.scales.x.ticks.callback = function(value) {
+                    return value + '%';
+                };
+            } else {
+                newData = ctrData;
+                window.engagementChartInstance.options.scales.x.max = 6;
+                window.engagementChartInstance.options.scales.x.ticks.callback = function(value) {
+                    return value + '%';
+                };
+            }
+            
+            // Update chart data
+            window.engagementChartInstance.data.datasets[0].label = newData.datasets[0].label;
+            window.engagementChartInstance.data.datasets[0].data = newData.datasets[0].data;
+            window.engagementChartInstance.data.datasets[0].backgroundColor = newData.datasets[0].backgroundColor;
+            window.engagementChartInstance.data.datasets[0].borderColor = newData.datasets[0].borderColor;
+            window.engagementChartInstance.update();
+        });
+    }
+}
+
+function initializeSegmentComparison() {
+    const compareSelects = document.querySelectorAll('#segmentCompare1, #segmentCompare2');
+    const compareBtn = document.getElementById('compareBtn');
+    const comparisonResults = document.getElementById('comparisonResults');
+    
+    // Enable/disable compare button based on selections
+    compareSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const select1Value = document.getElementById('segmentCompare1').value;
+            const select2Value = document.getElementById('segmentCompare2').value;
+            
+            // Enable button only when both dropdowns have selections that are different
+            compareBtn.disabled = !select1Value || !select2Value || select1Value === select2Value;
+        });
+    });
+    
+    // Show comparison results when button clicked
+    if (compareBtn) {
+        compareBtn.addEventListener('click', function() {
+            comparisonResults.style.display = 'block';
+            
+            // In a real app, this would fetch actual comparison data
+            // This is just for demo purposes
+        });
+    }
+}
+
+function initializeChartToggle() {
+    const toggleBtns = document.querySelectorAll('.chart-view-toggle button');
+    
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            toggleBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Get chart type
+            const chartType = this.getAttribute('data-chart-type');
+            
+            // Update chart
+            if (window.segmentDistributionChartInstance) {
+                // Destroy existing chart
+                window.segmentDistributionChartInstance.destroy();
+                
+                // Get canvas context
+                const ctx = document.getElementById('segmentDistributionChart').getContext('2d');
+                
+                // Create new chart with selected type
+                const data = {
+                    labels: ['Tech Professionals', 'Recent Graduates', 'Creative Professionals', 'Remote Workers', 'Mid-Career Professionals'],
+                    datasets: [{
+                        data: [24500, 18000, 15800, 28400, 22300],
+                        backgroundColor: [
+                            'rgba(67, 97, 238, 0.8)',
+                            'rgba(46, 196, 182, 0.8)',
+                            'rgba(255, 159, 28, 0.8)',
+                            'rgba(76, 201, 240, 0.8)',
+                            'rgba(147, 51, 234, 0.8)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: chartType === 'doughnut' ? '#ffffff' : 'rgba(67, 97, 238, 0.8)'
+                    }]
+                };
+                
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false
+                };
+                
+                if (chartType === 'doughnut') {
+                    options.plugins = {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${context.label}: ${value.toLocaleString()} candidates (${percentage}%)`;
+                                }
+                            }
+                        }
+                    };
+                    options.cutout = '65%';
+                } else {
+                    options.plugins = {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toLocaleString()} candidates`;
+                                }
+                            }
+                        }
+                    };
+                    options.scales = {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000) {
+                                        return (value / 1000) + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    };
+                    
+                    // For bar chart, we need to adjust the dataset
+                    data.datasets[0].backgroundColor = data.datasets[0].backgroundColor.map(color => color);
+                }
+                
+                // Create the new chart
+                window.segmentDistributionChartInstance = new Chart(ctx, {
+                    type: chartType,
+                    data: data,
+                    options: options
+                });
+            }
+        });
+    });
+}
+
+// Helper function to format numbers
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(0) + 'K';
+    }
+    return num;
+}
+</script>
+{% endblock %}

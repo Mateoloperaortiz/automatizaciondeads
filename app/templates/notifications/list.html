@@ -1,0 +1,281 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Notifications - MagnetoCursor{% endblock %}
+
+{% block styles %}
+<style>
+  .notification-card {
+    transition: all 0.2s ease;
+    border-left: 4px solid var(--neutral-300);
+    margin-bottom: 1rem;
+  }
+  
+  .notification-card.unread {
+    background-color: rgba(var(--primary-rgb), 0.05);
+  }
+  
+  .notification-card.success {
+    border-left-color: var(--success-500);
+  }
+  
+  .notification-card.info {
+    border-left-color: var(--primary-500);
+  }
+  
+  .notification-card.warning {
+    border-left-color: var(--warning-500);
+  }
+  
+  .notification-card.error {
+    border-left-color: var(--danger-500);
+  }
+  
+  .notification-icon {
+    font-size: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  
+  .notification-icon.success {
+    color: var(--success-500);
+    background-color: rgba(var(--success-rgb), 0.1);
+  }
+  
+  .notification-icon.info {
+    color: var(--primary-500);
+    background-color: rgba(var(--primary-rgb), 0.1);
+  }
+  
+  .notification-icon.warning {
+    color: var(--warning-500);
+    background-color: rgba(var(--warning-rgb), 0.1);
+  }
+  
+  .notification-icon.error {
+    color: var(--danger-500);
+    background-color: rgba(var(--danger-rgb), 0.1);
+  }
+  
+  .notification-time {
+    font-size: 0.8rem;
+    color: var(--neutral-500);
+  }
+  
+  .notification-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .notification-card:hover .notification-actions {
+    opacity: 1;
+  }
+  
+  .category-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    background-color: var(--neutral-200);
+    color: var(--neutral-700);
+  }
+  
+  .category-badge.campaign {
+    background-color: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-700);
+  }
+  
+  .category-badge.api {
+    background-color: rgba(var(--info-rgb), 0.1);
+    color: var(--info-700);
+  }
+  
+  .category-badge.segment {
+    background-color: rgba(var(--success-rgb), 0.1);
+    color: var(--success-700);
+  }
+  
+  .category-badge.system {
+    background-color: rgba(var(--neutral-rgb), 0.1);
+    color: var(--neutral-700);
+  }
+  
+  .category-badge.analytics {
+    background-color: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning-700);
+  }
+  
+  /* Filter sidebar */
+  .filter-sidebar {
+    position: sticky;
+    top: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <h1 class="h3 mb-3">Notifications</h1>
+  
+  <div class="row">
+    <!-- Filter Sidebar -->
+    <div class="col-12 col-lg-3 col-xl-2">
+      <div class="card filter-sidebar">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Filters</h5>
+        </div>
+        <div class="card-body">
+          <form id="filter-form" method="GET" action="{{ url_for('notifications.list_notifications') }}">
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="unread-only" name="unread_only" value="true" {% if unread_only %}checked{% endif %}>
+                <label class="form-check-label" for="unread-only">Unread only</label>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <select class="form-select" name="category">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
+                  {{ cat|capitalize }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+          </form>
+          
+          <hr>
+          
+          <form action="{{ url_for('notifications.mark_all_read') }}" method="POST" class="mt-3">
+            <input type="hidden" name="category" value="{{ category }}">
+            <button type="submit" class="btn btn-outline-primary w-100">Mark all as read</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notifications List -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            {% if unread_only %}Unread Notifications{% else %}All Notifications{% endif %}
+            {% if category %} - {{ category|capitalize }}{% endif %}
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if notifications %}
+            {% for notification in notifications %}
+              <div class="card notification-card {{ notification.type }} {% if not notification.is_read %}unread{% endif %}">
+                <div class="card-body">
+                  <div class="d-flex">
+                    <div class="notification-icon {{ notification.type }} me-3">
+                      <i data-feather="{{ notification.icon }}"></i>
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h5 class="mb-1">{{ notification.title }}</h5>
+                          <p class="mb-2">{{ notification.message }}</p>
+                          
+                          <div class="d-flex align-items-center">
+                            <span class="notification-time me-2">{{ notification.formatted_created_at }}</span>
+                            <span class="category-badge {{ notification.category }}">{{ notification.category }}</span>
+                            
+                            {% if notification.related_entity_type %}
+                            <span class="ms-2 small text-muted">
+                              {{ notification.related_entity_type|capitalize }} #{{ notification.related_entity_id }}
+                            </span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        
+                        <div class="notification-actions">
+                          {% if not notification.is_read %}
+                          <form action="{{ url_for('notifications.mark_read', notification_id=notification.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Mark as read</button>
+                          </form>
+                          {% endif %}
+                          
+                          <form action="{{ url_for('notifications.delete_notification', notification_id=notification.id) }}" method="POST" class="d-inline ms-2">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Notifications pagination">
+              <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('notifications.list_notifications', page=page-1, unread_only='true' if unread_only else '', category=category) }}">Previous</a>
+                </li>
+                
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('notifications.list_notifications', page=p, unread_only='true' if unread_only else '', category=category) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('notifications.list_notifications', page=page+1, unread_only='true' if unread_only else '', category=category) }}">Next</a>
+                </li>
+              </ul>
+            </nav>
+            {% endif %}
+            
+          {% else %}
+            <div class="text-center py-5">
+              <i data-feather="bell-off" style="width: 48px; height: 48px; stroke-width: 1; color: var(--neutral-400);"></i>
+              <h4 class="mt-3">No notifications found</h4>
+              <p class="text-muted">
+                {% if unread_only %}
+                  You don't have any unread notifications.
+                  <a href="{{ url_for('notifications.list_notifications') }}">View all notifications</a>
+                {% elif category %}
+                  No notifications in the {{ category }} category.
+                  <a href="{{ url_for('notifications.list_notifications') }}">View all notifications</a>
+                {% else %}
+                  Your notification inbox is empty.
+                {% endif %}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Re-initialize feather icons for notification cards
+    feather.replace();
+    
+    // Auto-submit filter form when select changes
+    document.querySelector('#filter-form select[name="category"]').addEventListener('change', function() {
+      document.getElementById('filter-form').submit();
+    });
+    
+    // Auto-submit filter form when checkbox changes
+    document.querySelector('#filter-form #unread-only').addEventListener('change', function() {
+      document.getElementById('filter-form').submit();
+    });
+  });
+</script>
+{% endblock %}

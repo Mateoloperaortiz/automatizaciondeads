@@ -1,0 +1,249 @@
+<!-- Help Button Component -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-question-circle me-1"></i> Help
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="helpDropdown">
+        <li><a class="dropdown-item" href="{{ url_for('docs.index') }}">
+            <i class="bi bi-book me-2"></i> Documentation
+        </a></li>
+        <li><a class="dropdown-item" href="{{ url_for('docs.api_documentation') }}">
+            <i class="bi bi-file-code me-2"></i> API Reference
+        </a></li>
+        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#tooltipsHelpModal">
+            <i class="bi bi-info-circle me-2"></i> Term Definitions
+        </a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#supportModal">
+            <i class="bi bi-headset me-2"></i> Get Support
+        </a></li>
+    </ul>
+</li>
+
+<!-- Tooltips Help Modal -->
+<div class="modal fade" id="tooltipsHelpModal" tabindex="-1" aria-labelledby="tooltipsHelpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tooltipsHelpModalLabel">Technical Terms Glossary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="glossarySearch" placeholder="Search for terms...">
+                </div>
+                
+                <div class="accordion" id="glossaryAccordion">
+                    <!-- Campaign Terms -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="campaignTermsHeading">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#campaignTerms" aria-expanded="true" aria-controls="campaignTerms">
+                                Campaign Terms
+                            </button>
+                        </h2>
+                        <div id="campaignTerms" class="accordion-collapse collapse show" aria-labelledby="campaignTermsHeading" data-bs-parent="#glossaryAccordion">
+                            <div class="accordion-body">
+                                <dl class="row">
+                                    <dt class="col-sm-3">Campaign</dt>
+                                    <dd class="col-sm-9">A structured advertising initiative targeting specific audience segments with job openings on social media platforms.</dd>
+                                    
+                                    <dt class="col-sm-3">Campaign Status</dt>
+                                    <dd class="col-sm-9">The current state of a campaign: draft (not published), active (running), paused (temporarily stopped), completed (finished), or rejected.</dd>
+                                    
+                                    <dt class="col-sm-3">Campaign Budget</dt>
+                                    <dd class="col-sm-9">The maximum amount to spend on a campaign across all platforms. Can be set as daily, lifetime, or per-platform.</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Segmentation Terms -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="segmentationTermsHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#segmentationTerms" aria-expanded="false" aria-controls="segmentationTerms">
+                                Audience Segmentation Terms
+                            </button>
+                        </h2>
+                        <div id="segmentationTerms" class="accordion-collapse collapse" aria-labelledby="segmentationTermsHeading" data-bs-parent="#glossaryAccordion">
+                            <div class="accordion-body">
+                                <dl class="row">
+                                    <dt class="col-sm-3">Segment</dt>
+                                    <dd class="col-sm-9">A group of potential candidates with similar characteristics, created through machine learning clustering algorithms.</dd>
+                                    
+                                    <dt class="col-sm-3">Segmentation</dt>
+                                    <dd class="col-sm-9">The process of dividing potential candidates into groups based on demographics, experience, interests, or behavior.</dd>
+                                    
+                                    <dt class="col-sm-3">Clustering</dt>
+                                    <dd class="col-sm-9">A machine learning technique used to group similar candidates together based on their attributes.</dd>
+                                    
+                                    <dt class="col-sm-3">K-means</dt>
+                                    <dd class="col-sm-9">A specific clustering algorithm that groups data points into k clusters by minimizing the variance within each cluster.</dd>
+                                    
+                                    <dt class="col-sm-3">Silhouette Score</dt>
+                                    <dd class="col-sm-9">A metric measuring how well-defined clusters are, ranging from -1 to 1, with higher values indicating better clustering.</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Platform Terms -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="platformTermsHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#platformTerms" aria-expanded="false" aria-controls="platformTerms">
+                                Social Media Platform Terms
+                            </button>
+                        </h2>
+                        <div id="platformTerms" class="accordion-collapse collapse" aria-labelledby="platformTermsHeading" data-bs-parent="#glossaryAccordion">
+                            <div class="accordion-body">
+                                <dl class="row">
+                                    <dt class="col-sm-3">Meta Ads</dt>
+                                    <dd class="col-sm-9">The advertising platform for Facebook and Instagram, allowing targeted job ads based on user interests, demographics, and behaviors.</dd>
+                                    
+                                    <dt class="col-sm-3">X Ads</dt>
+                                    <dd class="col-sm-9">The advertising platform for X (formerly Twitter), enabling targeted job ads based on user interests, keywords, and engagement behavior.</dd>
+                                    
+                                    <dt class="col-sm-3">Google Ads</dt>
+                                    <dd class="col-sm-9">Google's advertising platform that can display job ads on Google Search, YouTube, and partner websites based on search queries and interests.</dd>
+                                    
+                                    <dt class="col-sm-3">Conversion Tracking</dt>
+                                    <dd class="col-sm-9">The process of measuring when users complete desired actions after seeing an ad, such as submitting a job application.</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Terms -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="apiTermsHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#apiTerms" aria-expanded="false" aria-controls="apiTerms">
+                                API Terms
+                            </button>
+                        </h2>
+                        <div id="apiTerms" class="accordion-collapse collapse" aria-labelledby="apiTermsHeading" data-bs-parent="#glossaryAccordion">
+                            <div class="accordion-body">
+                                <dl class="row">
+                                    <dt class="col-sm-3">API</dt>
+                                    <dd class="col-sm-9">Application Programming Interface - a set of rules and protocols that allows different software applications to communicate with each other.</dd>
+                                    
+                                    <dt class="col-sm-3">API Key</dt>
+                                    <dd class="col-sm-9">A unique identifier used to authenticate API requests from your application to the MagnetoCursor API.</dd>
+                                    
+                                    <dt class="col-sm-3">REST API</dt>
+                                    <dd class="col-sm-9">Representational State Transfer API - an architectural style for designing networked applications that uses HTTP requests to access and manipulate data.</dd>
+                                    
+                                    <dt class="col-sm-3">Endpoint</dt>
+                                    <dd class="col-sm-9">A specific URL in the API that represents a resource or functionality that can be accessed by clients.</dd>
+                                    
+                                    <dt class="col-sm-3">Rate Limit</dt>
+                                    <dd class="col-sm-9">A restriction on the number of API requests a client can make within a specified time period.</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('docs.index') }}" class="btn btn-primary">Full Documentation</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Support Modal -->
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supportModalLabel">Get Support</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Need help with MagnetoCursor? Our support team is ready to assist you.</p>
+                
+                <div class="list-group mb-3">
+                    <a href="mailto:support@magnetocursor.com" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1"><i class="bi bi-envelope me-2"></i> Email Support</h5>
+                            <small>24-48hr response</small>
+                        </div>
+                        <p class="mb-1">Send an email to our support team</p>
+                        <small class="text-muted">support@magnetocursor.com</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1"><i class="bi bi-chat-dots me-2"></i> Live Chat</h5>
+                            <small>Available 9am-5pm ET</small>
+                        </div>
+                        <p class="mb-1">Chat with a support representative</p>
+                        <small class="text-muted">Average wait time: 2 minutes</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1"><i class="bi bi-telephone me-2"></i> Phone Support</h5>
+                            <small>Premium plans only</small>
+                        </div>
+                        <p class="mb-1">Speak directly with our support team</p>
+                        <small class="text-muted">+1 (800) 123-4567</small>
+                    </a>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="includeSystemInfo">
+                    <label class="form-check-label" for="includeSystemInfo">
+                        Include system information with my support request
+                    </label>
+                    <small class="form-text d-block">This helps our team diagnose your issue more quickly.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('docs.index') }}" class="btn btn-primary">Browse Documentation</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Tooltip Search Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const glossarySearch = document.getElementById('glossarySearch');
+        if (glossarySearch) {
+            glossarySearch.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const terms = document.querySelectorAll('#glossaryAccordion dt');
+                const definitions = document.querySelectorAll('#glossaryAccordion dd');
+                
+                // Show/hide based on search
+                let termsFound = false;
+                for (let i = 0; i < terms.length; i++) {
+                    const term = terms[i].textContent.toLowerCase();
+                    const definition = definitions[i].textContent.toLowerCase();
+                    
+                    if (term.includes(searchText) || definition.includes(searchText)) {
+                        terms[i].parentElement.style.display = '';
+                        termsFound = true;
+                    } else {
+                        terms[i].parentElement.style.display = 'none';
+                    }
+                }
+                
+                // Expand all sections if searching
+                if (searchText) {
+                    document.querySelectorAll('#glossaryAccordion .accordion-collapse').forEach(collapse => {
+                        collapse.classList.add('show');
+                    });
+                } else {
+                    // Reset to default state if search is cleared
+                    document.querySelectorAll('#glossaryAccordion .accordion-collapse').forEach((collapse, index) => {
+                        if (index === 0) {
+                            collapse.classList.add('show');
+                        } else {
+                            collapse.classList.remove('show');
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>

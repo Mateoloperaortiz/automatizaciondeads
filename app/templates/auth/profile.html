@@ -1,0 +1,126 @@
+{% extends "simple_base.html" %}
+
+{% block title %}My Profile - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <div class="user-avatar mb-3">
+            {% if user.get_preferences().get('avatar_url') %}
+              <img src="{{ user.get_preferences().get('avatar_url') }}" alt="{{ user.username }}" class="img-fluid rounded-circle" style="width: 128px; height: 128px; object-fit: cover;">
+            {% else %}
+              <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 128px; height: 128px; background-color: #f0f0f0; font-size: 48px; color: #007bff;">
+                {{ user.username[0].upper() }}
+              </div>
+            {% endif %}
+          </div>
+          <h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
+          <p class="text-muted">@{{ user.username }}</p>
+          <p class="badge bg-primary">{{ user.role.title() }}</p>
+          
+          <hr>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary btn-sm">Change Password</a>
+            <a href="{{ url_for('auth.preferences') }}" class="btn btn-outline-secondary btn-sm">Preferences</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Account Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <small class="text-muted">Member since</small>
+            <div>{{ user.created_at.strftime('%B %d, %Y') }}</div>
+          </div>
+          <div class="mb-2">
+            <small class="text-muted">Last login</small>
+            <div>{{ user.last_login.strftime('%B %d, %Y %H:%M') if user.last_login else 'Never' }}</div>
+          </div>
+          <div>
+            <small class="text-muted">Email</small>
+            <div>{{ user.email }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-9">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Edit Profile</h5>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          
+          <form method="POST" action="{{ url_for('auth.profile') }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                {{ form.first_name.label(class="form-label") }}
+                {{ form.first_name(class="form-control") }}
+                {% if form.first_name.errors %}
+                  <div class="form-text text-danger">
+                    {% for error in form.first_name.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                {{ form.last_name.label(class="form-label") }}
+                {{ form.last_name(class="form-control") }}
+                {% if form.last_name.errors %}
+                  <div class="form-text text-danger">
+                    {% for error in form.last_name.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control") }}
+              {% if form.email.errors %}
+                <div class="form-text text-danger">
+                  {% for error in form.email.errors %}
+                    {{ error }}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="text-end">
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Recent Activity</h5>
+        </div>
+        <div class="card-body">
+          <!-- This is a placeholder for potential future activity tracking -->
+          <p class="text-muted">Activity tracking will be available in a future update.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

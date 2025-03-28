@@ -1,0 +1,408 @@
+{% extends "simple_base.html" %}
+
+{% block title %}API Metrics Dashboard{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
+  <style>
+    .metrics-card {
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: #fff;
+    }
+    
+    .platform-section {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .metric-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .metric-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .error-rate {
+      color: #e74c3c;
+    }
+    
+    .success-rate {
+      color: #2ecc71;
+    }
+    
+    .latency-chart {
+      height: 250px;
+      margin-top: 20px;
+    }
+    
+    .refresh-time {
+      font-size: 12px;
+      color: #999;
+      text-align: right;
+      margin-top: 10px;
+    }
+    
+    .platform-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .platform-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    
+    .platform-badge {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .platform-meta {
+      background-color: #3b5998;
+      color: white;
+    }
+    
+    .platform-twitter {
+      background-color: #1da1f2;
+      color: white;
+    }
+    
+    .platform-google {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .metric-row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -10px;
+    }
+    
+    .metric-col {
+      flex: 1;
+      padding: 0 10px;
+      min-width: 150px;
+    }
+    
+    @media (max-width: 768px) {
+      .metric-col {
+        flex-basis: 50%;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .metric-col {
+        flex-basis: 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mt-4 mb-4">API Metrics Dashboard</h1>
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="metrics-card">
+        <h2>Overview</h2>
+        <div class="metric-row">
+          <div class="metric-col">
+            <div class="metric-label">Total Requests</div>
+            <div class="metric-value" id="total-requests">-</div>
+          </div>
+          <div class="metric-col">
+            <div class="metric-label">Overall Success Rate</div>
+            <div class="metric-value success-rate" id="overall-success-rate">-</div>
+          </div>
+          <div class="metric-col">
+            <div class="metric-label">Overall Error Rate</div>
+            <div class="metric-value error-rate" id="overall-error-rate">-</div>
+          </div>
+          <div class="metric-col">
+            <div class="metric-label">Avg. Response Time</div>
+            <div class="metric-value" id="overall-latency">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% for platform in ['META', 'TWITTER', 'GOOGLE'] %}
+  <div class="platform-section" id="platform-{{ platform|lower }}">
+    <div class="platform-header">
+      <div class="platform-title">{{ platform }} API</div>
+      <div class="platform-badge platform-{{ platform|lower }}">{{ platform }}</div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-4">
+        <div class="metrics-card">
+          <h4>Request Volume</h4>
+          <div class="metric-label">Total Requests</div>
+          <div class="metric-value" id="{{ platform|lower }}-requests">-</div>
+          
+          <div class="metric-label mt-3">Request Rate (last 5m)</div>
+          <div class="metric-value" id="{{ platform|lower }}-req-rate">-</div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="metrics-card">
+          <h4>Success/Error Rates</h4>
+          <div class="metric-label">Success Rate</div>
+          <div class="metric-value success-rate" id="{{ platform|lower }}-success-rate">-</div>
+          
+          <div class="metric-label mt-3">Error Rate</div>
+          <div class="metric-value error-rate" id="{{ platform|lower }}-error-rate">-</div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="metrics-card">
+          <h4>Response Times</h4>
+          <div class="metric-row">
+            <div class="metric-col">
+              <div class="metric-label">Average</div>
+              <div class="metric-value" id="{{ platform|lower }}-avg-latency">-</div>
+            </div>
+            <div class="metric-col">
+              <div class="metric-label">p95</div>
+              <div class="metric-value" id="{{ platform|lower }}-p95-latency">-</div>
+            </div>
+          </div>
+          
+          <div class="metric-row mt-3">
+            <div class="metric-col">
+              <div class="metric-label">Min</div>
+              <div class="metric-value" id="{{ platform|lower }}-min-latency">-</div>
+            </div>
+            <div class="metric-col">
+              <div class="metric-label">Max</div>
+              <div class="metric-value" id="{{ platform|lower }}-max-latency">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <div class="metrics-card">
+          <h4>Response Time Trends (24h)</h4>
+          <div class="latency-chart">
+            <canvas id="{{ platform|lower }}-latency-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  
+  <div class="refresh-time">
+    Last updated: <span id="last-updated">{{ now }}</span>
+    <button id="refresh-btn" class="btn btn-sm btn-outline-secondary ml-2">Refresh</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  // Sample data - this would be replaced with real data from the backend
+  const metricsData = {{ metrics|tojson }};
+  
+  // Format timestamp
+  function formatTime(timestamp) {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleTimeString();
+  }
+  
+  // Format latency in ms
+  function formatLatency(seconds) {
+    return (seconds * 1000).toFixed(1) + ' ms';
+  }
+  
+  // Format percentage
+  function formatPercentage(value) {
+    return (value * 100).toFixed(1) + '%';
+  }
+  
+  // Update metrics UI
+  function updateMetrics() {
+    let totalRequests = 0;
+    let totalErrors = 0;
+    let totalLatency = 0;
+    let latencyCount = 0;
+    
+    // Process each platform
+    for (const [platform, data] of Object.entries(metricsData)) {
+      const lcPlatform = platform.toLowerCase();
+      const platformMetrics = data.platforms[platform];
+      
+      if (platformMetrics) {
+        // Update request counts
+        const requests = platformMetrics.requests || 0;
+        const errors = platformMetrics.errors || 0;
+        totalRequests += requests;
+        totalErrors += errors;
+        
+        document.getElementById(`${lcPlatform}-requests`).textContent = requests.toLocaleString();
+        
+        // Update success/error rates
+        const errorRate = requests > 0 ? errors / requests : 0;
+        const successRate = 1 - errorRate;
+        document.getElementById(`${lcPlatform}-success-rate`).textContent = formatPercentage(successRate);
+        document.getElementById(`${lcPlatform}-error-rate`).textContent = formatPercentage(errorRate);
+        
+        // Update latency metrics if available
+        if (platformMetrics.latency) {
+          const latency = platformMetrics.latency;
+          document.getElementById(`${lcPlatform}-avg-latency`).textContent = formatLatency(latency.avg);
+          document.getElementById(`${lcPlatform}-p95-latency`).textContent = formatLatency(latency.p95);
+          document.getElementById(`${lcPlatform}-min-latency`).textContent = formatLatency(latency.min);
+          document.getElementById(`${lcPlatform}-max-latency`).textContent = formatLatency(latency.max);
+          
+          totalLatency += latency.avg;
+          latencyCount++;
+        }
+        
+        // Set request rate
+        const reqRate = data.request_rate || 0;
+        document.getElementById(`${lcPlatform}-req-rate`).textContent = reqRate.toFixed(2) + ' req/sec';
+        
+        // Create latency chart
+        createLatencyChart(lcPlatform, data.latency_trends || []);
+      }
+    }
+    
+    // Update overview metrics
+    document.getElementById('total-requests').textContent = totalRequests.toLocaleString();
+    
+    const overallErrorRate = totalRequests > 0 ? totalErrors / totalRequests : 0;
+    const overallSuccessRate = 1 - overallErrorRate;
+    document.getElementById('overall-success-rate').textContent = formatPercentage(overallSuccessRate);
+    document.getElementById('overall-error-rate').textContent = formatPercentage(overallErrorRate);
+    
+    const avgLatency = latencyCount > 0 ? totalLatency / latencyCount : 0;
+    document.getElementById('overall-latency').textContent = formatLatency(avgLatency);
+    
+    // Update last updated time
+    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+  }
+  
+  // Create latency chart
+  function createLatencyChart(platform, trendData) {
+    const canvas = document.getElementById(`${platform}-latency-chart`);
+    
+    // Sample data if no real data available
+    if (!trendData || trendData.length === 0) {
+      trendData = Array.from({length: 24}, (_, i) => ({
+        timestamp: Date.now() / 1000 - (23 - i) * 3600,
+        avg_latency: Math.random() * 0.2 + 0.1,
+        requests: Math.floor(Math.random() * 100) + 20
+      }));
+    }
+    
+    // Format data for chart
+    const labels = trendData.map(point => formatTime(point.timestamp));
+    const avgLatencyData = trendData.map(point => point.avg_latency * 1000); // Convert to ms
+    const requestVolumeData = trendData.map(point => point.requests);
+    
+    // Destroy existing chart if it exists
+    if (window[`${platform}Chart`]) {
+      window[`${platform}Chart`].destroy();
+    }
+    
+    // Create chart
+    window[`${platform}Chart`] = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Avg Latency (ms)',
+            data: avgLatencyData,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            yAxisID: 'y',
+            tension: 0.4
+          },
+          {
+            label: 'Requests',
+            data: requestVolumeData,
+            borderColor: '#e67e22',
+            backgroundColor: 'rgba(230, 126, 34, 0.1)',
+            yAxisID: 'y1',
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Latency (ms)'
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: 'Requests'
+            },
+            grid: {
+              drawOnChartArea: false
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Initialize charts and metrics
+  document.addEventListener('DOMContentLoaded', function() {
+    // Update metrics on load
+    updateMetrics();
+    
+    // Add refresh handler
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+      // In a real app, this would fetch fresh data from the server
+      // For now, we'll just refresh with the same data
+      updateMetrics();
+    });
+  });
+</script>
+{% endblock %}

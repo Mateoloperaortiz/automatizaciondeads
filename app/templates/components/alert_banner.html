@@ -1,0 +1,52 @@
+{% if alert %}
+<div class="alert-banner {% if alert.active %}show{% endif %}" id="alertBanner" data-alert-id="{{ alert.id }}">
+  <div class="alert-banner-content">
+    <div class="alert-banner-icon">
+      <i data-feather="{{ alert.icon|default('alert-triangle') }}"></i>
+    </div>
+    <div>
+      <strong>{{ alert.title }}</strong> - {{ alert.message }}
+    </div>
+  </div>
+  <button class="alert-banner-close" id="alertBannerClose">
+    <i data-feather="x"></i>
+  </button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const alertBanner = document.getElementById('alertBanner');
+    const alertBannerClose = document.getElementById('alertBannerClose');
+    
+    if (alertBanner && alertBannerClose) {
+      // Initialize Feather icons
+      feather.replace();
+      
+      // Handle alert dismissal
+      alertBannerClose.addEventListener('click', function() {
+        // Animate out
+        alertBanner.classList.remove('show');
+        
+        // After animation, remove from DOM
+        setTimeout(() => {
+          alertBanner.remove();
+        }, 300);
+        
+        // Record that user has dismissed this alert (optional)
+        const alertId = alertBanner.dataset.alertId;
+        if (alertId) {
+          fetch('/api/alerts/dismiss/' + alertId, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          }).catch(error => {
+            console.error('Error dismissing alert:', error);
+          });
+        }
+      });
+    }
+  });
+</script>
+{% endif %}

@@ -1,0 +1,494 @@
+{% extends "simple_base.html" %}
+
+{% block title %}API Playground | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="mb-1">API Playground</h1>
+        <p class="text-muted">Test API endpoints and experiment with different parameters</p>
+    </div>
+    
+    <div class="row">
+        <!-- API Request Builder Panel -->
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Request Builder</h5>
+                </div>
+                <div class="card-body">
+                    <form id="apiRequestForm">
+                        <div class="mb-3">
+                            <label for="platform" class="form-label">Platform</label>
+                            <select class="form-select" id="platform">
+                                <option value="">Select a platform</option>
+                                {% for platform in platforms %}
+                                <option value="{{ platform.id }}">{{ platform.name }} ({{ platform.version }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="endpoint" class="form-label">Endpoint</label>
+                            <select class="form-select" id="endpoint" disabled>
+                                <option value="">Select an endpoint</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="method" class="form-label">Method</label>
+                            <div class="method-selector">
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="method" id="method-get" value="GET" checked>
+                                    <label class="btn btn-outline-primary" for="method-get">GET</label>
+                                    
+                                    <input type="radio" class="btn-check" name="method" id="method-post" value="POST">
+                                    <label class="btn btn-outline-primary" for="method-post">POST</label>
+                                    
+                                    <input type="radio" class="btn-check" name="method" id="method-put" value="PUT">
+                                    <label class="btn btn-outline-primary" for="method-put">PUT</label>
+                                    
+                                    <input type="radio" class="btn-check" name="method" id="method-delete" value="DELETE">
+                                    <label class="btn btn-outline-primary" for="method-delete">DELETE</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="parameters" class="form-label">Parameters</label>
+                            <div id="parameters-container">
+                                <div class="row mb-2 parameter-row">
+                                    <div class="col-5">
+                                        <input type="text" class="form-control param-key" placeholder="Key">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control param-value" placeholder="Value">
+                                    </div>
+                                    <div class="col-1">
+                                        <button type="button" class="btn btn-outline-danger remove-param">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-param">
+                                <i class="fas fa-plus me-1"></i> Add Parameter
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="request-body" class="form-label">Request Body (JSON)</label>
+                            <div class="code-editor" id="request-body-editor">
+                                <pre><code class="language-json" id="request-body-code">{
+  "key": "value"
+}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" id="reset-form">
+                                <i class="fas fa-undo me-1"></i> Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="send-request">
+                                <i class="fas fa-paper-plane me-1"></i> Send Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Request History -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Request History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">GET /me/adaccounts</h6>
+                                <small class="text-muted">3 mins ago</small>
+                            </div>
+                            <p class="mb-1 text-muted small">Meta Ads API</p>
+                            <span class="badge bg-success">200 OK</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">GET /customers/1234567890/campaigns</h6>
+                                <small class="text-muted">10 mins ago</small>
+                            </div>
+                            <p class="mb-1 text-muted small">Google Ads API</p>
+                            <span class="badge bg-success">200 OK</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">POST /{ad_account_id}/campaigns</h6>
+                                <small class="text-muted">15 mins ago</small>
+                            </div>
+                            <p class="mb-1 text-muted small">Meta Ads API</p>
+                            <span class="badge bg-danger">400 Bad Request</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Response Panel -->
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Response</h5>
+                        <div>
+                            <span class="badge bg-success response-status">200 OK</span>
+                            <span class="text-muted ms-2 response-time">154 ms</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="nav nav-tabs" id="responseTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="response-body-tab" data-bs-toggle="tab" data-bs-target="#response-body" type="button" role="tab">Body</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="response-headers-tab" data-bs-toggle="tab" data-bs-target="#response-headers" type="button" role="tab">Headers</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="response-body" role="tabpanel">
+                            <div class="code-editor" id="response-body-editor">
+                                <pre><code class="language-json" id="response-body-code">{{ sample_responses.meta_accounts }}</code></pre>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="response-headers" role="tabpanel">
+                            <div class="p-3">
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <th>Content-Type</th>
+                                            <td>application/json</td>
+                                        </tr>
+                                        <tr>
+                                            <th>X-App-Usage</th>
+                                            <td>{"call_count":28,"total_time":122,"total_cputime":14}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>X-FB-Debug</th>
+                                            <td>5dYbw+pg3OcO3OlCm0DMb38PoVJfju66iJN38Me2iJYcVGJRk8HS/NA==</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date</th>
+                                            <td>Mon, 27 Mar 2025 14:58:26 GMT</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Connection</th>
+                                            <td>keep-alive</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Cache-Control</th>
+                                            <td>no-store</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Pragma</th>
+                                            <td>no-cache</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Documentation -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">API Documentation</h5>
+                </div>
+                <div class="card-body">
+                    <div id="no-api-selected" class="text-center py-5">
+                        <div class="api-placeholder">
+                            <i class="fas fa-book text-muted"></i>
+                        </div>
+                        <p class="text-muted mt-3">Select a platform and endpoint to view documentation</p>
+                    </div>
+                    
+                    <div id="api-documentation" class="d-none">
+                        <h5 id="doc-endpoint-title">Get Ad Accounts</h5>
+                        <p id="doc-endpoint-description" class="text-muted">Returns a list of ad accounts that the current user has access to.</p>
+                        
+                        <div class="mb-3">
+                            <h6>Endpoint</h6>
+                            <div class="code-inline">/me/adaccounts</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Parameters</h6>
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Required</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>fields</td>
+                                        <td>string</td>
+                                        <td>Comma-separated list of fields to return</td>
+                                        <td>No</td>
+                                    </tr>
+                                    <tr>
+                                        <td>limit</td>
+                                        <td>integer</td>
+                                        <td>Number of results to return</td>
+                                        <td>No</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div>
+                            <h6>Response Format</h6>
+                            <div class="code-inline">
+                                <pre><code class="language-json">{
+  "data": [
+    {
+      "id": "act_123456789",
+      "name": "Business Account",
+      "currency": "USD",
+      "account_status": 1
+    }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .method-selector .btn {
+        border-radius: 0;
+    }
+    
+    .method-selector .btn:first-child {
+        border-top-left-radius: 0.25rem;
+        border-bottom-left-radius: 0.25rem;
+    }
+    
+    .method-selector .btn:last-child {
+        border-top-right-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+    
+    .code-editor {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        background-color: #f8f9fa;
+        max-height: 400px;
+        overflow: auto;
+    }
+    
+    .code-editor pre {
+        margin: 0;
+        padding: 1rem;
+    }
+    
+    .code-inline {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        font-family: monospace;
+        overflow: auto;
+    }
+    
+    .api-placeholder {
+        font-size: 3rem;
+        opacity: 0.2;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Populate endpoints when platform changes
+        const platformSelect = document.getElementById('platform');
+        const endpointSelect = document.getElementById('endpoint');
+        
+        // Endpoint data by platform
+        const endpoints = {
+            meta: [
+                { value: '/me/adaccounts', name: 'Get Ad Accounts', method: 'GET' },
+                { value: '/{ad_account_id}/insights', name: 'Get Campaign Insights', method: 'GET' },
+                { value: '/{ad_account_id}/campaigns', name: 'Create Campaign', method: 'POST' }
+            ],
+            google: [
+                { value: '/customers/{customer_id}/campaigns', name: 'Get Campaigns', method: 'GET' },
+                { value: '/customers/{customer_id}/googleAds:search', name: 'Get Campaign Metrics', method: 'POST' },
+                { value: '/customers/{customer_id}/campaigns:mutate', name: 'Create Campaign', method: 'POST' }
+            ],
+            twitter: [
+                { value: '/accounts', name: 'Get Accounts', method: 'GET' },
+                { value: '/stats/accounts/{account_id}', name: 'Get Campaign Analytics', method: 'GET' },
+                { value: '/accounts/{account_id}/campaigns', name: 'Create Campaign', method: 'POST' }
+            ],
+            linkedin: [
+                { value: '/adAccountsV2', name: 'Get Ad Accounts', method: 'GET' },
+                { value: '/adAnalyticsV2', name: 'Get Campaign Analytics', method: 'GET' },
+                { value: '/adCampaignsV2', name: 'Create Campaign', method: 'POST' }
+            ]
+        };
+        
+        platformSelect.addEventListener('change', function() {
+            // Clear and disable endpoint select if no platform selected
+            if (!this.value) {
+                endpointSelect.innerHTML = '<option value="">Select an endpoint</option>';
+                endpointSelect.disabled = true;
+                return;
+            }
+            
+            // Enable endpoint select and populate options
+            endpointSelect.disabled = false;
+            endpointSelect.innerHTML = '<option value="">Select an endpoint</option>';
+            
+            // Add endpoints for selected platform
+            const platformEndpoints = endpoints[this.value] || [];
+            platformEndpoints.forEach(endpoint => {
+                const option = document.createElement('option');
+                option.value = endpoint.value;
+                option.text = endpoint.name;
+                option.dataset.method = endpoint.method;
+                endpointSelect.appendChild(option);
+            });
+        });
+        
+        // Set method when endpoint changes
+        endpointSelect.addEventListener('change', function() {
+            if (!this.value) return;
+            
+            const selectedOption = this.options[this.selectedIndex];
+            const method = selectedOption.dataset.method || 'GET';
+            
+            // Select the appropriate method radio button
+            document.getElementById(`method-${method.toLowerCase()}`).checked = true;
+            
+            // Show API documentation
+            document.getElementById('no-api-selected').classList.add('d-none');
+            document.getElementById('api-documentation').classList.remove('d-none');
+            
+            // Update documentation content
+            document.getElementById('doc-endpoint-title').textContent = selectedOption.text;
+            document.getElementById('doc-endpoint-description').textContent = `This endpoint allows you to ${selectedOption.text.toLowerCase()}.`;
+        });
+        
+        // Add parameter button functionality
+        document.getElementById('add-param').addEventListener('click', function() {
+            const container = document.getElementById('parameters-container');
+            const paramRow = document.createElement('div');
+            paramRow.className = 'row mb-2 parameter-row';
+            paramRow.innerHTML = `
+                <div class="col-5">
+                    <input type="text" class="form-control param-key" placeholder="Key">
+                </div>
+                <div class="col-6">
+                    <input type="text" class="form-control param-value" placeholder="Value">
+                </div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-outline-danger remove-param">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(paramRow);
+            
+            // Add event listener to the new remove button
+            paramRow.querySelector('.remove-param').addEventListener('click', function() {
+                container.removeChild(paramRow);
+            });
+        });
+        
+        // Initial event delegation for remove parameter buttons
+        document.getElementById('parameters-container').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-param') || e.target.parentElement.classList.contains('remove-param')) {
+                const button = e.target.classList.contains('remove-param') ? e.target : e.target.parentElement;
+                const row = button.closest('.parameter-row');
+                row.parentElement.removeChild(row);
+            }
+        });
+        
+        // Reset form button
+        document.getElementById('reset-form').addEventListener('click', function() {
+            document.getElementById('apiRequestForm').reset();
+            
+            // Clear parameters except the first one
+            const container = document.getElementById('parameters-container');
+            const paramRows = container.querySelectorAll('.parameter-row');
+            for (let i = 1; i < paramRows.length; i++) {
+                container.removeChild(paramRows[i]);
+            }
+            
+            // Clear first parameter inputs
+            const firstRow = container.querySelector('.parameter-row');
+            if (firstRow) {
+                firstRow.querySelector('.param-key').value = '';
+                firstRow.querySelector('.param-value').value = '';
+            }
+            
+            // Reset request body
+            document.getElementById('request-body-code').textContent = '{
+  "key": "value"
+}';
+            
+            // Reset documentation panel
+            document.getElementById('no-api-selected').classList.remove('d-none');
+            document.getElementById('api-documentation').classList.add('d-none');
+        });
+        
+        // Send request button
+        document.getElementById('apiRequestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const platform = document.getElementById('platform').value;
+            const endpoint = document.getElementById('endpoint').value;
+            const method = document.querySelector('input[name="method"]:checked').value;
+            
+            // For demo purposes, update response based on selections
+            const responseStatus = document.querySelector('.response-status');
+            const responseCode = document.getElementById('response-body-code');
+            
+            // Update status to success
+            responseStatus.textContent = '200 OK';
+            responseStatus.className = 'badge bg-success response-status';
+            
+            // Update response time
+            document.querySelector('.response-time').textContent = `${Math.floor(Math.random() * 100) + 100} ms`;
+            
+            // Update response body based on platform and endpoint
+            if (platform === 'meta') {
+                responseCode.textContent = {{ sample_responses.meta_accounts|tojson }};
+            } else if (platform === 'google') {
+                responseCode.textContent = {{ sample_responses.google_campaigns|tojson }};
+            } else if (platform === 'twitter') {
+                responseCode.textContent = {{ sample_responses.twitter_analytics|tojson }};
+            } else {
+                responseCode.textContent = '{
+  "data": {
+    "result": "success"
+  }
+}';
+            }
+        });
+    });
+</script>
+{% endblock %} 

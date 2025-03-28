@@ -1,0 +1,724 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Compare Segments | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Compare Segments{% endblock %}
+
+{% block page_title_content %}Segment Comparison{% endblock %}
+{% block page_subtitle %}Compare different audience segments to identify the best targeting for your campaigns{% endblock %}
+
+{% block page_actions %}
+<div class="page-actions">
+    <a href="{{ url_for('segments.list_segments') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Segments
+    </a>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="fas fa-download"></i> Export Comparison
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Comparison Overview -->
+<div class="card comparison-card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">Segment Comparison</h2>
+        <div class="card-actions">
+            <div class="btn-group viz-toggle" role="group">
+                <button type="button" class="btn btn-sm btn-outline-secondary active" data-view="table">
+                    <i class="fas fa-table"></i> Table
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-view="chart">
+                    <i class="fas fa-chart-bar"></i> Chart
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Table View -->
+        <div class="comparison-view table-view">
+            <div class="comparison-table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th class="feature-col">Feature</th>
+                            {% for segment in segments %}
+                            <th class="segment-col">{{ segment.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="highlight-row">
+                            <td>Segment Size</td>
+                            {% for segment in segments %}
+                            <td>{{ segment.candidate_count }} candidates</td>
+                            {% endfor %}
+                        </tr>
+                        
+                        {% for key in all_criteria_keys %}
+                        <tr>
+                            <td>{{ key|replace('_', ' ')|title }}</td>
+                            {% for segment in segments %}
+                                <td>
+                                    {% if key in segment.criteria %}
+                                        {% set value = segment.criteria[key] %}
+                                        {% if value is number %}
+                                            {% if key == 'age_avg' or key == 'average_age' %}
+                                                {{ value|round(1) }} years
+                                            {% elif key == 'experience_avg' or key == 'average_experience' %}
+                                                {{ value|round(1) }} years
+                                            {% else %}
+                                                {{ value|round(1) }}
+                                            {% endif %}
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Chart View -->
+        <div class="comparison-view chart-view" style="display:none;">
+            <div class="chart-container">
+                <canvas id="comparisonChart" height="300"></canvas>
+            </div>
+            <div class="chart-legend-container">
+                <div class="chart-legend" id="chartLegend"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Radar Chart Comparison -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">Segment Profiles</h2>
+    </div>
+    <div class="card-body">
+        <div class="radar-comparison-container">
+            <canvas id="radarComparisonChart" height="400"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Recommendations -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Targeting Recommendations</h2>
+    </div>
+    <div class="card-body">
+        <div class="recommendations-container">
+            {% for segment in segments %}
+            <div class="segment-recommendation">
+                <div class="recommendation-header">
+                    <h3>{{ segment.name }}</h3>
+                    <span class="candidate-badge">{{ segment.candidate_count }} candidates</span>
+                </div>
+                <div class="recommendation-body">
+                    <div class="recommendation-section">
+                        <h4>Best For</h4>
+                        <div class="tags">
+                            {% if segment.candidate_count > 50 %}
+                            <span class="tag">Wide Reach</span>
+                            {% else %}
+                            <span class="tag">Niche Targeting</span>
+                            {% endif %}
+                            
+                            {% if segment.criteria.education_level is defined and segment.criteria.education_level == 'Master' or segment.criteria.education_level == 'PhD' %}
+                            <span class="tag">Specialized Roles</span>
+                            {% elif segment.criteria.experience_avg is defined and segment.criteria.experience_avg > 7 %}
+                            <span class="tag">Senior Positions</span>
+                            {% elif segment.criteria.experience_avg is defined and segment.criteria.experience_avg < 3 %}
+                            <span class="tag">Entry-Level Roles</span>
+                            {% else %}
+                            <span class="tag">Mid-Level Positions</span>
+                            {% endif %}
+                            
+                            {% if segment.criteria.age_avg is defined and segment.criteria.age_avg < 30 %}
+                            <span class="tag">Young Professionals</span>
+                            {% elif segment.criteria.age_avg is defined and segment.criteria.age_avg > 40 %}
+                            <span class="tag">Experienced Professionals</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-section">
+                        <h4>Platform Recommendation</h4>
+                        <div class="platform-recommendations">
+                            {% if segment.criteria.age_avg is defined and segment.criteria.age_avg < 30 %}
+                            <div class="platform-recommendation high">
+                                <i class="fab fa-instagram"></i> Instagram
+                            </div>
+                            <div class="platform-recommendation high">
+                                <i class="fab fa-tiktok"></i> TikTok
+                            </div>
+                            {% elif segment.criteria.education_level is defined and segment.criteria.education_level == 'Master' or segment.criteria.education_level == 'PhD' %}
+                            <div class="platform-recommendation high">
+                                <i class="fab fa-linkedin"></i> LinkedIn
+                            </div>
+                            {% elif segment.criteria.experience_avg is defined and segment.criteria.experience_avg > 7 %}
+                            <div class="platform-recommendation high">
+                                <i class="fab fa-linkedin"></i> LinkedIn
+                            </div>
+                            <div class="platform-recommendation medium">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </div>
+                            {% else %}
+                            <div class="platform-recommendation high">
+                                <i class="fab fa-facebook"></i> Facebook
+                            </div>
+                            <div class="platform-recommendation medium">
+                                <i class="fab fa-google"></i> Google
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-actions">
+                        <a href="{{ url_for('campaigns.create_campaign_form') }}?segment_id={{ segment.id }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-bullhorn"></i> Target This Segment
+                        </a>
+                        <a href="{{ url_for('segments.view_segment', segment_id=segment.id) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Comparison</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Format</label>
+                    <div class="format-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportFormat" id="formatCSV" value="csv" checked>
+                            <label class="form-check-label" for="formatCSV">
+                                CSV (Excel, Spreadsheets)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportFormat" id="formatPDF" value="pdf">
+                            <label class="form-check-label" for="formatPDF">
+                                PDF Report
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportFormat" id="formatJSON" value="json">
+                            <label class="form-check-label" for="formatJSON">
+                                JSON (Raw Data)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Include</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeTable" checked>
+                        <label class="form-check-label" for="includeTable">
+                            Comparison Table
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeCharts" checked>
+                        <label class="form-check-label" for="includeCharts">
+                            Charts & Visualizations
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeRecommendations" checked>
+                        <label class="form-check-label" for="includeRecommendations">
+                            Targeting Recommendations
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="startExportBtn">Export</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Comparison Card */
+    .comparison-card {
+        margin-bottom: 2rem;
+    }
+    
+    /* Table View */
+    .comparison-table-container {
+        overflow-x: auto;
+    }
+    
+    .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: left;
+    }
+    
+    .comparison-table th {
+        background-color: var(--gray-50);
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+    
+    .comparison-table .feature-col {
+        position: sticky;
+        left: 0;
+        background-color: var(--gray-50);
+        z-index: 1;
+        min-width: 180px;
+    }
+    
+    .comparison-table .segment-col {
+        min-width: 200px;
+    }
+    
+    .comparison-table .highlight-row {
+        background-color: var(--primary-50);
+    }
+    
+    .comparison-table .highlight-row td {
+        font-weight: 600;
+    }
+    
+    .comparison-table tr:hover {
+        background-color: var(--gray-50);
+    }
+    
+    .comparison-table .text-muted {
+        color: var(--gray-500);
+        font-style: italic;
+    }
+    
+    /* Chart View */
+    .chart-container {
+        height: 400px;
+        position: relative;
+    }
+    
+    .chart-legend-container {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+    
+    /* Radar Chart */
+    .radar-comparison-container {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        height: 400px;
+    }
+    
+    /* Recommendations */
+    .recommendations-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .segment-recommendation {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    
+    .segment-recommendation:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .recommendation-header {
+        background-color: var(--primary-50);
+        padding: 1rem;
+        border-bottom: 1px solid var(--primary-100);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .recommendation-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--primary-800);
+    }
+    
+    .candidate-badge {
+        background-color: var(--primary-500);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .recommendation-body {
+        padding: 1rem;
+    }
+    
+    .recommendation-section {
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-section h4 {
+        font-size: 0.9rem;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        color: var(--gray-600);
+    }
+    
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .tag {
+        background-color: var(--primary-50);
+        color: var(--primary-800);
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+    
+    .platform-recommendations {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .platform-recommendation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    
+    .platform-recommendation i {
+        font-size: 1.25rem;
+    }
+    
+    .platform-recommendation.high {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: rgb(6, 95, 70);
+    }
+    
+    .platform-recommendation.medium {
+        background-color: rgba(14, 165, 233, 0.1);
+        color: rgb(12, 74, 110);
+    }
+    
+    .platform-recommendation.low {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: rgb(55, 48, 163);
+    }
+    
+    .recommendation-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    
+    /* Button Toggles */
+    .viz-toggle .btn {
+        font-size: 0.875rem;
+    }
+    
+    .viz-toggle .btn.active {
+        background-color: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    /* Export Modal */
+    .format-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize visualization toggles
+        initToggle();
+        
+        // Generate comparison charts
+        initComparisonCharts();
+        
+        // Initialize export functionality
+        initExport();
+    });
+    
+    function initToggle() {
+        const toggleButtons = document.querySelectorAll('.viz-toggle button');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active state
+                toggleButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding view
+                const view = this.getAttribute('data-view');
+                document.querySelectorAll('.comparison-view').forEach(view => {
+                    view.style.display = 'none';
+                });
+                document.querySelector(`.${view}-view`).style.display = '';
+            });
+        });
+    }
+    
+    function initComparisonCharts() {
+        // Get segment data from the page
+        const segments = {{ segments|tojson }};
+        const allCriteriaKeys = {{ all_criteria_keys|tojson }};
+        
+        // Generate radar chart data
+        const radarData = {
+            labels: [],
+            datasets: []
+        };
+        
+        // Add only numeric criteria to radar
+        for (const key of allCriteriaKeys) {
+            let isNumeric = false;
+            
+            // Check if at least one segment has a numeric value for this key
+            for (const segment of segments) {
+                if (segment.criteria[key] !== undefined && !isNaN(parseFloat(segment.criteria[key]))) {
+                    isNumeric = true;
+                    break;
+                }
+            }
+            
+            if (isNumeric) {
+                // Format the label
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                radarData.labels.push(formattedKey);
+            }
+        }
+        
+        // Colors for the segments
+        const colors = [
+            {
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                pointBackgroundColor: 'rgba(99, 102, 241, 1)'
+            },
+            {
+                backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                borderColor: 'rgba(14, 165, 233, 1)',
+                pointBackgroundColor: 'rgba(14, 165, 233, 1)'
+            },
+            {
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                pointBackgroundColor: 'rgba(16, 185, 129, 1)'
+            },
+            {
+                backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                pointBackgroundColor: 'rgba(245, 158, 11, 1)'
+            }
+        ];
+        
+        // Create a dataset for each segment
+        segments.forEach((segment, index) => {
+            const dataPoints = [];
+            
+            // Add values for each label
+            for (const key of allCriteriaKeys) {
+                if (radarData.labels.includes(key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))) {
+                    // Get value or default to 0
+                    let value = segment.criteria[key] !== undefined ? parseFloat(segment.criteria[key]) : 0;
+                    
+                    // Normalize values based on key type
+                    if (key.includes('age') && value > 0) {
+                        value = Math.min(100, value * 2); // Scale age
+                    } else if (key.includes('experience') && value > 0) {
+                        value = Math.min(100, value * 10); // Scale experience
+                    } else if (value > 100) {
+                        value = 100; // Cap at 100
+                    }
+                    
+                    dataPoints.push(value);
+                }
+            }
+            
+            radarData.datasets.push({
+                label: segment.name,
+                data: dataPoints,
+                backgroundColor: colors[index % colors.length].backgroundColor,
+                borderColor: colors[index % colors.length].borderColor,
+                pointBackgroundColor: colors[index % colors.length].pointBackgroundColor,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: colors[index % colors.length].borderColor
+            });
+        });
+        
+        // Create radar chart
+        if (radarData.labels.length > 0) {
+            const radarCtx = document.getElementById('radarComparisonChart').getContext('2d');
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: radarData,
+                options: {
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create bar chart comparing segment sizes
+        const barCtx = document.getElementById('comparisonChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: segments.map(segment => segment.name),
+                datasets: [{
+                    label: 'Candidate Count',
+                    data: segments.map(segment => segment.candidate_count),
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.7)',
+                        'rgba(14, 165, 233, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(245, 158, 11, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(99, 102, 241, 1)',
+                        'rgba(14, 165, 233, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 158, 11, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Candidates'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Generate legend
+        const legendContainer = document.getElementById('chartLegend');
+        segments.forEach((segment, index) => {
+            const color = colors[index % colors.length].borderColor;
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            
+            const colorBox = document.createElement('div');
+            colorBox.className = 'legend-color';
+            colorBox.style.backgroundColor = color;
+            
+            const label = document.createElement('span');
+            label.textContent = segment.name;
+            
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(label);
+            legendContainer.appendChild(legendItem);
+        });
+    }
+    
+    function initExport() {
+        const exportBtn = document.getElementById('startExportBtn');
+        
+        exportBtn.addEventListener('click', function() {
+            const format = document.querySelector('input[name="exportFormat"]:checked').value;
+            const includeTable = document.getElementById('includeTable').checked;
+            const includeCharts = document.getElementById('includeCharts').checked;
+            const includeRecommendations = document.getElementById('includeRecommendations').checked;
+            
+            // Simulate export (in production would connect to backend)
+            const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+            modal.hide();
+            
+            // Show feedback
+            alert(`Export started in ${format.toUpperCase()} format. The file will be available for download shortly.`);
+        });
+    }
+</script>
+{% endblock %}

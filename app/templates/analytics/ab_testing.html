@@ -1,0 +1,1001 @@
+{% extends "simple_base.html" %}
+
+{% block title %}A/B Testing Interface{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .ab-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ab-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .ab-chart {
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .metric-pill {
+        cursor: pointer;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        background-color: #e9ecef;
+        color: #495057;
+        transition: all 0.2s;
+    }
+    
+    .metric-pill.active {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+    
+    .segment-select {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    
+    .segment-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        border-radius: 20px;
+        background-color: #e9ecef;
+        color: #495057;
+    }
+    
+    .segment-badge .close {
+        margin-left: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .winner-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #28a745;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    
+    .segment-card {
+        position: relative;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .comparison-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 0.5rem;
+    }
+    
+    .comparison-table th {
+        font-weight: 500;
+        color: #6c757d;
+        padding: 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .comparison-table td {
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border: none;
+    }
+    
+    .comparison-table tr td:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+        font-weight: 500;
+    }
+    
+    .comparison-table tr td:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .winner-cell {
+        background-color: rgba(40, 167, 69, 0.1) !important;
+        font-weight: bold;
+    }
+    
+    .metric-description {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-icon {
+        display: inline-flex;
+        width: 24px;
+        height: 24px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h1 class="h3">A/B Testing Interface</h1>
+            <p class="text-muted">Compare audience segments or ad creatives to optimize campaign performance</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button class="btn btn-outline-secondary me-2" id="exportResults">
+                <i class="fas fa-file-csv"></i> Export Results
+            </button>
+            <button class="btn btn-primary" id="runTest">
+                <i class="fas fa-flask"></i> Run Test
+            </button>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card filter-card">
+                <h5>Test Configuration</h5>
+                <form id="testForm">
+                    <div class="mb-3">
+                        <label class="form-label">Select Segments to Compare</label>
+                        <select class="form-select segment-select" id="segmentSelect">
+                            <option value="">-- Select Segment --</option>
+                            {% for segment in segments %}
+                            <option value="{{ segment.id }}">{{ segment.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="selectedSegments" class="mt-2">
+                            <!-- Selected segments will be added here -->
+                        </div>
+                        <small class="text-muted">Select at least 2 segments to compare</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="platformFilter" class="form-label">Platform</label>
+                        <select class="form-select" id="platformFilter">
+                            <option value="">All Platforms</option>
+                            {% for platform in platforms %}
+                            <option value="{{ platform }}">{{ platform }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Comparison Metric</label>
+                        <div class="metric-pills">
+                            <div class="metric-pill active" data-metric="ctr">CTR</div>
+                            <div class="metric-pill" data-metric="cpc">CPC</div>
+                            <div class="metric-pill" data-metric="cpa">CPA</div>
+                            <div class="metric-pill" data-metric="roi">ROI</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Compare Segments</button>
+                </form>
+            </div>
+            
+            <div class="card filter-card mt-3">
+                <h5>Statistical Confidence</h5>
+                <div class="mb-3">
+                    <label for="confidenceLevel" class="form-label">Confidence Level</label>
+                    <select class="form-select" id="confidenceLevel">
+                        <option value="90">90% (Common)</option>
+                        <option value="95" selected>95% (Standard)</option>
+                        <option value="99">99% (Strict)</option>
+                    </select>
+                    <small class="text-muted">Higher confidence means more statistical certainty but may require more data</small>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="showSignificance" checked>
+                    <label class="form-check-label" for="showSignificance">
+                        Only show statistically significant results
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card mb-4" id="resultsCard" style="display: none;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">Test Results</h5>
+                        <div class="text-muted">
+                            <span id="testMetric">CTR</span> Comparison
+                            <span class="ms-2" id="testConfidence">(95% confidence)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div id="testSummary">
+                            Please select at least two segments and run the test to see results.
+                        </div>
+                    </div>
+                    
+                    <div class="ab-chart" id="comparisonChart"></div>
+                    
+                    <div class="metric-description" id="metricDescription">
+                        <span class="metric-icon"><i class="fas fa-percentage"></i></span>
+                        <strong>CTR (Click-Through Rate):</strong> The percentage of people who clicked on your ad after seeing it. Higher is better.
+                    </div>
+                    
+                    <h6 class="mt-4">Detailed Comparison</h6>
+                    <div class="table-responsive">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th id="segment1Header">Segment A</th>
+                                    <th id="segment2Header">Segment B</th>
+                                    <th>Difference</th>
+                                    <th>% Change</th>
+                                    <th>Significance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                                <!-- Comparison data will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row" id="segmentResults">
+                <!-- Segment result cards will be dynamically generated here -->
+                <div class="col-12 text-center py-5" id="initialMessage">
+                    <div class="alert alert-info">
+                        <i class="fas fa-flask fa-2x mb-3"></i>
+                        <h5>Ready to Run A/B Test</h5>
+                        <p class="mb-0">Select at least two segments from the sidebar and click "Run Test" to begin your comparison.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" id="recommendationsCard" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Recommendations</h5>
+                    <ul class="list-group list-group-flush" id="recommendationsList">
+                        <!-- Recommendations will be dynamically generated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables to store state
+        let selectedSegments = [];
+        let currentMetric = 'ctr';
+        let comparisonChart = null;
+        let testResults = null;
+        
+        // Segment colors for consistent visualization
+        const segmentColors = [
+            '#0d6efd', '#dc3545', '#198754', '#ffc107', '#6f42c1',
+            '#20c997', '#0dcaf0', '#6c757d', '#fd7e14', '#d63384'
+        ];
+        
+        // Metric descriptions and icons
+        const metricInfo = {
+            'ctr': {
+                icon: 'fa-percentage',
+                description: 'CTR (Click-Through Rate): The percentage of people who clicked on your ad after seeing it. Higher is better.'
+            },
+            'cpc': {
+                icon: 'fa-dollar-sign',
+                description: 'CPC (Cost Per Click): The average cost you pay for each click on your ad. Lower is better.'
+            },
+            'cpa': {
+                icon: 'fa-funnel-dollar',
+                description: 'CPA (Cost Per Acquisition): The average cost to acquire a customer. Lower is better.'
+            },
+            'roi': {
+                icon: 'fa-chart-line',
+                description: 'ROI (Return on Investment): The return generated on your ad spend. Higher is better.'
+            }
+        };
+        
+        // Event listeners
+        document.getElementById('segmentSelect').addEventListener('change', addSegment);
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            runTest();
+        });
+        document.getElementById('runTest').addEventListener('click', runTest);
+        document.getElementById('exportResults').addEventListener('click', exportResults);
+        document.getElementById('confidenceLevel').addEventListener('change', updateConfidence);
+        document.getElementById('showSignificance').addEventListener('change', filterResults);
+        
+        // Metric pill selection
+        document.querySelectorAll('.metric-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.metric-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                currentMetric = this.dataset.metric;
+                
+                // Update metric description
+                updateMetricDescription();
+                
+                // If we have results, update the chart and table
+                if (testResults) {
+                    updateResultsDisplay();
+                }
+            });
+        });
+        
+        // Function to add a segment to the comparison
+        function addSegment() {
+            const select = document.getElementById('segmentSelect');
+            const segmentId = select.value;
+            const segmentName = select.options[select.selectedIndex].text;
+            
+            if (!segmentId || selectedSegments.some(s => s.id === segmentId)) {
+                return;
+            }
+            
+            // Add to selected segments array
+            selectedSegments.push({
+                id: segmentId,
+                name: segmentName
+            });
+            
+            // Update UI
+            renderSelectedSegments();
+            
+            // Reset select
+            select.value = '';
+        }
+        
+        // Function to render selected segments
+        function renderSelectedSegments() {
+            const container = document.getElementById('selectedSegments');
+            container.innerHTML = '';
+            
+            selectedSegments.forEach((segment, index) => {
+                const badge = document.createElement('div');
+                badge.className = 'segment-badge';
+                badge.style.backgroundColor = segmentColors[index % segmentColors.length];
+                badge.style.color = 'white';
+                badge.innerHTML = `
+                    ${segment.name}
+                    <span class="close" data-segment-id="${segment.id}">&times;</span>
+                `;
+                container.appendChild(badge);
+            });
+            
+            // Add event listeners to close buttons
+            document.querySelectorAll('.segment-badge .close').forEach(closeBtn => {
+                closeBtn.addEventListener('click', function() {
+                    const segmentId = this.dataset.segmentId;
+                    selectedSegments = selectedSegments.filter(s => s.id !== segmentId);
+                    renderSelectedSegments();
+                });
+            });
+        }
+        
+        // Function to run the A/B test
+        function runTest() {
+            if (selectedSegments.length < 2) {
+                alert('Please select at least two segments to compare.');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('segmentResults').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Analyzing segment performance data...</p>
+                </div>
+            `;
+            
+            // Construct API URL with parameters
+            const platform = document.getElementById('platformFilter').value;
+            const confidenceLevel = document.getElementById('confidenceLevel').value;
+            
+            let url = '/analytics/ab-testing-data?metric=' + currentMetric;
+            selectedSegments.forEach(segment => {
+                url += `&segment_ids=${segment.id}`;
+            });
+            if (platform) url += `&platform=${platform}`;
+            
+            // Fetch data
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Store results
+                    testResults = data;
+                    
+                    // Update UI
+                    document.getElementById('resultsCard').style.display = 'block';
+                    document.getElementById('recommendationsCard').style.display = 'block';
+                    document.getElementById('testMetric').textContent = currentMetric.toUpperCase();
+                    document.getElementById('testConfidence').textContent = `(${confidenceLevel}% confidence)`;
+                    
+                    // Update results display
+                    updateResultsDisplay();
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('segmentResults').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="alert alert-danger">
+                                Error loading test data. Please try again.
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Function to update the results display
+        function updateResultsDisplay() {
+            if (!testResults) return;
+            
+            // Update metric description
+            updateMetricDescription();
+            
+            // Create the chart
+            createComparisonChart();
+            
+            // Build the results cards
+            buildResultsCards();
+            
+            // Build the comparison table
+            buildComparisonTable();
+            
+            // Generate recommendations
+            generateRecommendations();
+        }
+        
+        // Function to create the comparison chart
+        function createComparisonChart() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            // Extract data for the current metric
+            const labels = [];
+            const values = [];
+            const backgroundColor = [];
+            const bestValue = findBestPerformer(currentMetric);
+            
+            selectedSegments.forEach((segment, index) => {
+                labels.push(segment.name);
+                values.push(testResults.results[segment.name][currentMetric]);
+                backgroundColor.push(segmentColors[index % segmentColors.length]);
+            });
+            
+            // Determine chart type based on metric
+            let chartType = 'bar';
+            
+            // Format for different metrics
+            let yAxisFormat = value => value.toLocaleString();
+            let title = currentMetric.toUpperCase() + ' by Segment';
+            
+            if (currentMetric === 'ctr' || currentMetric === 'roi') {
+                yAxisFormat = value => value.toFixed(2) + '%';
+            } else if (currentMetric === 'cpc' || currentMetric === 'cpa') {
+                yAxisFormat = value => '$' + value.toFixed(2);
+            }
+            
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            comparisonChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: currentMetric.toUpperCase(),
+                        data: values,
+                        backgroundColor: backgroundColor,
+                        borderColor: backgroundColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: title
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return yAxisFormat(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return yAxisFormat(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update test summary
+            let summaryText = '';
+            if (bestValue.segment) {
+                if (currentMetric === 'cpc' || currentMetric === 'cpa') {
+                    summaryText = `${bestValue.segment} has the lowest ${currentMetric.toUpperCase()} at ${formatMetricValue(bestValue.value, currentMetric)}, making it the best performer for this metric.`;
+                } else {
+                    summaryText = `${bestValue.segment} has the highest ${currentMetric.toUpperCase()} at ${formatMetricValue(bestValue.value, currentMetric)}, making it the best performer for this metric.`;
+                }
+            } else {
+                summaryText = `No statistically significant difference found between segments for ${currentMetric.toUpperCase()}.`;
+            }
+            document.getElementById('testSummary').textContent = summaryText;
+        }
+        
+        // Function to build results cards
+        function buildResultsCards() {
+            const container = document.getElementById('segmentResults');
+            container.innerHTML = '';
+            
+            const bestValue = findBestPerformer(currentMetric);
+            
+            selectedSegments.forEach((segment, index) => {
+                const metrics = testResults.results[segment.name];
+                const color = segmentColors[index % segmentColors.length];
+                
+                let isWinner = false;
+                if (bestValue.segment === segment.name) {
+                    isWinner = true;
+                }
+                
+                // Different metrics presentation based on metric type
+                const metricsDisplay = getMetricsDisplay(metrics, currentMetric);
+                
+                let winnerBadge = '';
+                if (isWinner) {
+                    winnerBadge = `
+                        <div class="winner-badge">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML += `
+                    <div class="col-md-6">
+                        <div class="card segment-card" style="border-top: 4px solid ${color}">
+                            ${winnerBadge}
+                            <div class="d-flex align-items-center mb-3">
+                                <div style="width: 30px; height: 30px; border-radius: 50%; background-color: ${color}; margin-right: 10px;"></div>
+                                <h5 class="card-title mb-0">${segment.name}</h5>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="h4">${formatMetricValue(metrics[currentMetric], currentMetric)}</div>
+                                    <div class="small text-muted">${currentMetric.toUpperCase()}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="h4">${metrics.campaigns}</div>
+                                    <div class="small text-muted">Campaigns</div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row text-center">
+                                ${metricsDisplay}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Function to build the comparison table
+        function buildComparisonTable() {
+            if (selectedSegments.length < 2) return;
+            
+            // We'll just compare the first two segments
+            const segment1 = selectedSegments[0];
+            const segment2 = selectedSegments[1];
+            
+            // Set the headers
+            document.getElementById('segment1Header').textContent = segment1.name;
+            document.getElementById('segment2Header').textContent = segment2.name;
+            
+            // Get metrics for each segment
+            const metrics1 = testResults.results[segment1.name];
+            const metrics2 = testResults.results[segment2.name];
+            
+            // Determine which metrics to display
+            const metricsToCompare = [
+                { key: 'impressions', name: 'Impressions' },
+                { key: 'clicks', name: 'Clicks' },
+                { key: 'ctr', name: 'CTR' },
+                { key: 'cpc', name: 'CPC' },
+                { key: 'conversions', name: 'Conversions' },
+                { key: 'cpa', name: 'CPA' },
+                { key: 'roi', name: 'ROI' }
+            ];
+            
+            // Build table rows
+            let tableRows = '';
+            
+            metricsToCompare.forEach(metric => {
+                // Check if both segments have this metric
+                if (metrics1[metric.key] !== undefined && metrics2[metric.key] !== undefined) {
+                    const value1 = metrics1[metric.key];
+                    const value2 = metrics2[metric.key];
+                    
+                    // Calculate difference and percent change
+                    const difference = value2 - value1;
+                    const percentChange = value1 !== 0 ? (difference / value1) * 100 : 0;
+                    
+                    // Determine if the difference is significant
+                    // For simplicity, we'll assume significance with >10% difference
+                    // In a real app, this would be statistical significance
+                    const isSignificant = Math.abs(percentChange) > 10;
+                    
+                    // Determine the better value (lower is better for CPC and CPA, higher is better for others)
+                    let betterValue = 'none';
+                    if (metric.key === 'cpc' || metric.key === 'cpa') {
+                        betterValue = value1 < value2 ? 'segment1' : value1 > value2 ? 'segment2' : 'none';
+                    } else {
+                        betterValue = value1 > value2 ? 'segment1' : value1 < value2 ? 'segment2' : 'none';
+                    }
+                    
+                    // Format values based on metric type
+                    const formattedValue1 = formatMetricValue(value1, metric.key);
+                    const formattedValue2 = formatMetricValue(value2, metric.key);
+                    const formattedDifference = formatMetricValue(difference, metric.key, true);
+                    
+                    // Format percent change
+                    const formattedPercentChange = `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%`;
+                    
+                    // Cell classes
+                    const segment1Class = betterValue === 'segment1' && isSignificant ? 'winner-cell' : '';
+                    const segment2Class = betterValue === 'segment2' && isSignificant ? 'winner-cell' : '';
+                    
+                    // Significance indicator
+                    const significanceIcon = isSignificant 
+                        ? '<i class="fas fa-check-circle text-success"></i> Significant' 
+                        : '<i class="fas fa-question-circle text-muted"></i> Inconclusive';
+                    
+                    tableRows += `
+                        <tr>
+                            <td>${metric.name}</td>
+                            <td class="${segment1Class}">${formattedValue1}</td>
+                            <td class="${segment2Class}">${formattedValue2}</td>
+                            <td>${formattedDifference}</td>
+                            <td>${formattedPercentChange}</td>
+                            <td>${significanceIcon}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            document.getElementById('comparisonTableBody').innerHTML = tableRows;
+        }
+        
+        // Function to generate recommendations
+        function generateRecommendations() {
+            const recommendationsList = document.getElementById('recommendationsList');
+            recommendationsList.innerHTML = '';
+            
+            // Get the best performing segment for each metric
+            const bestPerformers = {
+                ctr: findBestPerformer('ctr'),
+                cpc: findBestPerformer('cpc'),
+                cpa: findBestPerformer('cpa'),
+                conversions: findBestPerformer('conversions'),
+                roi: findBestPerformer('roi')
+            };
+            
+            // Generate recommendations
+            const recommendations = [];
+            
+            // ROI recommendation
+            if (bestPerformers.roi.segment) {
+                recommendations.push(`
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-chart-line text-success me-2"></i>
+                            <strong>Allocate more budget to "${bestPerformers.roi.segment}" for higher ROI</strong>
+                        </div>
+                        <p class="mb-0 small text-muted">
+                            This segment has the highest ROI at ${formatMetricValue(bestPerformers.roi.value, 'roi')}, 
+                            suggesting it's the most efficient use of your ad spend.
+                        </p>
+                    </li>
+                `);
+            }
+            
+            // CPA recommendation
+            if (bestPerformers.cpa.segment) {
+                recommendations.push(`
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-funnel-dollar text-primary me-2"></i>
+                            <strong>Optimize campaign targeting using "${bestPerformers.cpa.segment}" parameters</strong>
+                        </div>
+                        <p class="mb-0 small text-muted">
+                            This segment has the lowest CPA at ${formatMetricValue(bestPerformers.cpa.value, 'cpa')}, 
+                            making it the most cost-effective for acquiring customers.
+                        </p>
+                    </li>
+                `);
+            }
+            
+            // CTR recommendation
+            if (bestPerformers.ctr.segment) {
+                recommendations.push(`
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-percentage text-info me-2"></i>
+                            <strong>Use creative elements from "${bestPerformers.ctr.segment}" campaigns</strong>
+                        </div>
+                        <p class="mb-0 small text-muted">
+                            This segment has the highest CTR at ${formatMetricValue(bestPerformers.ctr.value, 'ctr')}, 
+                            indicating that its ad creative and messaging are effectively engaging users.
+                        </p>
+                    </li>
+                `);
+            }
+            
+            // General recommendation
+            recommendations.push(`
+                <li class="list-group-item">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        <strong>Consider running more specific tests</strong>
+                    </div>
+                    <p class="mb-0 small text-muted">
+                        For even more insights, try comparing specific creative elements, bidding strategies, or
+                        audience demographics within your top-performing segments.
+                    </p>
+                </li>
+            `);
+            
+            // Add recommendations to the list
+            recommendationsList.innerHTML = recommendations.join('');
+        }
+        
+        // Function to find the best performing segment for a given metric
+        function findBestPerformer(metric) {
+            if (!testResults || !testResults.results) {
+                return { segment: null, value: 0 };
+            }
+            
+            let bestSegment = null;
+            let bestValue = 0;
+            
+            // For CPC and CPA, lower is better
+            const lowerIsBetter = metric === 'cpc' || metric === 'cpa';
+            
+            for (const segmentName in testResults.results) {
+                const value = testResults.results[segmentName][metric];
+                
+                if (value === undefined || value === null) continue;
+                
+                if (bestSegment === null) {
+                    bestSegment = segmentName;
+                    bestValue = value;
+                } else if (lowerIsBetter && value < bestValue) {
+                    bestSegment = segmentName;
+                    bestValue = value;
+                } else if (!lowerIsBetter && value > bestValue) {
+                    bestSegment = segmentName;
+                    bestValue = value;
+                }
+            }
+            
+            return { segment: bestSegment, value: bestValue };
+        }
+        
+        // Function to format metric values
+        function formatMetricValue(value, metric, includePlusSign = false) {
+            if (value === undefined || value === null) return 'N/A';
+            
+            if (metric === 'ctr' || metric === 'roi') {
+                return `${includePlusSign && value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+            } else if (metric === 'cpc' || metric === 'cpa' || metric === 'spend') {
+                return `${includePlusSign && value > 0 ? '+' : ''}$${Math.abs(value).toFixed(2)}`;
+            } else if (metric === 'impressions' || metric === 'clicks' || metric === 'conversions') {
+                return `${includePlusSign && value > 0 ? '+' : ''}${value.toLocaleString()}`;
+            }
+            
+            return `${includePlusSign && value > 0 ? '+' : ''}${value}`;
+        }
+        
+        // Function to get metrics display HTML
+        function getMetricsDisplay(metrics, currentMetric) {
+            // Different displays based on the current metric
+            if (currentMetric === 'ctr') {
+                return `
+                    <div class="col-4">
+                        <div class="h5">${metrics.impressions.toLocaleString()}</div>
+                        <div class="small text-muted">Impressions</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">${metrics.clicks.toLocaleString()}</div>
+                        <div class="small text-muted">Clicks</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">$${metrics.spend.toFixed(2)}</div>
+                        <div class="small text-muted">Spend</div>
+                    </div>
+                `;
+            } else if (currentMetric === 'cpc') {
+                return `
+                    <div class="col-4">
+                        <div class="h5">${metrics.clicks.toLocaleString()}</div>
+                        <div class="small text-muted">Clicks</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">$${metrics.spend.toFixed(2)}</div>
+                        <div class="small text-muted">Spend</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">${metrics.ctr.toFixed(2)}%</div>
+                        <div class="small text-muted">CTR</div>
+                    </div>
+                `;
+            } else if (currentMetric === 'cpa') {
+                return `
+                    <div class="col-4">
+                        <div class="h5">${metrics.conversions.toLocaleString()}</div>
+                        <div class="small text-muted">Conversions</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">$${metrics.spend.toFixed(2)}</div>
+                        <div class="small text-muted">Spend</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">${metrics.ctr.toFixed(2)}%</div>
+                        <div class="small text-muted">CTR</div>
+                    </div>
+                `;
+            } else if (currentMetric === 'roi') {
+                return `
+                    <div class="col-6">
+                        <div class="h5">${metrics.conversions.toLocaleString()}</div>
+                        <div class="small text-muted">Conversions</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h5">$${metrics.spend.toFixed(2)}</div>
+                        <div class="small text-muted">Spend</div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="col-4">
+                        <div class="h5">${metrics.impressions.toLocaleString()}</div>
+                        <div class="small text-muted">Impressions</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">${metrics.clicks.toLocaleString()}</div>
+                        <div class="small text-muted">Clicks</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5">${metrics.ctr.toFixed(2)}%</div>
+                        <div class="small text-muted">CTR</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to update metric description
+        function updateMetricDescription() {
+            const info = metricInfo[currentMetric];
+            if (info) {
+                document.getElementById('metricDescription').innerHTML = `
+                    <span class="metric-icon"><i class="fas ${info.icon}"></i></span>
+                    ${info.description}
+                `;
+            }
+        }
+        
+        // Function to update confidence level
+        function updateConfidence() {
+            const confidence = document.getElementById('confidenceLevel').value;
+            document.getElementById('testConfidence').textContent = `(${confidence}% confidence)`;
+            
+            // If we have results, update the significance indicators
+            if (testResults) {
+                buildComparisonTable();
+            }
+        }
+        
+        // Function to filter results based on significance
+        function filterResults() {
+            // This would filter table rows based on significance
+            // For this demo, we'll just rebuild the table
+            if (testResults) {
+                buildComparisonTable();
+            }
+        }
+        
+        // Function to export results
+        function exportResults() {
+            if (!testResults) {
+                alert('Please run a test first before exporting results.');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = "Segment,Impressions,Clicks,CTR,Spend,CPC,Conversions,CPA,ROI\n";
+            
+            for (const segmentName in testResults.results) {
+                const metrics = testResults.results[segmentName];
+                csvContent += `${segmentName},`;
+                csvContent += `${metrics.impressions || 0},`;
+                csvContent += `${metrics.clicks || 0},`;
+                csvContent += `${metrics.ctr ? metrics.ctr.toFixed(2) + '%' : '0%'},`;
+                csvContent += `$${metrics.spend ? metrics.spend.toFixed(2) : '0.00'},`;
+                csvContent += `$${metrics.cpc ? metrics.cpc.toFixed(2) : '0.00'},`;
+                csvContent += `${metrics.conversions || 0},`;
+                csvContent += `$${metrics.cpa ? metrics.cpa.toFixed(2) : '0.00'},`;
+                csvContent += `${metrics.roi ? metrics.roi.toFixed(2) + '%' : '0%'}\n`;
+            }
+            
+            // Create download link
+            const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'ab_test_results.csv');
+            document.body.appendChild(link);
+            
+            // Download CSV
+            link.click();
+            
+            // Clean up
+            document.body.removeChild(link);
+        }
+        
+        // Initialize metric description
+        updateMetricDescription();
+    });
+</script>
+{% endblock %}

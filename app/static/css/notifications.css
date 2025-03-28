@@ -1,0 +1,195 @@
+/**
+ * MagnetoCursor - Notification Styles
+ */
+
+/* Notification dropdown styles */
+.notification-counter {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: var(--danger-500);
+  border-radius: 50%;
+  line-height: 18px;
+}
+
+.notification-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--neutral-100);
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: var(--neutral-50);
+}
+
+.notification-item.unread {
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.notification-item.unread:hover {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.notification-item .notification-icon {
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--neutral-600);
+}
+
+.notification-item .notification-icon.success {
+  color: var(--success-500);
+  background-color: rgba(var(--success-rgb), 0.1);
+}
+
+.notification-item .notification-icon.error {
+  color: var(--danger-500);
+  background-color: rgba(var(--danger-rgb), 0.1);
+}
+
+.notification-item .notification-icon.warning {
+  color: var(--warning-500);
+  background-color: rgba(var(--warning-rgb), 0.1);
+}
+
+.notification-item .notification-icon.info {
+  color: var(--primary-500);
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.mark-notification-read {
+  font-size: 0.75rem;
+  color: var(--primary-500);
+  text-decoration: none;
+}
+
+.mark-notification-read:hover {
+  text-decoration: underline;
+}
+
+/* Real-time alert banner */
+.alert-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem;
+  background-color: var(--warning-500);
+  color: white;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.alert-banner.show {
+  transform: translateY(0);
+}
+
+.alert-banner-content {
+  display: flex;
+  align-items: center;
+}
+
+.alert-banner-icon {
+  margin-right: 0.75rem;
+}
+
+.alert-banner-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.alert-banner-close:hover {
+  opacity: 1;
+}
+
+/* Alert status indicator in sidebar */
+.alert-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.alert-status-indicator.success {
+  background-color: var(--success-500);
+}
+
+.alert-status-indicator.warning {
+  background-color: var(--warning-500);
+}
+
+.alert-status-indicator.error {
+  background-color: var(--danger-500);
+}
+
+/* Pulse animation for critical alerts */
+.alert-status-indicator.critical {
+  background-color: var(--danger-500);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--danger-rgb), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(var(--danger-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--danger-rgb), 0);
+  }
+}
+
+/* Desktop notifications permission request */
+.notification-permission-prompt {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  padding: 15px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  max-width: 300px;
+  z-index: 1000;
+  animation: slide-up 0.3s ease;
+}
+
+.notification-permission-prompt .buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,532 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Dashboard | Ad Automation P-01{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('main.index') }}">Home</a>
+<i class="fas fa-chevron-right"></i>
+<span>Dashboard</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container fade-in">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="header-actions">
+            <button class="btn btn-primary btn-sm" data-tooltip="Refresh data">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <div class="date-selector">
+                <button class="btn btn-secondary btn-sm">
+                    <i class="far fa-calendar-alt"></i> Last 30 days <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+        <!-- Active Campaigns -->
+        <div class="metric-card slide-in-left">
+            <div class="metric-header">
+                <div class="metric-title">Active Campaigns</div>
+                <div class="metric-icon blue">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+            </div>
+            <div class="metric-value">24</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> 12% from last month
+            </div>
+        </div>
+
+        <!-- Total Job Postings -->
+        <div class="metric-card slide-in-left">
+            <div class="metric-header">
+                <div class="metric-title">Total Job Postings</div>
+                <div class="metric-icon green">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+            </div>
+            <div class="metric-value">156</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> 8% from last month
+            </div>
+        </div>
+
+        <!-- Candidate Applications -->
+        <div class="metric-card slide-in-left">
+            <div class="metric-header">
+                <div class="metric-title">Candidate Applications</div>
+                <div class="metric-icon orange">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="metric-value">1,853</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> 23% from last month
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="metric-card slide-in-left">
+            <div class="metric-header">
+                <div class="metric-title">Conversion Rate</div>
+                <div class="metric-icon red">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="metric-value">3.8%</div>
+            <div class="metric-trend down">
+                <i class="fas fa-arrow-down"></i> 0.5% from last month
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('jobs.create_job') }}" class="action-button">
+                <i class="fas fa-plus-circle"></i>
+                <span>New Job</span>
+            </a>
+            <a href="{{ url_for('campaigns.create_campaign') }}" class="action-button">
+                <i class="fas fa-bullhorn"></i>
+                <span>New Campaign</span>
+            </a>
+            <a href="{{ url_for('analytics.export_data') }}" class="action-button">
+                <i class="fas fa-file-export"></i>
+                <span>Export Data</span>
+            </a>
+            <a href="{{ url_for('api.test_interface') }}" class="action-button">
+                <i class="fas fa-plug"></i>
+                <span>API Testing</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="dashboard-content">
+        <div class="row">
+            <!-- Ad Performance Chart -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Ads Performance</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="adsPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demographics Chart -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Candidate Demographics</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="demographicsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Platform Distribution -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Platform Distribution</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="platformsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Campaigns -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Campaigns</h3>
+                        <div class="card-actions">
+                            <a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-sm btn-primary">
+                                View All
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Campaign Name</th>
+                                        <th>Status</th>
+                                        <th>Platform</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Senior Developer Recruitment</td>
+                                        <td><span class="badge-status badge-active"><i class="fas fa-circle"></i> Active</span></td>
+                                        <td>Meta, X</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 78%"></div>
+                                                <span>78%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>UI/UX Designer Search</td>
+                                        <td><span class="badge-status badge-active"><i class="fas fa-circle"></i> Active</span></td>
+                                        <td>Meta, LinkedIn</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 65%"></div>
+                                                <span>65%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Data Analyst Position</td>
+                                        <td><span class="badge-status badge-pending"><i class="fas fa-circle"></i> Pending</span></td>
+                                        <td>Google, LinkedIn</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 42%"></div>
+                                                <span>42%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Product Manager</td>
+                                        <td><span class="badge-status badge-inactive"><i class="fas fa-circle"></i> Inactive</span></td>
+                                        <td>All Platforms</td>
+                                        <td>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 23%"></div>
+                                                <span>23%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs Status -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Job Status Overview</h3>
+                <div class="card-actions">
+                    <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-sm btn-primary">
+                        View All Jobs
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="status-cards">
+                    <div class="status-card">
+                        <div class="status-icon open">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <div class="status-details">
+                            <h4>Open Positions</h4>
+                            <div class="status-count">42</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon applications">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="status-details">
+                            <h4>Applications</h4>
+                            <div class="status-count">568</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon interviews">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="status-details">
+                            <h4>Interviews</h4>
+                            <div class="status-count">128</div>
+                        </div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-icon filled">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="status-details">
+                            <h4>Filled Positions</h4>
+                            <div class="status-count">23</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Additional dashboard-specific scripts can go here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Example of real-time updates simulation
+        setInterval(function() {
+            const metrics = document.querySelectorAll('.metric-value');
+            // Randomly update one of the metrics for demo purposes
+            const randomIndex = Math.floor(Math.random() * metrics.length);
+            const metric = metrics[randomIndex];
+            
+            // Add animation class
+            metric.classList.add('pulse');
+            
+            // Remove the class after animation completes
+            setTimeout(function() {
+                metric.classList.remove('pulse');
+            }, 1000);
+        }, 10000);
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard specific styles */
+    .dashboard-container {
+        padding-bottom: 30px;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .quick-actions {
+        margin-bottom: 24px;
+    }
+    
+    .quick-actions h2 {
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .action-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 16px;
+        width: 120px;
+        height: 100px;
+        transition: all var(--transition-speed) ease;
+        color: var(--gray-700);
+    }
+    
+    .action-button i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        color: var(--primary);
+    }
+    
+    .action-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        color: var(--primary);
+    }
+    
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -12px 24px;
+    }
+    
+    .col-lg-4, .col-lg-6, .col-lg-8 {
+        padding: 0 12px;
+        margin-bottom: 24px;
+    }
+    
+    .col-lg-4 {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+    }
+    
+    .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .col-lg-8 {
+        flex: 0 0 66.666%;
+        max-width: 66.666%;
+    }
+    
+    /* Progress bars for campaign performance */
+    .progress-bar {
+        height: 6px;
+        background-color: var(--gray-200);
+        border-radius: 3px;
+        position: relative;
+        margin-top: 5px;
+        width: 100%;
+    }
+    
+    .progress {
+        height: 100%;
+        background-color: var(--primary);
+        border-radius: 3px;
+    }
+    
+    .progress-bar span {
+        position: absolute;
+        right: 0;
+        top: -18px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    /* Status cards */
+    .status-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .status-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+        min-width: 200px;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .status-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+    }
+    
+    .status-icon.open {
+        background-color: var(--primary);
+    }
+    
+    .status-icon.applications {
+        background-color: var(--info);
+    }
+    
+    .status-icon.interviews {
+        background-color: var(--warning);
+    }
+    
+    .status-icon.filled {
+        background-color: var(--success);
+    }
+    
+    .status-details h4 {
+        margin: 0 0 5px;
+        font-size: 14px;
+        color: var(--gray-600);
+    }
+    
+    .status-count {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    
+    /* Animation for real-time updates */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+            color: var(--primary);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .pulse {
+        animation: pulse 1s ease;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .col-lg-4, .col-lg-6, .col-lg-8 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .action-buttons {
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .status-cards {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,264 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Refresh Segments | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Segments{% endblock %}
+
+{% block page_title_content %}Refresh Audience Segments{% endblock %}
+{% block page_subtitle %}Run segmentation algorithm to update audience segments{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Segment Refresh</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <h4>About Segment Refreshing</h4>
+                <p>Refreshing segments will analyze all candidates in the database and group them into distinct audience segments using machine learning algorithms. This process may take some time depending on the number of candidates.</p>
+            </div>
+        </div>
+
+        <h3 class="mt-4">What happens during refresh?</h3>
+        <div class="process-steps">
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Data Collection</h4>
+                    <p>System gathers all candidate data from the database</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Preprocessing</h4>
+                    <p>Data cleaning and normalization for accurate analysis</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Clustering Analysis</h4>
+                    <p>K-means algorithm groups candidates with similar traits</p>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Segment Generation</h4>
+                    <p>System creates new segments based on cluster analysis</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <form method="POST" action="{{ url_for('segments.refresh_segments') }}">
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="confirmRefresh" required>
+                        <label class="custom-control-label" for="confirmRefresh">I understand that this process will recreate all audience segments</label>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('segments.list_segments') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Return to Segments
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Start Refresh Process
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert {
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .alert-info {
+        background-color: rgba(52, 152, 219, 0.1);
+        border-left: 4px solid var(--primary);
+        color: var(--gray-800);
+    }
+    
+    .alert i {
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+    
+    .alert h4 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .alert p {
+        margin: 0;
+    }
+    
+    .process-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+        margin: 2rem 0;
+    }
+    
+    .process-steps:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 20px;
+        width: 2px;
+        background-color: var(--primary);
+        z-index: 0;
+    }
+    
+    .process-step {
+        display: flex;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background-color: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .step-content {
+        flex-grow: 1;
+    }
+    
+    .step-content h4 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        color: var(--gray-800);
+    }
+    
+    .step-content p {
+        margin: 0;
+        color: var(--gray-600);
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+    }
+    
+    .mt-4 {
+        margin-top: 1.5rem;
+    }
+    
+    .custom-control {
+        position: relative;
+        display: block;
+        min-height: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .custom-control-input {
+        position: absolute;
+        z-index: -1;
+        opacity: 0;
+    }
+    
+    .custom-control-label {
+        position: relative;
+        margin-bottom: 0;
+        vertical-align: top;
+    }
+    
+    .custom-control-label::before {
+        position: absolute;
+        top: 0.25rem;
+        left: -1.5rem;
+        display: block;
+        width: 1rem;
+        height: 1rem;
+        pointer-events: none;
+        content: "";
+        background-color: #fff;
+        border: 1px solid var(--gray-400);
+        border-radius: 0.25rem;
+    }
+    
+    .custom-control-input:checked ~ .custom-control-label::before {
+        color: #fff;
+        border-color: var(--primary);
+        background-color: var(--primary);
+    }
+    
+    .custom-control-label::after {
+        position: absolute;
+        top: 0.25rem;
+        left: -1.5rem;
+        display: block;
+        width: 1rem;
+        height: 1rem;
+        content: "";
+        background: no-repeat 50% / 50% 50%;
+    }
+    
+    .custom-control-input:checked ~ .custom-control-label::after {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23fff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z'/%3e%3c/svg%3e");
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmCheckbox = document.getElementById('confirmRefresh');
+        const refreshBtn = document.getElementById('refreshBtn');
+        
+        // Initially disable the refresh button
+        refreshBtn.disabled = true;
+        
+        // Enable/disable refresh button based on checkbox
+        confirmCheckbox.addEventListener('change', function() {
+            refreshBtn.disabled = !this.checked;
+        });
+        
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Please confirm that you understand the implications of refreshing segments.');
+                return false;
+            }
+            
+            // Show loading state
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            refreshBtn.disabled = true;
+            return true;
+        });
+    });
+</script>
+{% endblock %}

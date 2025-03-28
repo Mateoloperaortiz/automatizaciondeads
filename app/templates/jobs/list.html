@@ -1,0 +1,65 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Job Openings{% endblock %}
+
+{% block styles %}
+<style>
+    .job-list {
+        margin-top: 2rem;
+    }
+    .job-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 0.5rem 0 1rem;
+        color: #666;
+    }
+    .job-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Job Openings</h1>
+    
+    <div class="job-list">
+        {% if jobs %}
+            {% for job in jobs %}
+                <div class="job-card">
+                    <h2>{{ job.title }}</h2>
+                    <div class="job-meta">
+                        <span class="company">{{ job.company }}</span>
+                        <span class="location">{{ job.location }}</span>
+                        <span class="job-type">{{ job.job_type }}</span>
+                    </div>
+                    <p class="description">{{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}</p>
+                    <div class="job-footer">
+                        <span class="experience">{{ job.experience_level }}</span>
+                        {% if job.salary_range %}
+                            <span class="salary">{{ job.salary_range }}</span>
+                        {% endif %}
+                        <a href="{{ url_for('jobs.get_job', job_id=job.id) }}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No job openings available at this time.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

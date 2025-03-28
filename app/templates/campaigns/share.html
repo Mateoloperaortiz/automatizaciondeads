@@ -1,0 +1,210 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Share Campaign - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('campaigns.list_campaigns') }}">Campaigns</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('campaigns.get_campaign', campaign_id=campaign.id) }}">{{ campaign.title }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Share</li>
+    </ol>
+  </nav>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <div class="row">
+    <div class="col-md-8 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Share "{{ campaign.title }}"</h5>
+        </div>
+        <div class="card-body">
+          <p>Share this campaign with other users or teams to collaborate.</p>
+          
+          <ul class="nav nav-tabs mb-4" id="sharingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Users</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab" aria-controls="teams" aria-selected="false">Teams</button>
+            </li>
+          </ul>
+          
+          <div class="tab-content" id="sharingTabsContent">
+            <!-- Share with users tab -->
+            <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+              <form method="POST" action="{{ url_for('campaigns.share_with_user', campaign_id=campaign.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                  <label for="user_id" class="form-label">Select User</label>
+                  <select class="form-select" id="user_id" name="user_id" required>
+                    <option value="" selected disabled>Choose a user...</option>
+                    {% for user in available_users %}
+                      <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }} (@{{ user.username }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="role" class="form-label">Role</label>
+                  <select class="form-select" id="role" name="role" required>
+                    <option value="viewer" selected>Viewer</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                  <div class="form-text">
+                    <strong>Viewer:</strong> Can view the campaign but not make changes<br>
+                    <strong>Editor:</strong> Can view and edit the campaign
+                  </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Share with User</button>
+              </form>
+            </div>
+            
+            <!-- Share with teams tab -->
+            <div class="tab-pane fade" id="teams" role="tabpanel" aria-labelledby="teams-tab">
+              <form method="POST" action="{{ url_for('campaigns.share_with_team', campaign_id=campaign.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                  <label for="team_id" class="form-label">Select Team</label>
+                  <select class="form-select" id="team_id" name="team_id" required>
+                    <option value="" selected disabled>Choose a team...</option>
+                    {% for team in available_teams %}
+                      <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="team_role" class="form-label">Role</label>
+                  <select class="form-select" id="team_role" name="role" required>
+                    <option value="viewer" selected>Viewer</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                  <div class="form-text">
+                    All members of the team will receive this role for the campaign.
+                  </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Share with Team</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Current Collaborators</h5>
+        </div>
+        <div class="card-body">
+          {% if collaborators %}
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; background-color: #007bff; color: white;">
+                    {{ campaign.owner.username[0].upper() if campaign.owner else 'O' }}
+                  </div>
+                  <div>
+                    <span class="fw-bold">{{ campaign.owner.first_name }} {{ campaign.owner.last_name }}</span>
+                    <small class="d-block text-muted">@{{ campaign.owner.username }}</small>
+                  </div>
+                </div>
+                <span class="badge bg-primary rounded-pill">Owner</span>
+              </li>
+              {% for collab in collaborators %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; background-color: #f0f0f0; color: #007bff;">
+                      {{ collab.user.username[0].upper() }}
+                    </div>
+                    <div>
+                      <span class="fw-bold">{{ collab.user.first_name }} {{ collab.user.last_name }}</span>
+                      <small class="d-block text-muted">@{{ collab.user.username }}</small>
+                    </div>
+                  </div>
+                  <div>
+                    {% if collab.role == 'editor' %}
+                      <span class="badge bg-info rounded-pill">Editor</span>
+                    {% elif collab.role == 'viewer' %}
+                      <span class="badge bg-secondary rounded-pill">Viewer</span>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('campaigns.remove_collaborator', campaign_id=campaign.id, user_id=collab.user_id) }}" class="d-inline ms-2">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove" onclick="return confirm('Are you sure you want to remove this collaborator?');">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">This campaign hasn't been shared with anyone yet.</p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="card shadow-sm mt-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">About Collaboration</h5>
+        </div>
+        <div class="card-body">
+          <h6>Collaboration Roles</h6>
+          <ul class="list-unstyled">
+            <li class="mb-2">
+              <span class="badge bg-primary me-2">Owner</span>
+              Full control, can share with others
+            </li>
+            <li class="mb-2">
+              <span class="badge bg-info me-2">Editor</span>
+              Can edit campaign details and content
+            </li>
+            <li class="mb-2">
+              <span class="badge bg-secondary me-2">Viewer</span>
+              Can only view campaign details
+            </li>
+          </ul>
+          
+          <h6 class="mt-3">Teams</h6>
+          <p class="small text-muted">
+            When you share with a team, all members of the team get access according to the role you assign. If you 
+            need to organize collaborators, consider creating a team first.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap tab initialization
+    var triggerTabList = [].slice.call(document.querySelectorAll('#sharingTabs button'))
+    triggerTabList.forEach(function (triggerEl) {
+      var tabTrigger = new bootstrap.Tab(triggerEl)
+      triggerEl.addEventListener('click', function (event) {
+        event.preventDefault()
+        tabTrigger.show()
+      })
+    })
+  });
+</script>
+{% endblock %}

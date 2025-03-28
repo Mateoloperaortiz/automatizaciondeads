@@ -1,0 +1,615 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}API Playground - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <!-- API Endpoints Sidebar -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">API Endpoints</h5>
+                </div>
+                <div class="list-group list-group-flush" id="endpoint-list">
+                    <a href="#" class="list-group-item list-group-item-action active" data-endpoint="GET /api/v1/campaigns">GET /campaigns</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="GET /api/v1/campaigns/{id}">GET /campaigns/{id}</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="POST /api/v1/campaigns">POST /campaigns</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="PUT /api/v1/campaigns/{id}">PUT /campaigns/{id}</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="DELETE /api/v1/campaigns/{id}">DELETE /campaigns/{id}</a>
+                    <div class="list-group-item list-group-item-secondary">Job Openings</div>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="GET /api/v1/job_openings">GET /job_openings</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="GET /api/v1/job_openings/{id}">GET /job_openings/{id}</a>
+                    <div class="list-group-item list-group-item-secondary">Segments</div>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="GET /api/v1/segments">GET /segments</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-endpoint="GET /api/v1/segments/{id}">GET /segments/{id}</a>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Resources</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('docs.api_documentation') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-text me-2"></i>API Documentation
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#apiKeyModal">
+                        <i class="bi bi-key me-2"></i>Manage API Keys
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>API Playground</h1>
+                <div>
+                    <a href="#" id="save-request" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="bi bi-save me-1"></i> Save
+                    </a>
+                    <a href="#" id="share-request" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-share me-1"></i> Share
+                    </a>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                This playground allows you to test API endpoints and see responses in real-time.
+                Your API key will be used automatically for authentication.
+            </div>
+            
+            <!-- Request Builder -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Request</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <select class="form-select" id="request-method">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <span class="input-group-text">URL</span>
+                                <input type="text" id="request-url" class="form-control" value="/api/v1/campaigns" placeholder="API Endpoint">
+                                <button class="btn btn-primary" id="send-request">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <ul class="nav nav-tabs" id="requestTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="params-tab" data-bs-toggle="tab" data-bs-target="#params" type="button" role="tab" aria-controls="params" aria-selected="true">Query Params</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="headers-tab" data-bs-toggle="tab" data-bs-target="#headers" type="button" role="tab" aria-controls="headers" aria-selected="false">Headers</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="false">Body</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="requestTabContent">
+                        <div class="tab-pane fade show active" id="params" role="tabpanel" aria-labelledby="params-tab">
+                            <div class="param-rows">
+                                <div class="row mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control param-name" placeholder="Parameter name">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control param-value" placeholder="Parameter value">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-outline-danger remove-param">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary mt-2" id="add-param">Add Parameter</button>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="headers" role="tabpanel" aria-labelledby="headers-tab">
+                            <div class="header-rows">
+                                <div class="row mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control header-name" placeholder="Header name" value="Authorization">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control header-value" placeholder="Header value" value="Bearer YOUR_API_KEY">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-outline-danger remove-header">Remove</button>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control header-name" placeholder="Header name" value="Content-Type">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control header-value" placeholder="Header value" value="application/json">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-outline-danger remove-header">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary mt-2" id="add-header">Add Header</button>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="body" role="tabpanel" aria-labelledby="body-tab">
+                            <div class="mb-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="bodyType" id="bodyTypeJson" value="json" checked>
+                                    <label class="form-check-label" for="bodyTypeJson">JSON</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="bodyType" id="bodyTypeForm" value="form">
+                                    <label class="form-check-label" for="bodyTypeForm">Form</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="bodyType" id="bodyTypeText" value="text">
+                                    <label class="form-check-label" for="bodyTypeText">Text</label>
+                                </div>
+                            </div>
+                            <div id="json-editor-container">
+                                <pre id="json-editor" class="form-control" style="height: 200px;">{
+  "title": "Example Campaign",
+  "description": "API test campaign",
+  "platform_id": 1,
+  "job_opening_id": 42,
+  "segment_id": 3,
+  "budget": 500
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Response Display -->
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Response</h5>
+                    <div id="response-status"></div>
+                </div>
+                <div class="card-body">
+                    <div id="response-time" class="text-muted small mb-2"></div>
+                    
+                    <ul class="nav nav-tabs" id="responseTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="response-body-tab" data-bs-toggle="tab" data-bs-target="#response-body" type="button" role="tab" aria-controls="response-body" aria-selected="true">Body</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="response-headers-tab" data-bs-toggle="tab" data-bs-target="#response-headers" type="button" role="tab" aria-controls="response-headers" aria-selected="false">Headers</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="responseTabContent">
+                        <div class="tab-pane fade show active" id="response-body" role="tabpanel" aria-labelledby="response-body-tab">
+                            <pre id="response-json" class="mb-0" style="height: 300px; overflow: auto;">// Response will appear here after sending a request</pre>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="response-headers" role="tabpanel" aria-labelledby="response-headers-tab">
+                            <div id="response-headers-content" class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Header</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Response headers will be populated here -->
+                                        <tr>
+                                            <td colspan="2" class="text-muted">Headers will appear here after sending a request</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal fade" id="apiKeyModal" tabindex="-1" aria-labelledby="apiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="apiKeyModalLabel">API Keys</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="api-key" class="form-label">Your API Key</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="api-key" value="mc_1234567890abcdef1234567890abcdef" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">This API key has full access to your account's resources.</div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" id="generate-key-btn">Generate New API Key</button>
+                    <button class="btn btn-outline-danger" id="revoke-key-btn">Revoke This Key</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    pre#json-editor, pre#response-json {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.875rem;
+        white-space: pre-wrap;
+    }
+    
+    #response-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+    
+    .status-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables
+        const requestUrl = document.getElementById('request-url');
+        const requestMethod = document.getElementById('request-method');
+        const sendRequestBtn = document.getElementById('send-request');
+        const addParamBtn = document.getElementById('add-param');
+        const addHeaderBtn = document.getElementById('add-header');
+        const paramRows = document.querySelector('.param-rows');
+        const headerRows = document.querySelector('.header-rows');
+        const responseJson = document.getElementById('response-json');
+        const responseStatus = document.getElementById('response-status');
+        const responseTime = document.getElementById('response-time');
+        const responseHeadersContent = document.getElementById('response-headers-content').querySelector('tbody');
+        const jsonEditor = document.getElementById('json-editor');
+        
+        // Endpoint selection
+        document.querySelectorAll('#endpoint-list a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all endpoints
+                document.querySelectorAll('#endpoint-list a').forEach(l => {
+                    l.classList.remove('active');
+                });
+                
+                // Add active class to clicked endpoint
+                link.classList.add('active');
+                
+                // Update request method and URL
+                const endpoint = link.dataset.endpoint;
+                const [method, url] = endpoint.split(' ');
+                
+                requestMethod.value = method;
+                requestUrl.value = url.replace('/api/v1', '');
+                
+                // Update JSON body based on the endpoint
+                updateJsonBody(method, url);
+            });
+        });
+        
+        // Add parameter
+        addParamBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'row mb-2';
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-name" placeholder="Parameter name">
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control param-value" placeholder="Parameter value">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger remove-param">Remove</button>
+                </div>
+            `;
+            paramRows.appendChild(row);
+            
+            // Add event listener to the remove button
+            row.querySelector('.remove-param').addEventListener('click', () => {
+                row.remove();
+            });
+        });
+        
+        // Remove parameter
+        paramRows.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-param')) {
+                e.target.closest('.row').remove();
+            }
+        });
+        
+        // Add header
+        addHeaderBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'row mb-2';
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <input type="text" class="form-control header-name" placeholder="Header name">
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control header-value" placeholder="Header value">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger remove-header">Remove</button>
+                </div>
+            `;
+            headerRows.appendChild(row);
+            
+            // Add event listener to the remove button
+            row.querySelector('.remove-header').addEventListener('click', () => {
+                row.remove();
+            });
+        });
+        
+        // Remove header
+        headerRows.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-header')) {
+                e.target.closest('.row').remove();
+            }
+        });
+        
+        // Send request
+        sendRequestBtn.addEventListener('click', () => {
+            // Show loading state
+            sendRequestBtn.disabled = true;
+            sendRequestBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+            
+            // Reset response
+            responseJson.textContent = 'Loading...';
+            responseStatus.textContent = '';
+            responseStatus.className = '';
+            responseTime.textContent = '';
+            responseHeadersContent.innerHTML = '<tr><td colspan="2">Loading headers...</td></tr>';
+            
+            // Simulate API call
+            setTimeout(() => {
+                // This is a simulated response - in a real app, this would be an actual API call
+                const startTime = new Date();
+                const method = requestMethod.value;
+                const url = requestUrl.value;
+                
+                // Generate mock response based on endpoint
+                let response, statusCode, statusText;
+                
+                if (url.includes('/campaigns') && !url.includes('/{id}') && method === 'GET') {
+                    response = {
+                        success: true,
+                        data: [
+                            {
+                                id: 123,
+                                title: "Software Engineer Position",
+                                description: "Campaign for software engineer job opening",
+                                platform_id: 1,
+                                job_opening_id: 456,
+                                status: "active",
+                                budget: 1000.00,
+                                created_at: "2023-06-15T10:30:00Z"
+                            },
+                            {
+                                id: 124,
+                                title: "Marketing Manager Position",
+                                description: "Campaign for marketing manager job opening",
+                                platform_id: 2,
+                                job_opening_id: 457,
+                                status: "draft",
+                                budget: 1500.00,
+                                created_at: "2023-06-16T14:45:00Z"
+                            }
+                        ],
+                        pagination: {
+                            total_items: 2,
+                            total_pages: 1,
+                            current_page: 1,
+                            per_page: 20
+                        }
+                    };
+                    statusCode = 200;
+                    statusText = 'OK';
+                } 
+                else if (url.includes('/campaigns') && url.includes('/{id}') && method === 'GET') {
+                    response = {
+                        success: true,
+                        data: {
+                            id: 123,
+                            title: "Software Engineer Position",
+                            description: "Campaign for software engineer job opening",
+                            platform_id: 1,
+                            job_opening_id: 456,
+                            segment_id: 789,
+                            budget: 1000.00,
+                            status: "active",
+                            ad_headline: "Join Our Engineering Team",
+                            ad_text: "We are looking for talented software engineers...",
+                            created_at: "2023-06-15T10:30:00Z",
+                            updated_at: "2023-06-16T08:15:22Z"
+                        }
+                    };
+                    statusCode = 200;
+                    statusText = 'OK';
+                }
+                else if (url.includes('/campaigns') && method === 'POST') {
+                    const bodyContent = jsonEditor.textContent;
+                    let requestBody;
+                    try {
+                        requestBody = JSON.parse(bodyContent);
+                    } catch (e) {
+                        response = {
+                            success: false,
+                            error: "Invalid JSON",
+                            message: "The request body contains invalid JSON."
+                        };
+                        statusCode = 400;
+                        statusText = 'Bad Request';
+                    }
+                    
+                    if (requestBody) {
+                        response = {
+                            success: true,
+                            message: "Campaign created successfully",
+                            data: {
+                                id: 125,
+                                ...requestBody,
+                                status: "draft",
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            }
+                        };
+                        statusCode = 201;
+                        statusText = 'Created';
+                    }
+                }
+                else {
+                    response = {
+                        success: false,
+                        error: "Not Implemented",
+                        message: "This endpoint has not been implemented in the playground."
+                    };
+                    statusCode = 501;
+                    statusText = 'Not Implemented';
+                }
+                
+                // Update response UI
+                const endTime = new Date();
+                const requestTime = endTime - startTime;
+                
+                responseTime.textContent = `Request completed in ${requestTime}ms`;
+                responseJson.textContent = JSON.stringify(response, null, 2);
+                
+                // Update status
+                responseStatus.textContent = `${statusCode} ${statusText}`;
+                if (statusCode >= 200 && statusCode < 300) {
+                    responseStatus.className = 'status-success';
+                } else if (statusCode >= 400) {
+                    responseStatus.className = 'status-error';
+                } else {
+                    responseStatus.className = 'status-info';
+                }
+                
+                // Update headers
+                const headers = [
+                    { name: 'Content-Type', value: 'application/json' },
+                    { name: 'X-Request-ID', value: generateRandomId() },
+                    { name: 'X-RateLimit-Limit', value: '1000' },
+                    { name: 'X-RateLimit-Remaining', value: '999' },
+                    { name: 'X-RateLimit-Reset', value: '1623846000' }
+                ];
+                
+                let headersHtml = '';
+                headers.forEach(header => {
+                    headersHtml += `
+                        <tr>
+                            <td>${header.name}</td>
+                            <td>${header.value}</td>
+                        </tr>
+                    `;
+                });
+                
+                responseHeadersContent.innerHTML = headersHtml;
+                
+                // Reset button
+                sendRequestBtn.disabled = false;
+                sendRequestBtn.textContent = 'Send';
+            }, 1000);
+        });
+        
+        // Update JSON body based on endpoint
+        function updateJsonBody(method, url) {
+            if (method === 'POST' && url.includes('/campaigns')) {
+                jsonEditor.textContent = JSON.stringify({
+                    title: "Example Campaign",
+                    description: "API test campaign",
+                    platform_id: 1,
+                    job_opening_id: 42,
+                    segment_id: 3,
+                    budget: 500
+                }, null, 2);
+            } 
+            else if (method === 'PUT' && url.includes('/campaigns')) {
+                jsonEditor.textContent = JSON.stringify({
+                    title: "Updated Campaign",
+                    description: "Updated campaign description",
+                    budget: 1000
+                }, null, 2);
+            }
+            else if (method === 'POST' && url.includes('/job_openings')) {
+                jsonEditor.textContent = JSON.stringify({
+                    title: "Software Engineer",
+                    company: "Acme Inc.",
+                    description: "We are looking for a talented software engineer...",
+                    location: "San Francisco, CA",
+                    job_type: "Full-time",
+                    experience_level: "Mid-level"
+                }, null, 2);
+            } 
+            else {
+                jsonEditor.textContent = '{}';
+            }
+        }
+        
+        // Generate random ID for request header
+        function generateRandomId() {
+            return 'req_' + Math.random().toString(36).substring(2, 15);
+        }
+        
+        // Copy API key
+        window.copyApiKey = function() {
+            const apiKeyInput = document.getElementById('api-key');
+            apiKeyInput.select();
+            apiKeyInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(apiKeyInput.value);
+            
+            const copyButton = apiKeyInput.nextElementSibling;
+            copyButton.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                copyButton.innerHTML = '<i class="bi bi-clipboard"></i>';
+            }, 2000);
+        };
+    });
+</script>
+{% endblock %}

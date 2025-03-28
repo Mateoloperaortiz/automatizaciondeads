@@ -1,0 +1,68 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Edit Team - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('teams.list_teams') }}">Teams</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('teams.detail', team_id=team.id) }}">{{ team.name }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
+  </nav>
+  
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Edit Team</h5>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          
+          <form method="POST" action="{{ url_for('teams.edit_team', team_id=team.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+              <label for="name" class="form-label">Team Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ team.name }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3">{{ team.description or '' }}</textarea>
+            </div>
+            
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="active" name="active" {% if team.active %}checked{% endif %}>
+              <label class="form-check-label" for="active">Active</label>
+              <div class="form-text">Inactive teams will be hidden from campaigns and resources.</div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+              <a href="{{ url_for('teams.detail', team_id=team.id) }}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize feather icons
+    feather.replace();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,738 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Create New Segment | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Create New Segment{% endblock %}
+
+{% block page_title_content %}New Manual Segment{% endblock %}
+{% block page_subtitle %}Create a custom audience segment for targeted ad campaigns{% endblock %}
+
+{% block page_actions %}
+<div class="page-actions">
+    <a href="{{ url_for('segments.list_segments') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Segments
+    </a>
+    <button type="submit" form="createSegmentForm" class="btn btn-primary">
+        <i class="fas fa-save"></i> Create Segment
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="create-segment-container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Segment Details Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Segment Details</h2>
+                </div>
+                <div class="card-body">
+                    <form id="createSegmentForm" action="{{ url_for('segments.create_manual_segment') }}" method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Segment Name <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="form-text">Give your segment a clear, descriptive name</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe this audience segment's key characteristics and ideal use cases"></textarea>
+                        </div>
+                        
+                        <h3 class="section-title">Segment Characteristics</h3>
+                        <p class="section-description">Define the targeting criteria for this segment.</p>
+                        
+                        <div class="characteristics-form">
+                            <div class="mb-3">
+                                <label for="criteria_age_avg" class="form-label">Average Age</label>
+                                <input type="number" class="form-control" id="criteria_age_avg" name="criteria_age_avg" value="30" step="0.1">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="criteria_experience_avg" class="form-label">Average Experience (years)</label>
+                                <input type="number" class="form-control" id="criteria_experience_avg" name="criteria_experience_avg" value="5" step="0.1">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="criteria_education_level" class="form-label">Education Level</label>
+                                <select class="form-control" id="criteria_education_level" name="criteria_education_level">
+                                    <option value="High School">High School</option>
+                                    <option value="Bachelor" selected>Bachelor</option>
+                                    <option value="Master">Master</option>
+                                    <option value="PhD">PhD</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="criteria_primary_location" class="form-label">Primary Location</label>
+                                <input type="text" class="form-control" id="criteria_primary_location" name="criteria_primary_location" value="">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="criteria_industry_focus" class="form-label">Industry Focus</label>
+                                <input type="text" class="form-control" id="criteria_industry_focus" name="criteria_industry_focus" value="Technology">
+                            </div>
+                            
+                            <!-- Add new criteria field button -->
+                            <div class="add-criteria-container">
+                                <button type="button" class="btn btn-outline-primary" id="addCriteriaBtn">
+                                    <i class="fas fa-plus"></i> Add More Characteristics
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <h3 class="section-title mt-4">Initial Candidates</h3>
+                        <p class="section-description">Select candidates to include in this segment (optional).</p>
+                        
+                        <div class="candidate-selection-container">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="candidateSearch" placeholder="Search candidates by name, skills, location...">
+                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="candidates-list">
+                                {% if candidates %}
+                                    {% for candidate in candidates %}
+                                    <div class="candidate-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="candidates" value="{{ candidate.id }}" id="candidate{{ candidate.id }}">
+                                            <label class="form-check-label" for="candidate{{ candidate.id }}">
+                                                <div class="candidate-name">{{ candidate.name }}</div>
+                                                <div class="candidate-details">
+                                                    <span class="candidate-age">{{ candidate.age }} years</span>
+                                                    <span class="separator">•</span>
+                                                    <span class="candidate-location">{{ candidate.location }}</span>
+                                                    <span class="separator">•</span>
+                                                    <span class="candidate-education">{{ candidate.education }}</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="empty-state">
+                                        <p>No candidates available. Please add candidates first.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Preview Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Segment Preview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="preview-section">
+                        <div class="segment-preview-card">
+                            <div class="segment-card-header">
+                                <h3 id="previewName">New Segment</h3>
+                                <span class="status-badge">
+                                    <span id="previewCount">0</span> candidates
+                                </span>
+                            </div>
+                            <div class="segment-card-content">
+                                <p id="previewDescription">Segment description will appear here...</p>
+                                
+                                <div class="segment-traits" id="previewTraits">
+                                    <div class="trait-badge">
+                                        <strong>Age Avg:</strong> 30.0 years
+                                    </div>
+                                    <div class="trait-badge">
+                                        <strong>Experience Avg:</strong> 5.0 years
+                                    </div>
+                                    <div class="trait-badge">
+                                        <strong>Education Level:</strong> Bachelor
+                                    </div>
+                                    <div class="trait-badge">
+                                        <strong>Industry Focus:</strong> Technology
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-note">
+                            <i class="fas fa-info-circle"></i> This preview updates as you edit the segment details.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Segment Creation Tips</h2>
+                </div>
+                <div class="card-body">
+                    <div class="tips-container">
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div class="tip-content">
+                                <h4>Define Clear Criteria</h4>
+                                <p>Specific criteria lead to better targeting. Focus on demographic and professional characteristics most relevant to your job opening.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="tip-content">
+                                <h4>Optimal Segment Size</h4>
+                                <p>Aim for segments with 30-100 candidates. Too small may limit reach, too large may dilute targeting precision.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tip-item">
+                            <div class="tip-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="tip-content">
+                                <h4>Multiple Segments</h4>
+                                <p>Create 2-3 different segments for each job opening to test different audience approaches. Compare performance to optimize.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="automated-option">
+                            <h4>Need help?</h4>
+                            <p>Let our ML algorithm create segments automatically based on your candidate data.</p>
+                            <a href="{{ url_for('segments.refresh_segments') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-magic"></i> Auto-generate Segments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+    }
+    
+    .col-lg-8 {
+        width: 66.66%;
+        padding: 0 0.75rem;
+    }
+    
+    .col-lg-4 {
+        width: 33.33%;
+        padding: 0 0.75rem;
+    }
+    
+    @media (max-width: 992px) {
+        .col-lg-8, .col-lg-4 {
+            width: 100%;
+        }
+    }
+    
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mt-4 {
+        margin-top: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius);
+        background-color: white;
+        transition: border-color 0.15s ease-in-out;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary);
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+    }
+    
+    .form-text {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .section-description {
+        color: var(--gray-600);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .characteristics-form {
+        margin-bottom: 1rem;
+    }
+    
+    .add-criteria-container {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .candidate-selection-container {
+        margin-top: 1rem;
+    }
+    
+    .candidates-list {
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .candidate-item {
+        padding: 0.5rem;
+        border-radius: var(--border-radius);
+        transition: background-color 0.2s ease;
+    }
+    
+    .candidate-item:hover {
+        background-color: var(--gray-100);
+    }
+    
+    .candidate-name {
+        font-weight: 500;
+    }
+    
+    .candidate-details {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        margin-top: 0.25rem;
+    }
+    
+    .separator {
+        margin: 0 0.25rem;
+    }
+    
+    .empty-state {
+        padding: 1rem;
+        text-align: center;
+        color: var(--gray-600);
+        font-style: italic;
+    }
+    
+    /* Preview Card */
+    .preview-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .segment-preview-card {
+        border: 1px solid var(--primary-100);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.1);
+    }
+    
+    .segment-card-header {
+        background-color: var(--primary-50);
+        padding: 1rem;
+        border-bottom: 1px solid var(--primary-100);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .segment-card-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--primary-800);
+    }
+    
+    .status-badge {
+        background-color: var(--primary-500);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .segment-card-content {
+        padding: 1rem;
+        background-color: white;
+    }
+    
+    .segment-card-content p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--gray-700);
+        font-size: 0.9rem;
+    }
+    
+    .segment-traits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .trait-badge {
+        background-color: var(--primary-50);
+        color: var(--primary-800);
+        padding: 0.35rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+    
+    .trait-badge strong {
+        font-weight: 600;
+    }
+    
+    .preview-note {
+        background-color: var(--gray-50);
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        border: 1px dashed var(--gray-300);
+    }
+    
+    /* Tips Card */
+    .tips-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .tip-item {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .tip-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background-color: var(--primary-100);
+        color: var(--primary-600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .tip-content {
+        flex-grow: 1;
+    }
+    
+    .tip-content h4 {
+        margin-top: 0;
+        margin-bottom: 0.4rem;
+        font-size: 0.95rem;
+        color: var(--gray-800);
+    }
+    
+    .tip-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        line-height: 1.4;
+    }
+    
+    .automated-option {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px dashed var(--gray-300);
+        text-align: center;
+    }
+    
+    .automated-option h4 {
+        margin-top: 0;
+        margin-bottom: 0.4rem;
+        font-size: 1rem;
+    }
+    
+    .automated-option p {
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+    
+    /* Input Group */
+    .input-group {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        width: 100%;
+    }
+    
+    .input-group > .form-control {
+        position: relative;
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+    }
+    
+    .input-group-append {
+        margin-left: -1px;
+    }
+    
+    .input-group > .form-control:not(:last-child) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .input-group > .input-group-append > .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize live preview updates
+        initPreviewUpdates();
+        
+        // Initialize add criteria button
+        initAddCriteriaBtn();
+        
+        // Initialize candidate search
+        initCandidateSearch();
+    });
+    
+    function initPreviewUpdates() {
+        // Get form elements to watch
+        const nameInput = document.getElementById('name');
+        const descriptionInput = document.getElementById('description');
+        const criteriaInputs = document.querySelectorAll('[id^="criteria_"]');
+        const candidateCheckboxes = document.querySelectorAll('input[name="candidates"]');
+        
+        // Get preview elements
+        const previewName = document.getElementById('previewName');
+        const previewDescription = document.getElementById('previewDescription');
+        const previewTraits = document.getElementById('previewTraits');
+        const previewCount = document.getElementById('previewCount');
+        
+        // Update name
+        nameInput.addEventListener('input', function() {
+            previewName.textContent = this.value || 'New Segment';
+        });
+        
+        // Update description
+        descriptionInput.addEventListener('input', function() {
+            previewDescription.textContent = this.value || 'Segment description will appear here...';
+        });
+        
+        // Update criteria
+        criteriaInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                updatePreviewTraits();
+            });
+        });
+        
+        // Update candidate count
+        candidateCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('input[name="candidates"]:checked').length;
+                previewCount.textContent = checkedCount;
+            });
+        });
+        
+        // Function to update trait display in preview
+        function updatePreviewTraits() {
+            const traits = [];
+            criteriaInputs.forEach(input => {
+                if (input.value) {
+                    const key = input.id.replace('criteria_', '');
+                    const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    
+                    let formattedValue = input.value;
+                    if (key.includes('age') && !isNaN(input.value)) {
+                        formattedValue = parseFloat(input.value).toFixed(1) + ' years';
+                    } else if (key.includes('experience') && !isNaN(input.value)) {
+                        formattedValue = parseFloat(input.value).toFixed(1) + ' years';
+                    } else if (!isNaN(input.value)) {
+                        formattedValue = parseFloat(input.value).toFixed(1);
+                    }
+                    
+                    traits.push(`<div class="trait-badge"><strong>${formattedKey}:</strong> ${formattedValue}</div>`);
+                }
+            });
+            
+            previewTraits.innerHTML = traits.join('');
+        }
+    }
+    
+    function initAddCriteriaBtn() {
+        const addBtn = document.getElementById('addCriteriaBtn');
+        const criteriaContainer = document.querySelector('.characteristics-form');
+        const addContainer = document.querySelector('.add-criteria-container');
+        
+        addBtn.addEventListener('click', function() {
+            // Show form for new criteria
+            const newCriteriaHTML = `
+                <div class="new-criteria-form mb-3">
+                    <div class="d-flex gap-2 mb-2">
+                        <input type="text" class="form-control" placeholder="Characteristic Name" id="new_criteria_key">
+                        <select class="form-control" id="new_criteria_type">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                        </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control" placeholder="Value" id="new_criteria_value">
+                        <button type="button" class="btn btn-primary" id="saveCriteriaBtn">Add</button>
+                        <button type="button" class="btn btn-outline-secondary" id="cancelCriteriaBtn">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            // Insert new form before add button
+            addContainer.insertAdjacentHTML('beforebegin', newCriteriaHTML);
+            
+            // Hide add button while form is open
+            addBtn.style.display = 'none';
+            
+            // Handle saving new criteria
+            document.getElementById('saveCriteriaBtn').addEventListener('click', function() {
+                const keyInput = document.getElementById('new_criteria_key');
+                const typeSelect = document.getElementById('new_criteria_type');
+                const valueInput = document.getElementById('new_criteria_value');
+                
+                if (keyInput.value.trim() === '') {
+                    alert('Please enter a name for the characteristic');
+                    return;
+                }
+                
+                // Format the key (lowercase with underscores)
+                const key = keyInput.value.trim().toLowerCase().replace(/\s+/g, '_');
+                
+                // Create new field
+                const newFieldHTML = `
+                    <div class="mb-3">
+                        <label for="criteria_${key}" class="form-label">${keyInput.value.trim()}</label>
+                        <input type="${typeSelect.value}" class="form-control" id="criteria_${key}" name="criteria_${key}" value="${valueInput.value}">
+                    </div>
+                `;
+                
+                // Replace form with new field
+                document.querySelector('.new-criteria-form').outerHTML = newFieldHTML;
+                
+                // Add event listener to new field for preview updates
+                document.getElementById(`criteria_${key}`).addEventListener('input', function() {
+                    // Get all criteria inputs
+                    const criteriaInputs = document.querySelectorAll('[id^="criteria_"]');
+                    
+                    // Get preview elements
+                    const previewTraits = document.getElementById('previewTraits');
+                    
+                    // Update traits in preview
+                    const traits = [];
+                    criteriaInputs.forEach(input => {
+                        if (input.value) {
+                            const key = input.id.replace('criteria_', '');
+                            const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                            
+                            let formattedValue = input.value;
+                            if (key.includes('age') && !isNaN(input.value)) {
+                                formattedValue = parseFloat(input.value).toFixed(1) + ' years';
+                            } else if (key.includes('experience') && !isNaN(input.value)) {
+                                formattedValue = parseFloat(input.value).toFixed(1) + ' years';
+                            } else if (!isNaN(input.value)) {
+                                formattedValue = parseFloat(input.value).toFixed(1);
+                            }
+                            
+                            traits.push(`<div class="trait-badge"><strong>${formattedKey}:</strong> ${formattedValue}</div>`);
+                        }
+                    });
+                    
+                    previewTraits.innerHTML = traits.join('');
+                });
+                
+                // Show add button again
+                addBtn.style.display = 'block';
+            });
+            
+            // Handle canceling new criteria
+            document.getElementById('cancelCriteriaBtn').addEventListener('click', function() {
+                document.querySelector('.new-criteria-form').remove();
+                addBtn.style.display = 'block';
+            });
+        });
+    }
+    
+    function initCandidateSearch() {
+        const searchInput = document.getElementById('candidateSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        
+        // Function to filter candidates
+        function filterCandidates() {
+            const searchValue = searchInput.value.toLowerCase();
+            const candidateItems = document.querySelectorAll('.candidate-item');
+            
+            candidateItems.forEach(item => {
+                const candidateName = item.querySelector('.candidate-name').textContent.toLowerCase();
+                const candidateDetails = item.querySelector('.candidate-details').textContent.toLowerCase();
+                
+                if (candidateName.includes(searchValue) || candidateDetails.includes(searchValue)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Listen for input
+        searchInput.addEventListener('input', filterCandidates);
+        
+        // Listen for button click
+        searchBtn.addEventListener('click', filterCandidates);
+        
+        // Listen for Enter key press in search input
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission
+                filterCandidates();
+            }
+        });
+    }
+</script>
+{% endblock %}

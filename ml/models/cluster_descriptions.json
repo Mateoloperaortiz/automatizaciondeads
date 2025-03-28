@@ -1,0 +1,27 @@
+[
+  {
+    "id": 0,
+    "name": "Segment 0",
+    "description": "Audience segment 0 with 7 candidates"
+  },
+  {
+    "id": 1,
+    "name": "Segment 1",
+    "description": "Audience segment 1 with 14 candidates"
+  },
+  {
+    "id": 2,
+    "name": "Segment 2",
+    "description": "Audience segment 2 with 14 candidates"
+  },
+  {
+    "id": 3,
+    "name": "Segment 3",
+    "description": "Audience segment 3 with 7 candidates"
+  },
+  {
+    "id": 4,
+    "name": "Segment 4",
+    "description": "Audience segment 4 with 8 candidates"
+  }
+]

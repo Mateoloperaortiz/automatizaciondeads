@@ -1,0 +1,992 @@
+{% extends "simple_base.html" %}
+
+{% block title %}ROI & Conversion Dashboard{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .kpi-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-label {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-trend {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .trend-up {
+        color: #28a745;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    .roi-chart {
+        height: 300px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .time-series-chart {
+        height: 300px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .platform-pill {
+        cursor: pointer;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        background-color: #e9ecef;
+        color: #495057;
+        transition: all 0.2s;
+    }
+    
+    .platform-pill.active {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+    
+    .conversion-card {
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .conversion-table th {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .platform-icon {
+        width: 24px;
+        height: 24px;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    
+    .forecast-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+        background-color: #e9ecef;
+    }
+    
+    .good-forecast {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .neutral-forecast {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+    
+    .bad-forecast {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h1 class="h3">ROI & Conversion Dashboard</h1>
+            <p class="text-muted">Track campaign performance and return on investment metrics</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button class="btn btn-outline-secondary me-2" id="exportData">
+                <i class="fas fa-file-csv"></i> Export Data
+            </button>
+            <button class="btn btn-primary" id="refreshData">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card filter-card">
+                <h5>Filters</h5>
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label for="dateRange" class="form-label">Date Range</label>
+                        <select class="form-select" id="dateRange">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 date-range-custom d-none">
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="dateFrom" class="form-label">From</label>
+                                <input type="date" class="form-control" id="dateFrom">
+                            </div>
+                            <div class="col-6">
+                                <label for="dateTo" class="form-label">To</label>
+                                <input type="date" class="form-control" id="dateTo">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="segmentFilter" class="form-label">Segment</label>
+                        <select class="form-select" id="segmentFilter">
+                            <option value="">All Segments</option>
+                            {% for segment in segments %}
+                            <option value="{{ segment.id }}">{{ segment.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="platformFilter" class="form-label">Platform</label>
+                        <select class="form-select" id="platformFilter">
+                            <option value="">All Platforms</option>
+                            {% for platform in platforms %}
+                            <option value="{{ platform }}">{{ platform }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">ROI Calculator</h5>
+                    <form id="roiCalculatorForm">
+                        <div class="mb-3">
+                            <label for="investmentAmount" class="form-label">Ad Spend ($)</label>
+                            <input type="number" class="form-control" id="investmentAmount" value="1000">
+                        </div>
+                        <div class="mb-3">
+                            <label for="conversionRate" class="form-label">Conversion Rate (%)</label>
+                            <input type="number" class="form-control" id="conversionRate" value="2.5" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="averageOrderValue" class="form-label">Average Value ($)</label>
+                            <input type="number" class="form-control" id="averageOrderValue" value="100">
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-100">Calculate ROI</button>
+                    </form>
+                    
+                    <div class="mt-3 p-3 bg-light rounded" id="roiResult" style="display: none;">
+                        <div class="text-center">
+                            <div class="h5 mb-0">Estimated ROI</div>
+                            <div class="display-6 text-primary" id="calculatedRoi">0%</div>
+                            <small class="text-muted">Based on your inputs</small>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="h6 mb-0">Revenue</div>
+                                <div id="calculatedRevenue">$0</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="h6 mb-0">Profit</div>
+                                <div id="calculatedProfit">$0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <!-- KPI Cards -->
+            <div class="row" id="kpiRow">
+                <div class="col-md-3">
+                    <div class="card kpi-card">
+                        <div class="kpi-value text-primary" id="totalSpend">$0</div>
+                        <div class="kpi-label">Total Ad Spend</div>
+                        <div class="kpi-trend" id="spendTrend">
+                            <i class="fas fa-arrow-up me-1 trend-up"></i> 0% vs. previous period
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card">
+                        <div class="kpi-value text-success" id="totalConversions">0</div>
+                        <div class="kpi-label">Conversions</div>
+                        <div class="kpi-trend" id="conversionsTrend">
+                            <i class="fas fa-arrow-up me-1 trend-up"></i> 0% vs. previous period
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card">
+                        <div class="kpi-value text-info" id="totalRevenue">$0</div>
+                        <div class="kpi-label">Revenue</div>
+                        <div class="kpi-trend" id="revenueTrend">
+                            <i class="fas fa-arrow-up me-1 trend-up"></i> 0% vs. previous period
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card">
+                        <div class="kpi-value" id="totalRoi">0%</div>
+                        <div class="kpi-label">ROI</div>
+                        <div class="kpi-trend" id="roiTrend">
+                            <i class="fas fa-arrow-up me-1 trend-up"></i> 0% vs. previous period
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Time Series Chart -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">Performance Over Time</h5>
+                        <div class="platform-pills">
+                            <div class="platform-pill active" data-metric="roi">ROI</div>
+                            <div class="platform-pill" data-metric="conversions">Conversions</div>
+                            <div class="platform-pill" data-metric="spend">Spend</div>
+                            <div class="platform-pill" data-metric="revenue">Revenue</div>
+                        </div>
+                    </div>
+                    <div class="time-series-chart" id="timeSeriesChart"></div>
+                </div>
+            </div>
+            
+            <!-- Platform Comparison -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">ROI by Platform</h5>
+                    <div class="roi-chart" id="platformRoiChart"></div>
+                </div>
+            </div>
+            
+            <!-- Conversion Funnel -->
+            <div class="card conversion-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title">Conversion Funnel & CPA Analysis</h5>
+                    <div class="text-muted">
+                        <span id="dateRangeDisplay">Last 30 days</span>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Conversion Funnel</h6>
+                                <div id="conversionFunnelChart" style="height: 250px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Cost Per Acquisition</h6>
+                                <div id="cpaChart" style="height: 250px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive mt-3">
+                    <table class="table conversion-table">
+                        <thead>
+                            <tr>
+                                <th>Platform</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>CTR</th>
+                                <th>Conversions</th>
+                                <th>Conv. Rate</th>
+                                <th>CPA</th>
+                                <th>ROI</th>
+                                <th>Forecast</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conversionTableBody">
+                            <!-- Table rows will be dynamically generated here -->
+                            <tr>
+                                <td colspan="9" class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Loading data...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Platform colors for consistent visualization
+        const platformColors = {
+            'Meta': '#1877F2',
+            'X': '#1DA1F2',
+            'Google': '#4285F4',
+            'TikTok': '#000000',
+            'Snapchat': '#FFFC00',
+            'Default': '#6c757d'
+        };
+        
+        // Platform icons
+        const platformIcons = {
+            'Meta': 'fa-facebook',
+            'X': 'fa-twitter',
+            'Google': 'fa-google',
+            'TikTok': 'fa-tiktok',
+            'Snapchat': 'fa-snapchat',
+            'Default': 'fa-ad'
+        };
+        
+        // Variables to store state
+        let timeSeriesChart = null;
+        let platformRoiChart = null;
+        let conversionFunnelChart = null;
+        let cpaChart = null;
+        let currentTimeSeriesMetric = 'roi';
+        let roiData = null;
+        
+        // Event listeners
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadData();
+        });
+        
+        document.getElementById('dateRange').addEventListener('change', function() {
+            const customRange = document.querySelector('.date-range-custom');
+            if (this.value === 'custom') {
+                customRange.classList.remove('d-none');
+            } else {
+                customRange.classList.add('d-none');
+            }
+            
+            // Update date range display
+            updateDateRangeDisplay();
+        });
+        
+        document.getElementById('refreshData').addEventListener('click', loadData);
+        document.getElementById('exportData').addEventListener('click', exportData);
+        
+        // ROI calculator
+        document.getElementById('roiCalculatorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateRoi();
+        });
+        
+        // Time series metric selection
+        document.querySelectorAll('.platform-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                currentTimeSeriesMetric = this.dataset.metric;
+                updateTimeSeriesChart();
+            });
+        });
+        
+        // Load initial data
+        loadData();
+        updateDateRangeDisplay();
+        
+        // Function to load data from API
+        function loadData() {
+            // Get filter values
+            const segmentId = document.getElementById('segmentFilter').value;
+            const platform = document.getElementById('platformFilter').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            let dateFrom = '';
+            let dateTo = '';
+            
+            if (dateRange === 'custom') {
+                dateFrom = document.getElementById('dateFrom').value;
+                dateTo = document.getElementById('dateTo').value;
+            } else {
+                // Calculate date range
+                const today = new Date();
+                dateTo = today.toISOString().split('T')[0];
+                
+                const fromDate = new Date();
+                fromDate.setDate(today.getDate() - parseInt(dateRange));
+                dateFrom = fromDate.toISOString().split('T')[0];
+            }
+            
+            // Construct API URL with parameters
+            let url = '/analytics/roi-data?';
+            if (segmentId) url += `segment_id=${segmentId}&`;
+            if (platform) url += `platform=${platform}&`;
+            if (dateFrom) url += `date_from=${dateFrom}&`;
+            if (dateTo) url += `date_to=${dateTo}&`;
+            
+            // Show loading states
+            showLoading();
+            
+            // Fetch data
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Store the data
+                    roiData = data;
+                    
+                    // Update the UI
+                    updateKpiCards(data.totals);
+                    updateCharts(data);
+                    updateConversionTable(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    showError();
+                });
+        }
+        
+        // Function to show loading state
+        function showLoading() {
+            document.getElementById('conversionTableBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading data...</span>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Function to show error state
+        function showError() {
+            document.getElementById('conversionTableBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center">
+                        <div class="alert alert-danger mb-0">
+                            Error loading data. Please try again.
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Function to update KPI cards
+        function updateKpiCards(totals) {
+            // Update spend
+            document.getElementById('totalSpend').textContent = formatCurrency(totals.spend);
+            
+            // Update conversions
+            document.getElementById('totalConversions').textContent = totals.conversions.toLocaleString();
+            
+            // Update revenue
+            document.getElementById('totalRevenue').textContent = formatCurrency(totals.revenue);
+            
+            // Update ROI
+            document.getElementById('totalRoi').textContent = formatPercentage(totals.roi);
+            
+            // Update trends (using random values for demo)
+            const spendTrend = (Math.random() * 20) - 10;
+            const conversionsTrend = (Math.random() * 20) - 5;
+            const revenueTrend = (Math.random() * 20) - 5;
+            const roiTrend = (Math.random() * 20) - 5;
+            
+            document.getElementById('spendTrend').innerHTML = getTrendHtml(spendTrend);
+            document.getElementById('conversionsTrend').innerHTML = getTrendHtml(conversionsTrend);
+            document.getElementById('revenueTrend').innerHTML = getTrendHtml(revenueTrend);
+            document.getElementById('roiTrend').innerHTML = getTrendHtml(roiTrend);
+        }
+        
+        // Function to create trend HTML
+        function getTrendHtml(trend) {
+            const isUp = trend >= 0;
+            const iconClass = isUp ? 'trend-up' : 'trend-down';
+            const icon = isUp ? 'fa-arrow-up' : 'fa-arrow-down';
+            
+            return `
+                <i class="fas ${icon} me-1 ${iconClass}"></i> ${Math.abs(trend).toFixed(1)}% vs. previous period
+            `;
+        }
+        
+        // Function to update charts
+        function updateCharts(data) {
+            // Update time series chart
+            updateTimeSeriesChart();
+            
+            // Update platform ROI chart
+            updatePlatformRoiChart();
+            
+            // Update conversion funnel chart
+            updateConversionFunnelChart();
+            
+            // Update CPA chart
+            updateCpaChart();
+        }
+        
+        // Function to update time series chart
+        function updateTimeSeriesChart() {
+            if (!roiData) return;
+            
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            
+            // Extract time series data
+            const labels = roiData.time_series.map(d => d.date);
+            const data = roiData.time_series.map(d => d[currentTimeSeriesMetric]);
+            
+            if (timeSeriesChart) {
+                timeSeriesChart.destroy();
+            }
+            
+            // Format for different metrics
+            let yAxisFormat, title;
+            
+            switch (currentTimeSeriesMetric) {
+                case 'roi':
+                    yAxisFormat = value => value.toFixed(2) + '%';
+                    title = 'ROI Over Time';
+                    break;
+                case 'conversions':
+                    yAxisFormat = value => value.toLocaleString();
+                    title = 'Conversions Over Time';
+                    break;
+                case 'spend':
+                case 'revenue':
+                    yAxisFormat = value => '$' + value.toFixed(2);
+                    title = (currentTimeSeriesMetric === 'spend' ? 'Ad Spend' : 'Revenue') + ' Over Time';
+                    break;
+                default:
+                    yAxisFormat = value => value.toLocaleString();
+                    title = currentTimeSeriesMetric.charAt(0).toUpperCase() + currentTimeSeriesMetric.slice(1) + ' Over Time';
+            }
+            
+            timeSeriesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: currentTimeSeriesMetric.toUpperCase(),
+                        data: data,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return yAxisFormat(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return yAxisFormat(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to update platform ROI chart
+        function updatePlatformRoiChart() {
+            if (!roiData || !roiData.totals) return;
+            
+            // For demo, we'll generate platform data
+            const platforms = ['Meta', 'X', 'Google', 'TikTok', 'Snapchat'];
+            const roiValues = [
+                roiData.totals.roi * 0.8,
+                roiData.totals.roi * 1.2,
+                roiData.totals.roi * 0.9,
+                roiData.totals.roi * 1.1,
+                roiData.totals.roi * 0.7
+            ];
+            
+            const ctx = document.getElementById('platformRoiChart').getContext('2d');
+            
+            if (platformRoiChart) {
+                platformRoiChart.destroy();
+            }
+            
+            platformRoiChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platforms,
+                    datasets: [{
+                        label: 'ROI',
+                        data: roiValues,
+                        backgroundColor: platforms.map(p => platformColors[p] || platformColors.Default),
+                        borderColor: platforms.map(p => platformColors[p] || platformColors.Default),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to update conversion funnel chart
+        function updateConversionFunnelChart() {
+            if (!roiData || !roiData.totals) return;
+            
+            // Create funnel data (simplified for demo)
+            const funnelData = [
+                roiData.totals.impressions,
+                roiData.totals.clicks,
+                roiData.totals.conversions
+            ];
+            
+            const ctx = document.getElementById('conversionFunnelChart').getContext('2d');
+            
+            if (conversionFunnelChart) {
+                conversionFunnelChart.destroy();
+            }
+            
+            conversionFunnelChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Impressions', 'Clicks', 'Conversions'],
+                    datasets: [{
+                        label: 'Count',
+                        data: funnelData,
+                        backgroundColor: ['#6c757d', '#0d6efd', '#28a745'],
+                        borderColor: ['#6c757d', '#0d6efd', '#28a745'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.x.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000).toFixed(1) + 'M';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000).toFixed(1) + 'K';
+                                    }
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to update CPA chart
+        function updateCpaChart() {
+            if (!roiData || !roiData.totals) return;
+            
+            // For demo, generate CPA data for platforms
+            const platforms = ['Meta', 'X', 'Google', 'TikTok', 'Snapchat'];
+            const baseCpa = roiData.totals.spend / roiData.totals.conversions;
+            const cpaValues = [
+                baseCpa * 0.8,
+                baseCpa * 1.2,
+                baseCpa * 0.9,
+                baseCpa * 1.1,
+                baseCpa * 1.3
+            ];
+            
+            const ctx = document.getElementById('cpaChart').getContext('2d');
+            
+            if (cpaChart) {
+                cpaChart.destroy();
+            }
+            
+            cpaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platforms,
+                    datasets: [{
+                        label: 'CPA',
+                        data: cpaValues,
+                        backgroundColor: platforms.map(p => platformColors[p] || platformColors.Default),
+                        borderColor: platforms.map(p => platformColors[p] || platformColors.Default),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to update conversion table
+        function updateConversionTable(data) {
+            if (!data || !data.totals) return;
+            
+            // For demo, generate platform-specific data
+            const platforms = ['Meta', 'X', 'Google', 'TikTok', 'Snapchat'];
+            const totalImpressions = data.totals.impressions;
+            const totalClicks = data.totals.clicks;
+            const totalConversions = data.totals.conversions;
+            const totalSpend = data.totals.spend;
+            
+            let tableRows = '';
+            
+            platforms.forEach(platform => {
+                // Generate random variations for each platform (for demo)
+                const impressions = Math.round(totalImpressions * (0.8 + Math.random() * 0.4) / platforms.length);
+                const clicks = Math.round(totalClicks * (0.8 + Math.random() * 0.4) / platforms.length);
+                const conversions = Math.round(totalConversions * (0.8 + Math.random() * 0.4) / platforms.length);
+                const spend = totalSpend * (0.8 + Math.random() * 0.4) / platforms.length;
+                
+                // Calculate metrics
+                const ctr = (clicks / impressions) * 100;
+                const convRate = (conversions / clicks) * 100;
+                const cpa = spend / conversions;
+                const revenue = conversions * 100; // Assuming $100 per conversion
+                const roi = ((revenue - spend) / spend) * 100;
+                
+                // Generate forecast
+                let forecastClass, forecastText;
+                if (roi > 100) {
+                    forecastClass = 'good-forecast';
+                    forecastText = 'Trending Up';
+                } else if (roi > 50) {
+                    forecastClass = 'neutral-forecast';
+                    forecastText = 'Stable';
+                } else {
+                    forecastClass = 'bad-forecast';
+                    forecastText = 'Trending Down';
+                }
+                
+                const color = platformColors[platform] || platformColors.Default;
+                const icon = platformIcons[platform] || platformIcons.Default;
+                
+                tableRows += `
+                    <tr>
+                        <td>
+                            <i class="fab ${icon}" style="color: ${color}"></i>
+                            ${platform}
+                        </td>
+                        <td>${impressions.toLocaleString()}</td>
+                        <td>${clicks.toLocaleString()}</td>
+                        <td>${ctr.toFixed(2)}%</td>
+                        <td>${conversions.toLocaleString()}</td>
+                        <td>${convRate.toFixed(2)}%</td>
+                        <td>$${cpa.toFixed(2)}</td>
+                        <td>${roi.toFixed(2)}%</td>
+                        <td><span class="forecast-badge ${forecastClass}">${forecastText}</span></td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('conversionTableBody').innerHTML = tableRows;
+        }
+        
+        // Function to calculate ROI from calculator inputs
+        function calculateRoi() {
+            const investmentAmount = parseFloat(document.getElementById('investmentAmount').value) || 0;
+            const conversionRate = parseFloat(document.getElementById('conversionRate').value) || 0;
+            const averageOrderValue = parseFloat(document.getElementById('averageOrderValue').value) || 0;
+            
+            // Calculate metrics
+            const estimatedClicks = (investmentAmount / 0.5) * 1; // Assuming $0.50 per click
+            const estimatedConversions = estimatedClicks * (conversionRate / 100);
+            const estimatedRevenue = estimatedConversions * averageOrderValue;
+            const estimatedProfit = estimatedRevenue - investmentAmount;
+            const estimatedRoi = (estimatedProfit / investmentAmount) * 100;
+            
+            // Update calculator results
+            document.getElementById('calculatedRoi').textContent = formatPercentage(estimatedRoi);
+            document.getElementById('calculatedRevenue').textContent = formatCurrency(estimatedRevenue);
+            document.getElementById('calculatedProfit').textContent = formatCurrency(estimatedProfit);
+            
+            // Show result
+            document.getElementById('roiResult').style.display = 'block';
+        }
+        
+        // Function to update date range display
+        function updateDateRangeDisplay() {
+            const dateRange = document.getElementById('dateRange').value;
+            let displayText = '';
+            
+            if (dateRange === 'custom') {
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                
+                if (dateFrom && dateTo) {
+                    displayText = `${dateFrom} to ${dateTo}`;
+                } else {
+                    displayText = 'Custom Range';
+                }
+            } else if (dateRange === '7') {
+                displayText = 'Last 7 days';
+            } else if (dateRange === '30') {
+                displayText = 'Last 30 days';
+            } else if (dateRange === '90') {
+                displayText = 'Last 90 days';
+            }
+            
+            document.getElementById('dateRangeDisplay').textContent = displayText;
+        }
+        
+        // Function to export data
+        function exportData() {
+            if (!roiData) {
+                alert('Please load data first before exporting.');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = "Date,Impressions,Clicks,Spend,Conversions,Revenue,ROI\n";
+            
+            roiData.time_series.forEach(day => {
+                csvContent += `${day.date},`;
+                csvContent += `${day.impressions},`;
+                csvContent += `${day.clicks},`;
+                csvContent += `${day.spend},`;
+                csvContent += `${day.conversions},`;
+                csvContent += `${day.revenue},`;
+                csvContent += `${day.roi}%\n`;
+            });
+            
+            // Create download link
+            const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'roi_data.csv');
+            document.body.appendChild(link);
+            
+            // Download CSV
+            link.click();
+            
+            // Clean up
+            document.body.removeChild(link);
+        }
+        
+        // Utility function to format currency
+        function formatCurrency(value) {
+            return '$' + value.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // Utility function to format percentage
+        function formatPercentage(value) {
+            return value.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + '%';
+        }
+    });
+</script>
+{% endblock %}

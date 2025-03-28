@@ -1,0 +1,1263 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Dashboard | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Dashboard Overview</h1>
+            <p class="text-muted">Real-time metrics and performance across all campaigns and platforms</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt"></i> Last 30 Days
+                </button>
+            </div>
+            <a href="/campaigns" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Campaign
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-bullhorn text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Active Campaigns</div>
+                <div class="stats-value">{{ campaigns|length }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 8% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-users text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Audience Segments</div>
+                <div class="stats-value">{{ segments|length }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 5% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-eye text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Impressions</div>
+                <div class="stats-value">1.24M</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 12% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-chart-line text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Conversion Rate</div>
+                <div class="stats-value">4.2%</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 0.5% from last month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Main Content -->
+        <div class="dashboard-main">
+            <!-- Campaign Performance Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Campaign Performance</h2>
+                    <div class="header-actions">
+                        <select class="form-select form-select-sm metric-select me-2" style="width: 150px;">
+                            <option value="impressions" selected>Impressions</option>
+                            <option value="clicks">Clicks</option>
+                            <option value="ctr">CTR</option>
+                            <option value="conversions">Conversions</option>
+                        </select>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" id="exportDataBtn" data-bs-toggle="tooltip" title="Download CSV">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" id="refreshDataBtn" data-bs-toggle="tooltip" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Comparison -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Platform Performance</h2>
+                    <div class="header-actions">
+                        <div class="btn-group view-toggle">
+                            <button class="btn btn-sm btn-outline-primary active" data-view="chart">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" data-view="table">
+                                <i class="fas fa-table"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="view-content chart-view">
+                        <div class="chart-container platform-chart-container">
+                            <canvas id="platformComparisonChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="view-content table-view" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Platform</th>
+                                        <th>Impressions</th>
+                                        <th>Clicks</th>
+                                        <th>CTR</th>
+                                        <th>Applications</th>
+                                        <th>Conv. Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set platform_icons = {
+                                        'Meta': 'fab fa-facebook text-primary',
+                                        'Google': 'fab fa-google text-danger',
+                                        'Twitter': 'fab fa-twitter text-info'
+                                    } %}
+                                    
+                                    {% for i in range(platform_names|length) %}
+                                    <tr>
+                                        <td>
+                                            <div class="platform-badge">
+                                                <i class="{{ platform_icons.get(platform_names[i], 'fas fa-ad') }}"></i> {{ platform_names[i] }}
+                                            </div>
+                                        </td>
+                                        <td>{{ impressions_data[i]|int }}</td>
+                                        <td>{{ clicks_data[i]|int }}</td>
+                                        <td>{{ (clicks_data[i] / impressions_data[i] * 100)|round(1) }}%</td>
+                                        <td>{{ applications_data[i]|int }}</td>
+                                        <td>{{ (applications_data[i] / clicks_data[i] * 100)|round(1) }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Campaigns Table -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Recent Campaigns</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search campaigns..." id="campaignSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <a href="/campaigns" class="btn btn-primary btn-sm ms-2">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover campaign-table">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Platform</th>
+                                    <th>Status</th>
+                                    <th>Budget</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in campaigns %}
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon bg-primary-light">
+                                                {{ campaign.name[:2]|upper }}
+                                            </div>
+                                            <div>{{ campaign.name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if campaign.platform == 'Meta' %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-facebook text-primary me-2"></i> Meta
+                                        </span>
+                                        {% elif campaign.platform == 'Google' %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-google text-danger me-2"></i> Google
+                                        </span>
+                                        {% elif campaign.platform == 'X' %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-twitter text-info me-2"></i> X
+                                        </span>
+                                        {% else %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fas fa-ad me-2"></i> {{ campaign.platform }}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.status == 'active' %}
+                                        <span class="status-badge active"><i class="fas fa-circle"></i> Active</span>
+                                        {% elif campaign.status == 'draft' %}
+                                        <span class="status-badge draft"><i class="fas fa-circle"></i> Draft</span>
+                                        {% elif campaign.status == 'completed' or campaign.status == 'finished' %}
+                                        <span class="status-badge inactive"><i class="fas fa-circle"></i> Completed</span>
+                                        {% elif campaign.status == 'paused' %}
+                                        <span class="status-badge pending"><i class="fas fa-circle"></i> Paused</span>
+                                        {% else %}
+                                        <span class="status-badge pending"><i class="fas fa-circle"></i> {{ campaign.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ campaign.budget }}</td>
+                                    <td>{{ campaign.created_at.strftime('%b %d, %Y') if campaign.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="/campaign/{{ campaign.id }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="/analytics"><i class="fas fa-chart-bar me-2"></i>Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar Content -->
+        <div class="dashboard-sidebar">
+            <!-- Conversion Metrics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Conversion Metrics</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-icon btn-outline-secondary" data-bs-toggle="tooltip" title="View Details">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Click-through Rate</span>
+                                <span class="metric-value">3.8%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 38%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of users who click on ads
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Application Rate</span>
+                                <span class="metric-value">5.2%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 52%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of viewers who apply
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Cost per Application</span>
+                                <span class="metric-value">$22.45</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Average cost per submitted application
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Segments -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Audience Segments</h2>
+                    <div class="header-actions">
+                        <a href="/segments" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for segment in segments %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="segment-icon bg-{{ ['primary', 'success', 'warning', 'info', 'danger']|random }}-light me-3">
+                                    {{ segment.name[:2]|upper }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ segment.name }}</h6>
+                                    <p class="text-muted mb-0 small">{{ segment.description|truncate(60) }}</p>
+                                </div>
+                                <a href="/segment/{{ segment.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/segments" class="btn btn-outline-primary btn-sm">Manage Segments</a>
+                </div>
+            </div>
+
+            <!-- Analytics & Insights -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>AI-Powered Insights</h2>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Campaign Timing</h3>
+                                <p>Tech job posts show 28% higher engagement on weekday evenings.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Optimize Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-success-light">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Budget Optimization</h3>
+                                <p>Reallocate 20% of budget from Twitter to Meta for better ROI.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Apply Change</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-warning-light">
+                                <i class="fas fa-bullseye text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Audience Targeting</h3>
+                                <p>Creating a custom segment for mid-career professionals could increase CTR by 15%.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Create Segment</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Status -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Platform Status</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-icon btn-outline-secondary" id="refreshStatusBtn">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="platform-status-list">
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-primary-light">
+                                    <i class="fab fa-facebook text-primary"></i>
+                                </div>
+                                <div class="platform-name">Meta Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Connected
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-info-light">
+                                    <i class="fab fa-twitter text-info"></i>
+                                </div>
+                                <div class="platform-name">X Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Connected
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-danger-light">
+                                    <i class="fab fa-google text-danger"></i>
+                                </div>
+                                <div class="platform-name">Google Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Connected
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-dark">
+                                    <i class="fab fa-linkedin text-light"></i>
+                                </div>
+                                <div class="platform-name">LinkedIn Ads</div>
+                            </div>
+                            <div class="status-indicator offline">
+                                <i class="fas fa-circle"></i> Not Connected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/api/platform-status" class="btn btn-sm btn-outline-primary">Manage Connections</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --success: #2ec4b6;
+        --success-light: rgba(46, 196, 182, 0.1);
+        --warning: #ff9f1c;
+        --warning-light: rgba(255, 159, 28, 0.1);
+        --danger: #e71d36;
+        --danger-light: rgba(231, 29, 54, 0.1);
+        --info: #4cc9f0;
+        --info-light: rgba(76, 201, 240, 0.1);
+        --card-border-radius: 0.5rem;
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        --card-header-bg: rgba(248, 250, 252, 0.5);
+        --sidebar-width: 320px;
+        --grid-gap: 1.5rem;
+        --text-muted: #6c757d;
+        --transition-speed: 0.2s;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-wrapper {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--grid-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--card-shadow);
+        transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success);
+    }
+
+    .stats-change.negative {
+        color: var(--danger);
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr var(--sidebar-width);
+        gap: var(--grid-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--grid-gap);
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 0;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    .card-footer {
+        padding: 0.75rem 1.25rem;
+        background-color: var(--card-header-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* Platform chart specific styles */
+    .platform-chart-container {
+        height: 300px;
+        width: 100%;
+        max-width: 600px; 
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Campaign and Segment Tables */
+    .campaign-name, .segment-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .campaign-icon, .segment-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: flex-end;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background-color: var(--success-light);
+        color: var(--success);
+    }
+
+    .status-badge.inactive {
+        background-color: var(--danger-light);
+        color: var(--danger);
+    }
+
+    .status-badge.pending {
+        background-color: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .status-badge.draft {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: var(--text-muted);
+    }
+
+    .status-badge i {
+        font-size: 0.5rem;
+        margin-right: 0.35rem;
+    }
+
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .progress {
+        height: 0.5rem;
+        border-radius: 1rem;
+    }
+
+    /* Platform Status */
+    .platform-status-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .platform-status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .platform-status-item:last-child {
+        border-bottom: none;
+    }
+
+    .platform-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .platform-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+    }
+
+    .platform-name {
+        font-weight: 500;
+    }
+
+    .status-indicator {
+        font-size: 0.8125rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+    }
+
+    .status-indicator.online {
+        color: var(--success);
+        background-color: var(--success-light);
+    }
+
+    .status-indicator.offline {
+        color: var(--danger);
+        background-color: var(--danger-light);
+    }
+
+    .status-indicator.maintenance {
+        color: var(--warning);
+        background-color: var(--warning-light);
+    }
+
+    .status-indicator i {
+        font-size: 0.625rem;
+    }
+
+    /* Insights */
+    .insights-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-content h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Background Colors */
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-info-light { background-color: var(--info-light); }
+    
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-info { color: var(--info) !important; }
+
+    /* View Toggle */
+    .view-toggle {
+        display: flex;
+    }
+
+    .view-toggle .btn {
+        padding: 0.375rem 0.75rem;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1200px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- Import Chart.js and date-fns adapter for dashboard charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<!-- Initialize dashboard after DOM is loaded -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Performance Chart
+        initializePerformanceChart();
+        
+        // Handle metric selector change
+        const metricSelect = document.querySelector('.metric-select');
+        if (metricSelect) {
+            metricSelect.addEventListener('change', function() {
+                updatePerformanceChart(this.value);
+            });
+        }
+        
+        // Handle refresh button
+        document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+            const currentMetric = document.querySelector('.metric-select').value;
+            updatePerformanceChart(currentMetric, true);
+        });
+        
+        // Handle export button
+        document.getElementById('exportDataBtn')?.addEventListener('click', function() {
+            // In a real app, this would export data to CSV
+            alert('Data exported successfully!');
+        });
+        
+        function initializePerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Generate dates for the last 30 days
+            const dates = [];
+            const now = new Date();
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(now.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]);
+            }
+            
+            // Generate random data for each platform
+            const platformData = {
+                'Meta': generateRandomData(dates, 30000, 60000),
+                'Google': generateRandomData(dates, 20000, 45000),
+                'Twitter': generateRandomData(dates, 15000, 35000)
+            };
+            
+            // Create datasets
+            const datasets = Object.keys(platformData).map((platform, index) => {
+                const colors = {
+                    'Meta': 'rgba(66, 103, 178, 1)',
+                    'Google': 'rgba(234, 67, 53, 1)', 
+                    'Twitter': 'rgba(29, 161, 242, 1)'
+                };
+                
+                const bgColors = {
+                    'Meta': 'rgba(66, 103, 178, 0.1)',
+                    'Google': 'rgba(234, 67, 53, 0.1)', 
+                    'Twitter': 'rgba(29, 161, 242, 0.1)'
+                };
+                
+                return {
+                    label: platform,
+                    data: platformData[platform],
+                    borderColor: colors[platform] || `hsl(${index * 137.5}, 70%, 60%)`,
+                    backgroundColor: bgColors[platform] || `hsla(${index * 137.5}, 70%, 60%, 0.1)`,
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 2
+                };
+            });
+            
+            // Create chart
+            window.performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MMM d'
+                                },
+                                tooltipFormat: 'MMM d, yyyy'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000).toFixed(1) + 'M';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000).toFixed(0) + 'K';
+                                    }
+                                    return value;
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updatePerformanceChart(metric, animate = false) {
+            if (!window.performanceChart) return;
+            
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const dates = window.performanceChart.data.labels;
+            
+            // Generate new data based on selected metric
+            let yAxisTitle, valueFormatter;
+            let minValue, maxValue;
+            
+            switch (metric) {
+                case 'clicks':
+                    minValue = 1000;
+                    maxValue = 3000;
+                    yAxisTitle = 'Clicks';
+                    valueFormatter = (value) => value.toLocaleString();
+                    break;
+                case 'ctr':
+                    minValue = 1;
+                    maxValue = 6;
+                    yAxisTitle = 'CTR (%)';
+                    valueFormatter = (value) => value.toFixed(1) + '%';
+                    break;
+                case 'conversions':
+                    minValue = 50;
+                    maxValue = 150;
+                    yAxisTitle = 'Conversions';
+                    valueFormatter = (value) => value.toLocaleString();
+                    break;
+                case 'impressions':
+                default:
+                    minValue = 20000;
+                    maxValue = 60000;
+                    yAxisTitle = 'Impressions';
+                    valueFormatter = (value) => value.toLocaleString();
+                    break;
+            }
+            
+            // Generate new data for each platform
+            const platformData = {
+                'Meta': generateRandomData(dates, minValue, maxValue),
+                'Google': generateRandomData(dates, minValue * 0.7, maxValue * 0.7),
+                'Twitter': generateRandomData(dates, minValue * 0.5, maxValue * 0.5)
+            };
+            
+            // Update datasets
+            window.performanceChart.data.datasets.forEach((dataset, index) => {
+                const platform = dataset.label;
+                dataset.data = platformData[platform] || [];
+            });
+            
+            // Update chart options
+            window.performanceChart.options.scales.y.title = {
+                display: true,
+                text: yAxisTitle
+            };
+            
+            // Update tooltip callback
+            window.performanceChart.options.plugins.tooltip.callbacks.label = function(context) {
+                return `${context.dataset.label}: ${valueFormatter(context.raw)}`;
+            };
+            
+            // Update tick callback for y-axis
+            window.performanceChart.options.scales.y.ticks.callback = function(value) {
+                if (metric === 'ctr') {
+                    return value + '%';
+                } else if (value >= 1000000) {
+                    return (value / 1000000).toFixed(1) + 'M';
+                } else if (value >= 1000) {
+                    return (value / 1000).toFixed(0) + 'K';
+                }
+                return value;
+            };
+            
+            // Update the animation duration
+            window.performanceChart.options.animation = {
+                duration: animate ? 800 : 0
+            };
+            
+            // Update chart
+            window.performanceChart.update();
+        }
+        
+        function generateRandomData(dates, min, max) {
+            // Generate random but somewhat smooth data
+            const data = [];
+            let prevValue = min + Math.random() * (max - min);
+            
+            for (let i = 0; i < dates.length; i++) {
+                // Use previous value with some random change for continuity
+                const change = (Math.random() - 0.5) * (max - min) * 0.1;
+                let newValue = prevValue + change;
+                
+                // Keep within bounds
+                if (newValue < min) newValue = min;
+                if (newValue > max) newValue = max;
+                
+                data.push(newValue);
+                prevValue = newValue;
+            }
+            
+            return data;
+        }
+
+        // Initialize Platform Comparison Chart
+        const platformCtx = document.getElementById('platformComparisonChart').getContext('2d');
+        
+        // Get data from template
+        const platformNames = {{ platform_names|tojson }};
+        const impressionsData = {{ impressions_data|tojson }};
+        const clicksData = {{ clicks_data|tojson }};
+        const applicationsData = {{ applications_data|tojson }};
+        
+        // Create chart
+        window.platformChart = new Chart(platformCtx, {
+            type: 'bar',
+            data: {
+                labels: platformNames,
+                datasets: [
+                    {
+                        label: 'Impressions (x100)',
+                        data: impressionsData.map(value => value / 100),
+                        backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Clicks',
+                        data: clicksData,
+                        backgroundColor: 'rgba(46, 196, 182, 0.7)',
+                        borderColor: 'rgba(46, 196, 182, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Applications',
+                        data: applicationsData,
+                        backgroundColor: 'rgba(255, 159, 28, 0.7)',
+                        borderColor: 'rgba(255, 159, 28, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                
+                                if (label) {
+                                    label += ': ';
+                                }
+                                
+                                if (context.dataset.label.includes('Impressions')) {
+                                    label += (context.raw * 100).toLocaleString();
+                                } else {
+                                    label += context.raw.toLocaleString();
+                                }
+                                
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Set up view toggling for platform performance
+        const viewButtons = document.querySelectorAll('.view-toggle button');
+        const viewContents = document.querySelectorAll('.view-content');
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button state
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding view
+                const viewToShow = this.getAttribute('data-view');
+                viewContents.forEach(content => {
+                    content.style.display = content.classList.contains(viewToShow + '-view') ? '' : 'none';
+                });
+            });
+        });
+
+        // Search functionality for campaign table
+        document.getElementById('campaignSearchInput')?.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('.campaign-table tbody tr');
+            
+            tableRows.forEach(row => {
+                const campaignName = row.querySelector('.campaign-name').textContent.toLowerCase();
+                if (campaignName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        if (tooltipTriggerList.length > 0) {
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        }
+    });
+</script>
+{% endblock %}

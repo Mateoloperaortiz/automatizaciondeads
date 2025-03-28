@@ -1,0 +1,300 @@
+/**
+ * Platform Status Visualization Styles
+ * Styling for platform connection status indicators and visualizations
+ */
+
+/* Global Styles */
+.platform-status-container {
+  margin-bottom: 2rem;
+}
+
+/* Platform Status List */
+.platform-status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.platform-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bs-border-color);
+  background-color: var(--bs-white);
+  transition: background-color 0.2s ease;
+}
+
+.platform-item:hover {
+  background-color: var(--bs-light);
+}
+
+.platform-item:last-child {
+  border-bottom: none;
+}
+
+.platform-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary);
+  border-radius: 8px;
+  margin-right: 16px;
+  font-size: 1.2rem;
+}
+
+.platform-info {
+  flex: 1;
+}
+
+.platform-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.platform-status, .platform-health {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--bs-secondary-text);
+}
+
+.platform-health {
+  margin-top: 4px;
+}
+
+.platform-health i {
+  margin-right: 6px;
+}
+
+.platform-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Status Indicator */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-indicator.connected {
+  background-color: var(--bs-success);
+  box-shadow: 0 0 0 2px rgba(var(--bs-success-rgb), 0.2);
+}
+
+.status-indicator.disconnected {
+  background-color: var(--bs-danger);
+  box-shadow: 0 0 0 2px rgba(var(--bs-danger-rgb), 0.2);
+}
+
+/* Navbar Status Indicator */
+.navbar-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-status-indicator .status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(25%, -25%);
+  font-size: 0.65rem;
+}
+
+/* Platform Status Cards */
+.platform-status-card {
+  height: 100%;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.platform-status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.platform-status-card .card-header {
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+  border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.platform-status-card .card-footer {
+  background-color: rgba(var(--bs-light-rgb), 0.5);
+  border-top: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+}
+
+/* Health Score */
+.health-score label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.health-score .progress {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.health-score small {
+  display: block;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* Platform Status Details */
+.platform-status-details {
+  font-size: 0.9rem;
+}
+
+.platform-status-details .row {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.platform-status-details .row:last-child {
+  border-bottom: none;
+}
+
+/* Global Status Alert */
+.platform-global-status .alert {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.platform-global-status .alert-heading {
+  font-size: 1.25rem;
+  margin-bottom: 0;
+}
+
+.platform-global-status .text-small {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Platform Icons Styling */
+.fa-facebook {
+  color: #1877F2;
+}
+
+.fa-google {
+  color: #DB4437;
+}
+
+.fa-twitter {
+  color: #1DA1F2;
+}
+
+.fa-tiktok {
+  color: #000000;
+}
+
+.fa-snapchat {
+  color: #FFFC00;
+}
+
+/* Health Status Indicators */
+.health-excellent, .health-good {
+  color: var(--bs-success);
+}
+
+.health-fair {
+  color: var(--bs-warning);
+}
+
+.health-poor, .health-critical {
+  color: var(--bs-danger);
+}
+
+/* Animation for Status Change */
+@keyframes status-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.status-changed {
+  animation: status-pulse 1s ease;
+}
+
+/* Health Metrics */
+.platform-health-metrics {
+  padding: 0.5rem;
+}
+
+.platform-health-metric .progress {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.platform-health-metric .badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  .platform-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .platform-icon {
+    margin-bottom: 12px;
+  }
+  
+  .platform-actions {
+    margin-top: 12px;
+    align-self: flex-end;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .platform-item {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color-translucent);
+  }
+  
+  .platform-item:hover {
+    background-color: var(--bs-dark-bg-subtle);
+  }
+  
+  .platform-icon {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+  }
+  
+  .platform-status-card {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color-translucent);
+  }
+  
+  .platform-status-card .card-header {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+  }
+  
+  .platform-status-card .card-footer {
+    background-color: rgba(var(--bs-dark-rgb), 0.7);
+  }
+  
+  .platform-status-details .row {
+    border-color: var(--bs-border-color-translucent);
+  }
+}

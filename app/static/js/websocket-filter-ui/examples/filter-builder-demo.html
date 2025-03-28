@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Filter UI Demo</title>
+  
+  <!-- Required external dependencies -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                     "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background-color: #f5f5f5;
+    }
+    
+    body.dark-theme {
+      background-color: #121212;
+      color: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 0.5rem;
+    }
+    
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      background-color: #fff;
+      border: 1px solid #dee2e6;
+      transition: all 0.2s;
+    }
+    
+    .tab.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .dark-theme .tab {
+      background-color: #343a40;
+      border-color: #495057;
+      color: #f8f9fa;
+    }
+    
+    .dark-theme .tab.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .filter-container {
+      height: 800px;
+      border-radius: 8px;
+      background-color: #fff;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark-theme .filter-container {
+      background-color: #1e1e1e;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-align: center;
+    }
+    
+    .sidebar {
+      float: right;
+      width: 300px;
+      margin-left: 20px;
+      margin-bottom: 20px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark-theme .sidebar {
+      background-color: #343a40;
+      color: #f8f9fa;
+    }
+    
+    .sidebar h3 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 10px;
+    }
+    
+    .feature-list {
+      padding-left: 20px;
+    }
+    
+    .feature-list li {
+      margin-bottom: 10px;
+    }
+    
+    .console-log {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 20px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    
+    .dark-theme .console-log {
+      background-color: #2a2a2a;
+      border-color: #444;
+      color: #f8f9fa;
+    }
+    
+    .log-item {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .log-item:last-child {
+      border-bottom: none;
+    }
+    
+    .log-info {
+      color: #17a2b8;
+    }
+    
+    .log-success {
+      color: #28a745;
+    }
+    
+    .log-warning {
+      color: #ffc107;
+    }
+    
+    .log-error {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>WebSocket Filter UI</h1>
+      <div class="control-group">
+        <span>Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="dark-mode-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+    
+    <div class="sidebar">
+      <h3>WebSocket Filter Features</h3>
+      <ul class="feature-list">
+        <li><strong>Visual Filter Builder</strong> - Create complex filters with a user-friendly interface</li>
+        <li><strong>Nested Conditions</strong> - Support for AND, OR, and NOT logic operators</li>
+        <li><strong>Multiple Data Types</strong> - String, number, boolean, date, and array fields</li>
+        <li><strong>Filter Management</strong> - Save, load, and organize your filters</li>
+        <li><strong>Performance Statistics</strong> - Track filter efficiency and match rates</li>
+        <li><strong>Filter Testing</strong> - Debug and validate filters before saving</li>
+      </ul>
+      
+      <div class="console-log">
+        <div class="log-title">Activity Log</div>
+        <div id="log-content"></div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="builder">Filter Builder</div>
+      <div class="tab" data-tab="manager">Filter Manager</div>
+    </div>
+    
+    <div class="tab-content active" data-tab="builder">
+      <div id="filter-builder" class="filter-container"></div>
+    </div>
+    
+    <div class="tab-content" data-tab="manager">
+      <div id="filter-manager" class="filter-container"></div>
+    </div>
+    
+    <footer>
+      <p>MagnetoCursor WebSocket Filter UI | Demo Page</p>
+    </footer>
+  </div>
+  
+  <!-- Import as a module -->
+  <script type="module">
+    // Import filter components
+    import { FilterBuilder } from '../filter-builder.js';
+    import { FilterManager } from '../filter-manager.js';
+    
+    // Mock data for available fields
+    const availableFields = [
+      { id: 'entity_type', label: 'Entity Type', type: 'string' },
+      { id: 'entity_id', label: 'Entity ID', type: 'string' },
+      { id: 'action', label: 'Action', type: 'string' },
+      { id: 'timestamp', label: 'Timestamp', type: 'date' },
+      { id: 'user_id', label: 'User ID', type: 'string' },
+      { id: 'campaign_id', label: 'Campaign ID', type: 'string' },
+      { id: 'platform', label: 'Platform', type: 'string' },
+      { id: 'status', label: 'Status', type: 'string' },
+      { id: 'budget', label: 'Budget', type: 'number' },
+      { id: 'impressions', label: 'Impressions', type: 'number' },
+      { id: 'clicks', label: 'Clicks', type: 'number' },
+      { id: 'conversions', label: 'Conversions', type: 'number' },
+      { id: 'tags', label: 'Tags', type: 'array' },
+      { id: 'is_active', label: 'Is Active', type: 'boolean' }
+    ];
+    
+    // Entity types for filtering
+    const entityTypes = [
+      { id: 'campaign', label: 'Campaign' },
+      { id: 'ad_set', label: 'Ad Set' },
+      { id: 'ad', label: 'Ad' },
+      { id: 'user', label: 'User' },
+      { id: 'notification', label: 'Notification' }
+    ];
+    
+    // Mock saved filters
+    const savedFilters = [
+      {
+        id: 'filter1',
+        name: 'Active Google Campaigns',
+        description: 'Filter for active campaigns on Google platform',
+        category: 'campaigns',
+        entityType: 'campaign',
+        createdAt: '2025-02-15T10:30:00',
+        updatedAt: '2025-02-20T14:45:00',
+        createdBy: 'admin',
+        conditions: {
+          type: 'group',
+          operator: 'and',
+          conditions: [
+            {
+              type: 'condition',
+              field: 'platform',
+              operator: 'equals',
+              value: 'google'
+            },
+            {
+              type: 'condition',
+              field: 'is_active',
+              operator: 'equals',
+              value: true
+            }
+          ]
+        }
+      },
+      {
+        id: 'filter2',
+        name: 'High Budget Meta Campaigns',
+        description: 'Campaigns on Meta with budget over $5000',
+        category: 'campaigns',
+        entityType: 'campaign',
+        createdAt: '2025-01-10T09:15:00',
+        updatedAt: '2025-03-05T11:20:00',
+        createdBy: 'marketing',
+        conditions: {
+          type: 'group',
+          operator: 'and',
+          conditions: [
+            {
+              type: 'condition',
+              field: 'platform',
+              operator: 'equals',
+              value: 'meta'
+            },
+            {
+              type: 'condition',
+              field: 'budget',
+              operator: 'greater_than',
+              value: 5000
+            }
+          ]
+        }
+      },
+      {
+        id: 'filter3',
+        name: 'Critical Alerts',
+        description: 'Notifications with critical status',
+        category: 'alerts',
+        entityType: 'notification',
+        createdAt: '2025-03-01T16:45:00',
+        updatedAt: '2025-03-01T16:45:00',
+        createdBy: 'system',
+        conditions: {
+          type: 'group',
+          operator: 'and',
+          conditions: [
+            {
+              type: 'condition',
+              field: 'entity_type',
+              operator: 'equals',
+              value: 'notification'
+            },
+            {
+              type: 'condition',
+              field: 'status',
+              operator: 'equals',
+              value: 'critical'
+            }
+          ]
+        }
+      }
+    ];
+    
+    // Mock filter statistics
+    const filterStats = {
+      filter1: {
+        received: 12580,
+        matched: 543,
+        matchRate: 4.32,
+        avgProcessingTime: 0.82,
+        lastMatched: '2025-03-26T14:32:15',
+        efficiency: 91
+      },
+      filter2: {
+        received: 12580,
+        matched: 128,
+        matchRate: 1.02,
+        avgProcessingTime: 1.24,
+        lastMatched: '2025-03-25T09:15:42',
+        efficiency: 86
+      },
+      filter3: {
+        received: 12580,
+        matched: 3,
+        matchRate: 0.02,
+        avgProcessingTime: 0.65,
+        lastMatched: '2025-03-22T23:08:10',
+        efficiency: 94
+      }
+    };
+    
+    // Activity logger
+    const logger = {
+      container: document.getElementById('log-content'),
+      
+      log(message, type = 'info') {
+        const logItem = document.createElement('div');
+        logItem.className = `log-item log-${type}`;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        logItem.textContent = `[${timestamp}] ${message}`;
+        
+        this.container.appendChild(logItem);
+        this.container.scrollTop = this.container.scrollHeight;
+      },
+      
+      info(message) {
+        this.log(message, 'info');
+      },
+      
+      success(message) {
+        this.log(message, 'success');
+      },
+      
+      warning(message) {
+        this.log(message, 'warning');
+      },
+      
+      error(message) {
+        this.log(message, 'error');
+      }
+    };
+    
+    // Mock API endpoints
+    const mockApi = {
+      // Mock fetch for filter list
+      async fetchFilters() {
+        logger.info('Fetching saved filters...');
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        logger.success(`Fetched ${savedFilters.length} saved filters`);
+        return { filters: savedFilters };
+      },
+      
+      // Mock fetch for filter statistics
+      async fetchFilterStats() {
+        logger.info('Fetching filter statistics...');
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        logger.success('Fetched filter statistics');
+        return { stats: filterStats };
+      },
+      
+      // Mock save filter
+      async saveFilter(filter) {
+        logger.info(`Saving filter: ${filter.name}`);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Generate ID if new filter
+        if (!filter.id) {
+          filter.id = `filter${Date.now()}`;
+          filter.createdAt = new Date().toISOString();
+          filter.createdBy = 'current_user';
+          savedFilters.push(filter);
+          logger.success(`Created new filter: ${filter.name}`);
+        } else {
+          // Update existing filter
+          const existingFilter = savedFilters.find(f => f.id === filter.id);
+          if (existingFilter) {
+            Object.assign(existingFilter, filter, { updatedAt: new Date().toISOString() });
+            logger.success(`Updated filter: ${filter.name}`);
+          }
+        }
+        
+        return filter;
+      },
+      
+      // Mock delete filter
+      async deleteFilter(filterId) {
+        logger.warning(`Deleting filter with ID: ${filterId}`);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const index = savedFilters.findIndex(f => f.id === filterId);
+        if (index !== -1) {
+          const deletedFilter = savedFilters.splice(index, 1)[0];
+          logger.success(`Deleted filter: ${deletedFilter.name}`);
+          return true;
+        }
+        
+        logger.error(`Filter with ID ${filterId} not found`);
+        return false;
+      },
+      
+      // Mock test filter
+      async testFilter(filter) {
+        logger.info(`Testing filter: ${filter.name || 'Unnamed filter'}`);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Generate random test results
+        const totalMessages = Math.floor(Math.random() * 500) + 100;
+        const matchedMessages = Math.floor(Math.random() * totalMessages);
+        const avgProcessingTime = Math.random() * 2;
+        
+        logger.success(`Filter test complete: ${matchedMessages}/${totalMessages} messages matched`);
+        
+        return {
+          totalMessages,
+          matchedMessages,
+          matchRate: (matchedMessages / totalMessages) * 100,
+          avgProcessingTime,
+          executionTime: Math.random() * 1000 + 500,
+          examples: [
+            // Example matched messages
+            { entity_type: 'campaign', platform: 'google', is_active: true, matched: true },
+            { entity_type: 'campaign', platform: 'meta', is_active: true, matched: filter.entityType === 'campaign' }
+          ]
+        };
+      }
+    };
+    
+    // Initialize components when DOM is loaded
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Mock fetch API for the demo
+      window.fetch = async (url, options) => {
+        if (url.includes('/filters')) {
+          const data = await mockApi.fetchFilters();
+          return {
+            ok: true,
+            json: async () => data
+          };
+        } else if (url.includes('/filter-stats')) {
+          const data = await mockApi.fetchFilterStats();
+          return {
+            ok: true,
+            json: async () => data
+          };
+        }
+        
+        // Default response for other URLs
+        return {
+          ok: false,
+          statusText: 'Not Found'
+        };
+      };
+      
+      // Initialize tab functionality
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Remove active class from all tabs and content
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          
+          // Add active class to clicked tab and corresponding content
+          tab.classList.add('active');
+          const tabName = tab.getAttribute('data-tab');
+          document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add('active');
+          
+          logger.info(`Switched to ${tabName} tab`);
+        });
+      });
+      
+      // Initialize dark mode toggle
+      const darkModeToggle = document.getElementById('dark-mode-toggle');
+      darkModeToggle.addEventListener('change', (e) => {
+        const darkMode = e.target.checked;
+        
+        // Update body class
+        if (darkMode) {
+          document.body.classList.add('dark-theme');
+          logger.info('Dark mode enabled');
+        } else {
+          document.body.classList.remove('dark-theme');
+          logger.info('Dark mode disabled');
+        }
+        
+        // Update components if initialized
+        if (filterBuilder) {
+          filterBuilder.options.darkMode = darkMode;
+          // Re-render filter builder
+          filterBuilder.initialize();
+          logger.info('Updated filter builder theme');
+        }
+        
+        if (filterManager) {
+          filterManager.options.darkMode = darkMode;
+          // Re-render filter manager
+          filterManager.initialize();
+          logger.info('Updated filter manager theme');
+        }
+      });
+      
+      // Initialize filter builder
+      const filterBuilderContainer = document.getElementById('filter-builder');
+      const filterBuilder = new FilterBuilder(filterBuilderContainer, {
+        availableFields,
+        filterableEntityTypes: entityTypes,
+        onChange: (filter) => {
+          logger.info('Filter updated');
+          console.log('Updated filter:', filter);
+        },
+        onSave: async (filter) => {
+          try {
+            const savedFilter = await mockApi.saveFilter(filter);
+            logger.success(`Filter "${filter.name}" saved successfully`);
+            return savedFilter;
+          } catch (error) {
+            logger.error(`Error saving filter: ${error.message}`);
+            throw error;
+          }
+        },
+        onTest: async (filter) => {
+          try {
+            const testResults = await mockApi.testFilter(filter);
+            logger.success(`Filter tested: ${testResults.matchedMessages}/${testResults.totalMessages} messages matched`);
+            return testResults;
+          } catch (error) {
+            logger.error(`Error testing filter: ${error.message}`);
+            throw error;
+          }
+        }
+      });
+      
+      // Initialize filter manager
+      const filterManagerContainer = document.getElementById('filter-manager');
+      const filterManager = new FilterManager(filterManagerContainer, {
+        filterListUrl: '/api/websocket/filters',
+        filterStatsUrl: '/api/websocket/filter-stats',
+        categories: ['General', 'Campaigns', 'Notifications', 'Alerts', 'Custom'],
+        onLoadFilter: (filter) => {
+          logger.info(`Loaded filter: ${filter.name}`);
+          
+          // Switch to builder tab and load the filter
+          document.querySelector('.tab[data-tab="builder"]').click();
+          
+          if (filterBuilder) {
+            filterBuilder.loadFilter(filter);
+            logger.success(`Filter "${filter.name}" loaded into builder`);
+          }
+        },
+        onDeleteFilter: async (filterId) => {
+          try {
+            await mockApi.deleteFilter(filterId);
+            logger.success('Filter deleted successfully');
+            return true;
+          } catch (error) {
+            logger.error(`Error deleting filter: ${error.message}`);
+            return false;
+          }
+        },
+        onDuplicateFilter: (filter) => {
+          logger.info(`Duplicating filter: ${filter.name}`);
+          
+          // Create a copy of the filter with a new name
+          const duplicate = { 
+            ...filter,
+            id: null,
+            name: `${filter.name} (Copy)`,
+            createdAt: null,
+            updatedAt: null
+          };
+          
+          // Switch to builder tab and load the duplicated filter
+          document.querySelector('.tab[data-tab="builder"]').click();
+          
+          if (filterBuilder) {
+            filterBuilder.loadFilter(duplicate);
+            logger.success(`Filter "${filter.name}" duplicated and loaded into builder`);
+          }
+        }
+      });
+      
+      // Initial log message
+      logger.info('WebSocket Filter UI Demo initialized');
+      logger.info('Use the tabs to switch between filter builder and manager');
+    });
+  </script>
+</body>
+</html>

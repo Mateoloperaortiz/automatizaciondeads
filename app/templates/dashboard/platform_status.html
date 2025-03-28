@@ -1,0 +1,306 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Platform Status | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title" style="color: green; font-size: 2.5em;">DASHBOARD PLATFORM STATUS</h1>
+            <p class="text-muted">Monitor and manage connections to social media advertising platforms</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-primary" id="refreshAllBtn">
+                <i class="fas fa-sync-alt me-2"></i> Refresh All
+            </button>
+            <button class="btn btn-primary ms-2">
+                <i class="fas fa-plus me-2"></i> Add Platform
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Summary -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Connected Platforms</div>
+                <div class="stats-value">{{ connected_count }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> Ready to use
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Platforms in Maintenance</div>
+                <div class="stats-value">1</div>
+                <div class="stats-change pending">
+                    <i class="fas fa-clock"></i> Temporary issues
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-danger-light">
+                <i class="fas fa-times-circle text-danger"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Disconnected Platforms</div>
+                <div class="stats-value">{{ total_platforms - connected_count - 1 }}</div>
+                <div class="stats-change negative">
+                    <i class="fas fa-arrow-down"></i> Needs configuration
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-globe text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Platforms</div>
+                <div class="stats-value">{{ total_platforms }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-plus"></i> All available platforms
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Status Table -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h2>Platform Status</h2>
+            <div class="header-actions">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="Search platforms..." id="platformSearchInput">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover platform-table">
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Status</th>
+                            <th>Last Checked</th>
+                            <th>Response Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for platform in platforms %}
+                        <tr>
+                            <td>
+                                <div class="platform-name">
+                                    {% if platform.name == 'Meta' %}
+                                    <div class="platform-icon bg-primary-light">
+                                        <i class="fab fa-facebook text-primary"></i>
+                                    </div>
+                                    {% elif platform.name == 'Google' %}
+                                    <div class="platform-icon bg-danger-light">
+                                        <i class="fab fa-google text-danger"></i>
+                                    </div>
+                                    {% elif platform.name == 'X (Twitter)' %}
+                                    <div class="platform-icon bg-info-light">
+                                        <i class="fab fa-twitter text-info"></i>
+                                    </div>
+                                    {% elif platform.name == 'LinkedIn' %}
+                                    <div class="platform-icon bg-primary-light">
+                                        <i class="fab fa-linkedin text-primary"></i>
+                                    </div>
+                                    {% elif platform.name == 'TikTok' %}
+                                    <div class="platform-icon bg-dark">
+                                        <i class="fab fa-tiktok text-white"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="platform-icon bg-secondary-light">
+                                        <i class="fas fa-ad text-secondary"></i>
+                                    </div>
+                                    {% endif %}
+                                    <span>{{ platform.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if platform.status == 'connected' %}
+                                <span class="status-badge active"><i class="fas fa-circle"></i> Connected</span>
+                                {% elif platform.status == 'disconnected' %}
+                                <span class="status-badge inactive"><i class="fas fa-circle"></i> Disconnected</span>
+                                {% elif platform.status == 'maintenance' %}
+                                <span class="status-badge pending"><i class="fas fa-circle"></i> In Maintenance</span>
+                                {% else %}
+                                <span class="status-badge pending"><i class="fas fa-circle"></i> {{ platform.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ platform.last_checked.strftime('%b %d, %Y %H:%M') if platform.last_checked else 'N/A' }}</td>
+                            <td>
+                                {% if platform.status == 'connected' %}
+                                <span class="{% if platform.response_time < 150 %}text-success{% elif platform.response_time < 300 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ platform.response_time }} ms
+                                </span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-outline-primary test-connection-btn" data-platform="{{ platform.name }}">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    {% if platform.status == 'connected' %}
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-unlink"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    {% endif %}
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configure</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>View History</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle me-2"></i>API Details</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credentials Manager -->
+    <div class="dashboard-card mt-4">
+        <div class="card-header">
+            <h2>API Credentials Management</h2>
+            <div class="header-actions">
+                <button class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-key me-2"></i> Add New Credentials
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> API credentials are securely stored and rotated automatically. You can manage your credentials and check their validation status below.
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fab fa-facebook me-2"></i> Meta Ads API</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">API Version</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="v17.0" readonly>
+                                    <button class="btn btn-outline-secondary" type="button"><i class="fas fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">App ID</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="********2345" readonly>
+                                    <button class="btn btn-outline-secondary" type="button"><i class="fas fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-sync-alt me-2"></i>Rotate</button>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-cog me-2"></i>Configure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-danger text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fab fa-google me-2"></i> Google Ads API</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">API Version</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="v14" readonly>
+                                    <button class="btn btn-outline-secondary" type="button"><i class="fas fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Client ID</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="********78ab" readonly>
+                                    <button class="btn btn-outline-secondary" type="button"><i class="fas fa-copy"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-primary"><i class="fas fa-sync-alt me-2"></i>Rotate</button>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-cog me-2"></i>Configure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle refresh all button
+        document.getElementById('refreshAllBtn').addEventListener('click', function() {
+            alert('Refreshing all platform connections...');
+            // In a real implementation, this would make API calls to test connections
+            // and update the UI with the results
+        });
+        
+        // Handle individual test connection buttons
+        const testButtons = document.querySelectorAll('.test-connection-btn');
+        testButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const platform = this.getAttribute('data-platform');
+                alert(`Testing connection to ${platform}...`);
+                // In a real implementation, this would make an API call to test
+                // the connection and update the UI with the result
+            });
+        });
+        
+        // Search functionality for platforms
+        document.getElementById('platformSearchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('.platform-table tbody tr');
+            
+            tableRows.forEach(row => {
+                const platformName = row.querySelector('.platform-name').textContent.toLowerCase();
+                if (platformName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

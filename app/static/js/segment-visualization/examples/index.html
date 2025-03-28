@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML Segment Visualization Dashboard Example</title>
+  
+  <!-- Required external dependencies -->
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                    "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    
+    body.dark-theme {
+      background-color: #121212;
+      color: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+    }
+    
+    .dashboard-container {
+      height: 800px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background-color: #fff;
+      overflow: hidden;
+    }
+    
+    .dark-theme .dashboard-container {
+      background-color: #1e1e1e;
+      border-color: #444;
+    }
+    
+    .dashboard-controls {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    /* Tabs */
+    .example-tabs {
+      display: flex;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 1rem;
+    }
+    
+    .example-tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 0.25rem;
+      background-color: #f8f9fa;
+    }
+    
+    .example-tab.active {
+      background-color: #fff;
+      border-color: #dee2e6;
+    }
+    
+    .dark-theme .example-tab {
+      background-color: #2a2a2a;
+    }
+    
+    .dark-theme .example-tab.active {
+      background-color: #1e1e1e;
+      border-color: #444;
+    }
+    
+    /* Form controls */
+    select, button {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+      background-color: #fff;
+      font-size: 0.875rem;
+    }
+    
+    button {
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    /* Code box */
+    .code-box {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-top: 2rem;
+      overflow: auto;
+      max-height: 300px;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .dark-theme .code-box {
+      background-color: #2a2a2a;
+      border-color: #444;
+    }
+    
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ML Segment Visualization Dashboard</h1>
+      <div class="control-group">
+        <span>Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="dark-mode-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+    
+    <div class="example-tabs">
+      <div class="example-tab active" data-example="basic">Basic</div>
+      <div class="example-tab" data-example="custom">Custom</div>
+      <div class="example-tab" data-example="dark">Dark Mode</div>
+      <div class="example-tab" data-example="advanced">Advanced</div>
+    </div>
+    
+    <div class="dashboard-controls">
+      <div class="control-group">
+        <label for="external-metric-selector">Metric:</label>
+        <select id="external-metric-selector">
+          <option value="impressions">Impressions</option>
+          <option value="clicks">Clicks</option>
+          <option value="conversions">Conversions</option>
+          <option value="ctr">CTR</option>
+          <option value="cpc">CPC</option>
+          <option value="roi">ROI</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <button id="create-segment-button">Create New Segment</button>
+        <button id="run-segmentation-button">Run Segmentation</button>
+      </div>
+    </div>
+    
+    <div id="segment-dashboard" class="dashboard-container">
+      <!-- Dashboard will be rendered here -->
+    </div>
+    
+    <div class="code-box">
+      <pre id="example-code">// Example code will be shown here</pre>
+    </div>
+    
+    <!-- Segment creation modal (hidden by default) -->
+    <div id="create-segment-modal" style="display: none;">
+      <!-- Modal content would go here -->
+    </div>
+    
+    <footer>
+      <p>MagnetoCursor ML Segment Visualization | Example Page</p>
+    </footer>
+  </div>
+  
+  <!-- Required external libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js"></script>
+  
+  <!-- Import as a module -->
+  <script type="module">
+    // Import dashboard example module
+    import { 
+      initializeBasicDashboard,
+      initializeDarkModeDashboard,
+      initializeCustomDashboard,
+      initializeAdvancedDashboard
+    } from './dashboard-example.js';
+    
+    // Track current example
+    let currentExample = 'basic';
+    let currentDashboard = null;
+    
+    // Example code snippets
+    const codeSnippets = {
+      basic: `import { createDashboard } from '../index.js';
+
+// Get container element
+const container = document.getElementById('segment-dashboard');
+if (!container) {
+  console.error('Dashboard container not found');
+  return;
+}
+
+// Create dashboard with default settings
+const dashboard = createDashboard('segment-dashboard');`,
+      
+      custom: `import { createDashboard } from '../index.js';
+
+// Create dashboard with custom settings
+const dashboard = createDashboard('segment-dashboard', {
+  refreshInterval: 30000, // 30 seconds
+  showDistribution: true,
+  showPerformance: true,
+  showMap: true,
+  darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches, // Use system preference
+  initialSegmentId: 1 // Initial segment to display
+});`,
+      
+      dark: `import { createDashboardWithPreset } from '../index.js';
+
+// Create dashboard with dark mode preset
+const dashboard = createDashboardWithPreset('segment-dashboard', 'DARK_MODE');`,
+      
+      advanced: `import { createDashboardWithPreset } from '../index.js';
+
+// Create dashboard with performance-focused preset and overrides
+const dashboard = createDashboardWithPreset('segment-dashboard', 'PERFORMANCE_FOCUSED', {
+  refreshInterval: 120000 // 2 minutes
+});
+
+// Add event listeners to external controls
+const metricSelector = document.getElementById('external-metric-selector');
+if (metricSelector) {
+  metricSelector.addEventListener('change', (e) => {
+    // Get selected metric
+    const metric = e.target.value;
+    
+    // Update performance chart
+    if (dashboard.visualizations.performanceChart) {
+      dashboard.visualizations.performanceChart.setMetric(metric);
+    }
+  });
+}`
+    };
+    
+    // Function to initialize example
+    function initializeExample(example) {
+      // Clean up previous example
+      if (currentDashboard && typeof currentDashboard.destroy === 'function') {
+        currentDashboard.destroy();
+      }
+      
+      // Reset dashboard container
+      const dashboardContainer = document.getElementById('segment-dashboard');
+      dashboardContainer.innerHTML = '';
+      
+      // Initialize new example
+      switch (example) {
+        case 'dark':
+          currentDashboard = initializeDarkModeDashboard();
+          break;
+        case 'custom':
+          currentDashboard = initializeCustomDashboard();
+          break;
+        case 'advanced':
+          currentDashboard = initializeAdvancedDashboard();
+          break;
+        default:
+          currentDashboard = initializeBasicDashboard();
+      }
+      
+      // Update code snippet
+      const codeElement = document.getElementById('example-code');
+      if (codeElement) {
+        codeElement.textContent = codeSnippets[example] || codeSnippets.basic;
+      }
+      
+      // Update current example
+      currentExample = example;
+    }
+    
+    // Set up tab click handlers
+    document.querySelectorAll('.example-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Get example ID
+        const example = tab.getAttribute('data-example');
+        
+        // Skip if already active
+        if (example === currentExample) return;
+        
+        // Update active tab
+        document.querySelectorAll('.example-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Initialize example
+        initializeExample(example);
+      });
+    });
+    
+    // Set up dark mode toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+      // Set initial state based on user preference
+      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      darkModeToggle.checked = prefersDarkMode;
+      if (prefersDarkMode) {
+        document.body.classList.add('dark-theme');
+      }
+      
+      // Add change handler
+      darkModeToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          document.body.classList.add('dark-theme');
+        } else {
+          document.body.classList.remove('dark-theme');
+        }
+        
+        // Reinitialize current example with new theme
+        initializeExample(currentExample);
+      });
+    }
+    
+    // Handle create segment button
+    const createSegmentButton = document.getElementById('create-segment-button');
+    if (createSegmentButton) {
+      createSegmentButton.addEventListener('click', () => {
+        alert('Create segment functionality would open a modal in a real application.');
+      });
+    }
+    
+    // Handle run segmentation button
+    const runSegmentationButton = document.getElementById('run-segmentation-button');
+    if (runSegmentationButton) {
+      runSegmentationButton.addEventListener('click', () => {
+        alert('Run segmentation would trigger the ML clustering algorithm in a real application.');
+      });
+    }
+    
+    // Initialize the default example on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeExample('basic');
+    });
+  </script>
+</body>
+</html>

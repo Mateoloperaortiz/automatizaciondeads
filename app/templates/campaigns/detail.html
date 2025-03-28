@@ -1,0 +1,365 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Campaign Details - Ad Automation P-01{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('campaigns.list_campaigns') }}">Campaigns</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <h1>{{ campaign.title }}</h1>
+            <p class="lead">{{ campaign.description }}</p>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Campaign Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><span data-tooltip="campaign-status">Status</span>:</strong> 
+                                {% if campaign.status == 'draft' %}
+                                <span class="badge badge-secondary">Draft</span>
+                                {% elif campaign.status == 'active' %}
+                                <span class="badge badge-success">Active</span>
+                                {% elif campaign.status == 'paused' %}
+                                <span class="badge badge-warning">Paused</span>
+                                {% elif campaign.status == 'completed' %}
+                                <span class="badge badge-info">Completed</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ campaign.status }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Platform:</strong> {{ campaign.platform.name }}</p>
+                            <p><strong><span data-tooltip="campaign-budget">Budget</span>:</strong> ${{ campaign.budget or '0.00' }}</p>
+                            <p><strong><span data-tooltip="api" data-tooltip-placement="bottom">Platform Ad ID</span>:</strong> {{ campaign.platform_ad_id or 'Not published yet' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Created:</strong> {{ campaign.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                            <p><strong>Updated:</strong> {{ campaign.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                            <p><strong><span data-tooltip="segment" data-tooltip-placement="left">Audience Segment</span>:</strong> {{ campaign.segment_id or 'Not specified' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Ad Content</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ad-content">
+                        {% if campaign.ad_content %}
+                        <pre class="p-3 bg-light">{{ campaign.ad_content }}</pre>
+                        {% else %}
+                        <p class="text-muted">No ad content specified. Ad content will be generated automatically when the campaign is published.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Job Opening</h5>
+                </div>
+                <div class="card-body">
+                    <h5>{{ campaign.job_opening.title }}</h5>
+                    <p><strong>Company:</strong> {{ campaign.job_opening.company }}</p>
+                    <p><strong>Location:</strong> {{ campaign.job_opening.location }}</p>
+                    <p><strong>Job Type:</strong> {{ campaign.job_opening.job_type }}</p>
+                    <p><strong>Experience Level:</strong> {{ campaign.job_opening.experience_level }}</p>
+                    <a href="{{ url_for('jobs.get_job', job_id=campaign.job_opening.id) }}" class="btn btn-info btn-sm">View Job Details</a>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group-vertical w-100">
+                        {% if campaign.status == 'draft' and can_edit %}
+                        <button id="publishBtn" class="btn btn-success mb-2">Publish Campaign</button>
+                        <a href="#" class="btn btn-primary mb-2">Edit Campaign</a>
+                        {% if user_role == 'owner' or user_role == 'admin' %}
+                        <a href="{{ url_for('campaigns.share_campaign_form', campaign_id=campaign.id) }}" class="btn btn-info mb-2">
+                            <i class="bi bi-share"></i> Share Campaign
+                        </a>
+                        <button id="deleteBtn" class="btn btn-danger">Delete Campaign</button>
+                        {% endif %}
+                        {% elif campaign.status == 'active' %}
+                        {% if can_edit %}
+                        <button id="pauseBtn" class="btn btn-warning mb-2">Pause Campaign</button>
+                        {% endif %}
+                        <button id="statsBtn" class="btn btn-info mb-2">Refresh Statistics</button>
+                        {% if user_role == 'owner' or user_role == 'admin' %}
+                        <a href="{{ url_for('campaigns.share_campaign_form', campaign_id=campaign.id) }}" class="btn btn-info mb-2">
+                            <i class="bi bi-share"></i> Share Campaign
+                        </a>
+                        {% endif %}
+                        {% elif campaign.status == 'paused' %}
+                        {% if can_edit %}
+                        <button id="resumeBtn" class="btn btn-success mb-2">Resume Campaign</button>
+                        {% endif %}
+                        <button id="statsBtn" class="btn btn-info mb-2">Refresh Statistics</button>
+                        {% if user_role == 'owner' or user_role == 'admin' %}
+                        <a href="{{ url_for('campaigns.share_campaign_form', campaign_id=campaign.id) }}" class="btn btn-info mb-2">
+                            <i class="bi bi-share"></i> Share Campaign
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Collaborators Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Collaborators</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            {% if campaign.owner %}
+                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; background-color: #007bff; color: white;">
+                                {{ campaign.owner.username[0].upper() }}
+                            </div>
+                            <div>
+                                <strong>{{ campaign.owner.first_name }} {{ campaign.owner.last_name }}</strong>
+                                <small class="d-block text-muted">@{{ campaign.owner.username }}</small>
+                            </div>
+                            <span class="badge bg-primary ms-auto">Owner</span>
+                            {% else %}
+                            <em class="text-muted">No owner assigned</em>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if collaborators %}
+                        <hr>
+                        <h6 class="mb-3">Other collaborators</h6>
+                        {% for collab in collaborators %}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; background-color: #f0f0f0; color: #007bff;">
+                                    {{ collab.user.username[0].upper() }}
+                                </div>
+                                <div>
+                                    <span>{{ collab.user.first_name }} {{ collab.user.last_name }}</span>
+                                    <small class="d-block text-muted">@{{ collab.user.username }}</small>
+                                </div>
+                                {% if collab.role == 'editor' %}
+                                <span class="badge bg-info ms-auto">Editor</span>
+                                {% elif collab.role == 'viewer' %}
+                                <span class="badge bg-secondary ms-auto">Viewer</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mt-3">This campaign hasn't been shared with anyone else.</p>
+                        {% if user_role == 'owner' or user_role == 'admin' %}
+                        <a href="{{ url_for('campaigns.share_campaign_form', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-share"></i> Share Now
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if current_viewers %}
+                        <hr>
+                        <h6 class="mb-2">Currently viewing <span class="badge bg-success rounded-pill">{{ current_viewers|length }}</span></h6>
+                        <div class="avatar-group">
+                            {% for viewer in current_viewers %}
+                                <div class="avatar-placeholder rounded-circle d-inline-flex align-items-center justify-content-center me-1" 
+                                     style="width: 28px; height: 28px; background-color: #f0f0f0; color: #007bff;"
+                                     title="{{ viewer.user.username }} ({{ viewer.role }})">
+                                    {{ viewer.user.username[0].upper() }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if campaign.status == 'active' or campaign.status == 'paused' or campaign.status == 'completed' %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Campaign Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div id="stats-loading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading campaign statistics...</p>
+                    </div>
+                    <div id="stats-content" class="d-none">
+                        <!-- Stats will be loaded here via AJAX -->
+                    </div>
+                    <div id="stats-error" class="alert alert-danger d-none">
+                        An error occurred while loading statistics.
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Publish Campaign Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="publishModalLabel">Publish Campaign</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to publish this campaign to {{ campaign.platform.name }}?</p>
+                <p class="text-info">This will create a real ad campaign on the platform using the configured settings.</p>
+                <div id="publishError" class="alert alert-danger d-none"></div>
+                <div id="publishSuccess" class="alert alert-success d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmPublishBtn">Publish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Campaign Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Campaign</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this campaign?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('campaigns.delete_campaign', campaign_id=campaign.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- jQuery (required for this page) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle publish button click
+        $('#publishBtn').click(function() {
+            $('#publishError').addClass('d-none').text('');
+            $('#publishSuccess').addClass('d-none').text('');
+            $('#publishModal').modal('show');
+        });
+        
+        // Handle delete button click
+        $('#deleteBtn').click(function() {
+            $('#deleteModal').modal('show');
+        });
+        
+        // Handle confirm publish button click
+        $('#confirmPublishBtn').click(function() {
+            const button = $(this);
+            
+            // Disable button and show loading state
+            button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Publishing...');
+            
+            // Call API to publish campaign
+            $.ajax({
+                url: `/api/campaigns/{{ campaign.id }}/publish`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({}),
+                success: function(response) {
+                    if (response.success) {
+                        $('#publishSuccess').removeClass('d-none').text('Campaign published successfully! ' + response.message);
+                        
+                        // Update UI after successful publish
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        $('#publishError').removeClass('d-none').text('Error: ' + response.error);
+                        button.prop('disabled', false).text('Try Again');
+                    }
+                },
+                error: function(jqXHR) {
+                    let errorMsg = 'An error occurred while publishing the campaign.';
+                    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                        errorMsg = jqXHR.responseJSON.error;
+                    }
+                    $('#publishError').removeClass('d-none').text('Error: ' + errorMsg);
+                    button.prop('disabled', false).text('Try Again');
+                }
+            });
+        });
+        
+        // Load campaign statistics
+        function loadCampaignStats() {
+            if ('{{ campaign.status }}' === 'active' || '{{ campaign.status }}' === 'paused' || '{{ campaign.status }}' === 'completed') {
+                $.ajax({
+                    url: `/api/campaigns/{{ campaign.id }}/status`,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#stats-loading').addClass('d-none');
+                        
+                        if (response.success) {
+                            let statsHtml = '<ul class="list-group list-group-flush">';
+                            
+                            if (response.stats && Object.keys(response.stats).length > 0) {
+                                for (const [key, value] of Object.entries(response.stats)) {
+                                    statsHtml += `<li class="list-group-item"><strong>${key}:</strong> ${value}</li>`;
+                                }
+                            } else {
+                                statsHtml += '<li class="list-group-item">No statistics available yet.</li>';
+                            }
+                            
+                            statsHtml += '</ul>';
+                            $('#stats-content').html(statsHtml).removeClass('d-none');
+                        } else {
+                            $('#stats-error').text('Error: ' + response.error).removeClass('d-none');
+                        }
+                    },
+                    error: function() {
+                        $('#stats-loading').addClass('d-none');
+                        $('#stats-error').removeClass('d-none');
+                    }
+                });
+            }
+        }
+        
+        // Load stats on page load
+        loadCampaignStats();
+        
+        // Refresh stats button
+        $('#statsBtn').click(function() {
+            $('#stats-content').addClass('d-none');
+            $('#stats-error').addClass('d-none');
+            $('#stats-loading').removeClass('d-none');
+            loadCampaignStats();
+        });
+    });
+</script>
+{% endblock %} 

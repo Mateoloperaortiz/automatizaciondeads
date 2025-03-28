@@ -1,0 +1,1061 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Dashboard | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Dashboard Overview</h1>
+            <p class="text-muted">Real-time metrics and performance across all campaigns and job postings</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt"></i> Last 30 Days
+                </button>
+            </div>
+            <a href="{{ url_for('campaigns.create_campaign_form') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Campaign
+            </a>
+            <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-outline-primary ms-2">
+                <i class="fas fa-briefcase"></i> Job Openings
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-briefcase text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Active Job Openings</div>
+                <div class="stats-value">{{ job_count }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 12% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-bullhorn text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Active Campaigns</div>
+                <div class="stats-value">{{ campaign_count }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 8% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-users text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Candidate Pool</div>
+                <div class="stats-value">{{ candidate_count }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 15% from last month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-chart-pie text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Audience Segments</div>
+                <div class="stats-value">{{ segment_count }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 5% from last month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Main Content -->
+        <div class="dashboard-main">
+            <!-- Campaign Performance Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Campaign Performance</h2>
+                    <div class="header-actions">
+                        <div class="btn-group chart-view-toggle" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-type="line">Line</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-chart-type="bar">Bar</button>
+                        </div>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" id="exportDataBtn" data-bs-toggle="tooltip" title="Download CSV">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" id="refreshDataBtn" data-bs-toggle="tooltip" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div id="campaign-dashboard-container" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Campaigns Table -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Recent Campaigns</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search campaigns..." id="campaignSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-primary btn-sm ms-2">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover campaign-table">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Job Opening</th>
+                                    <th>Platform</th>
+                                    <th>Status</th>
+                                    <th>Budget</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in recent_campaigns %}
+                                <tr>
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon bg-primary-light">
+                                                {{ campaign.title[:2]|upper }}
+                                            </div>
+                                            <div>{{ campaign.title }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ campaign.job_opening.title }}</td>
+                                    <td>
+                                        {% if campaign.platform_id == 1 %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-facebook text-primary me-2"></i> Meta
+                                        </span>
+                                        {% elif campaign.platform_id == 2 %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-twitter text-info me-2"></i> X
+                                        </span>
+                                        {% elif campaign.platform_id == 3 %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-google text-danger me-2"></i> Google
+                                        </span>
+                                        {% elif campaign.platform_id == 4 %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-tiktok me-2"></i> TikTok
+                                        </span>
+                                        {% elif campaign.platform_id == 5 %}
+                                        <span class="d-flex align-items-center">
+                                            <i class="fab fa-snapchat text-warning me-2"></i> Snapchat
+                                        </span>
+                                        {% else %}
+                                        Unknown
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.status == 'active' %}
+                                        <span class="status-badge active"><i class="fas fa-circle"></i> Active</span>
+                                        {% elif campaign.status == 'draft' %}
+                                        <span class="status-badge draft"><i class="fas fa-circle"></i> Draft</span>
+                                        {% elif campaign.status == 'completed' %}
+                                        <span class="status-badge inactive"><i class="fas fa-circle"></i> Completed</span>
+                                        {% elif campaign.status == 'paused' %}
+                                        <span class="status-badge pending"><i class="fas fa-circle"></i> Paused</span>
+                                        {% else %}
+                                        <span class="status-badge pending"><i class="fas fa-circle"></i> {{ campaign.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ campaign.budget }}</td>
+                                    <td>{{ campaign.created_at.strftime('%b %d, %Y') }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('campaigns.get_campaign', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit Campaign">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Analytics</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Job Openings Table -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Recent Job Openings</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search jobs..." id="jobSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary btn-sm ms-2">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover jobs-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Location</th>
+                                    <th>Department</th>
+                                    <th>Date Posted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in recent_jobs %}
+                                <tr>
+                                    <td>
+                                        <div class="job-title">
+                                            <div class="job-icon bg-secondary-light">{{ job.title[:2]|upper }}</div>
+                                            <div>{{ job.title }}</div>
+                                        </div>
+                                    </td>
+                                    <td><i class="fas fa-map-marker-alt text-muted me-1"></i> {{ job.location }}</td>
+                                    <td>{{ job.department }}</td>
+                                    <td>{{ job.created_at.strftime('%b %d, %Y') }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('jobs.get_job', job_id=job.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('campaigns.create_campaign_form') }}?job_id={{ job.id }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-bullhorn"></i>
+                                            </a>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar Content -->
+        <div class="dashboard-sidebar">
+            <!-- Conversion Metrics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Conversion Metrics</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-icon btn-outline-secondary" data-bs-toggle="tooltip" title="View Details">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Click-through Rate</span>
+                                <span class="metric-value">2.8%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 28%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of users who click on ads
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Application Rate</span>
+                                <span class="metric-value">5.2%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 52%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Percentage of viewers who apply
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Interview Conversion</span>
+                                <span class="metric-value">12.4%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 12.4%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Applicants who reach interview stage
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Cost per Application</span>
+                                <span class="metric-value">$24.80</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Average cost per submitted application
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Distribution Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Audience Distribution</h2>
+                    <div class="header-actions">
+                        <select class="form-select form-select-sm platform-select">
+                            <option value="platform">By Platform</option>
+                            <option value="segment">By Segment</option>
+                            <option value="department">By Department</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 220px;">
+                        <canvas id="audienceDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>AI-Powered Insights</h2>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item">
+                            <div class="insight-icon bg-success-light">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Increased Engagement</h3>
+                                <p>Tech job campaigns show 24% higher engagement on weekday evenings.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Optimize Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-warning-light">
+                                <i class="fas fa-lightbulb text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Budget Allocation</h3>
+                                <p>Meta campaigns providing 35% better ROI than X platform campaigns.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Adjust Budget</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-light">
+                                <i class="fas fa-bullseye text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Creative Opportunity</h3>
+                                <p>Job posts with video content receive 48% more applications.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Create Video</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Status -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Platform Status</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-icon btn-outline-secondary" id="refreshStatusBtn">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="platform-status-list">
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-primary-light">
+                                    <i class="fab fa-facebook text-primary"></i>
+                                </div>
+                                <div class="platform-name">Meta Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Online
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-info-light">
+                                    <i class="fab fa-twitter text-info"></i>
+                                </div>
+                                <div class="platform-name">X Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Online
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-danger-light">
+                                    <i class="fab fa-google text-danger"></i>
+                                </div>
+                                <div class="platform-name">Google Ads</div>
+                            </div>
+                            <div class="status-indicator online">
+                                <i class="fas fa-circle"></i> Online
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-dark">
+                                    <i class="fab fa-tiktok text-white"></i>
+                                </div>
+                                <div class="platform-name">TikTok Ads</div>
+                            </div>
+                            <div class="status-indicator maintenance">
+                                <i class="fas fa-circle"></i> Maintenance
+                            </div>
+                        </div>
+                        <div class="platform-status-item">
+                            <div class="platform-info">
+                                <div class="platform-icon bg-warning-light">
+                                    <i class="fab fa-snapchat text-warning"></i>
+                                </div>
+                                <div class="platform-name">Snapchat Ads</div>
+                            </div>
+                            <div class="status-indicator offline">
+                                <i class="fas fa-circle"></i> Not Connected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('api.platform_status') }}" class="btn btn-sm btn-outline-primary">Manage Connections</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --dashboard-gap: 1.5rem;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-wrapper {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--dashboard-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--dashboard-gap);
+        margin-bottom: var(--dashboard-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--shadow);
+        transition: transform var(--transition-normal) var(--ease-in-out),
+                    box-shadow var(--transition-normal) var(--ease-in-out);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success-600);
+    }
+
+    .stats-change.negative {
+        color: var(--danger-600);
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: var(--dashboard-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--dashboard-gap);
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: box-shadow var(--transition-normal) var(--ease-in-out);
+    }
+
+    .dashboard-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        background-color: rgba(248, 250, 252, 0.5);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    .card-footer {
+        padding: 0.75rem 1.25rem;
+        background-color: rgba(248, 250, 252, 0.5);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* Job and Campaign Tables */
+    .campaign-name, .job-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .campaign-icon, .job-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: flex-end;
+    }
+
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    /* Insights */
+    .insights-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-content h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Platform Status */
+    .platform-status-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .platform-status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .platform-status-item:last-child {
+        border-bottom: none;
+    }
+
+    .platform-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .platform-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+    }
+
+    .platform-name {
+        font-weight: 500;
+    }
+
+    .status-indicator {
+        font-size: 0.8125rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+    }
+
+    .status-indicator.online {
+        color: var(--success-700);
+        background-color: var(--success-100);
+    }
+
+    .status-indicator.offline {
+        color: var(--danger-700);
+        background-color: var(--danger-100);
+    }
+
+    .status-indicator.maintenance {
+        color: var(--warning-700);
+        background-color: var(--warning-100);
+    }
+
+    .status-indicator i {
+        font-size: 0.625rem;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1200px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- Import Chart.js for dashboard charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<!-- Import campaign dashboard modules -->
+<script type="module">
+    import { CampaignDashboard } from '{{ url_for("static", filename="js/campaign-analytics/campaign-dashboard.js") }}';
+    import { TimeSeriesChart } from '{{ url_for("static", filename="js/campaign-analytics/time-series-chart.js") }}';
+    import { PlatformComparisonChart } from '{{ url_for("static", filename="js/campaign-analytics/platform-comparison-chart.js") }}';
+    import { RoiVisualization } from '{{ url_for("static", filename="js/campaign-analytics/roi-visualization.js") }}';
+    import { KpiMetricsPanel } from '{{ url_for("static", filename="js/campaign-analytics/kpi-metrics-panel.js") }}';
+    
+    // Initialize campaign dashboard after DOM is loaded
+    document.addEventListener('DOMContentLoaded', async function() {
+        // First, fetch campaign list
+        try {
+            const response = await fetch('/api/campaigns/list');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.campaigns && data.campaigns.length > 0) {
+                // Initialize the dashboard with the first campaign
+                const initialCampaignId = data.campaigns[0].id;
+                
+                // Create dashboard instance
+                const dashboardContainer = document.getElementById('campaign-dashboard-container');
+                if (dashboardContainer) {
+                    const dashboard = new CampaignDashboard('campaign-dashboard-container', {
+                        initialCampaignId: initialCampaignId,
+                        refreshInterval: 0, // Disable auto-refresh (we'll handle it manually)
+                        showKpiMetrics: true,
+                        showTimeSeriesChart: true,
+                        showPlatformComparison: true,
+                        showRoiVisualization: true,
+                        darkMode: false
+                    });
+                    
+                    // Handle refresh button clicks
+                    document.getElementById('refreshDataBtn').addEventListener('click', () => {
+                        dashboard.loadData();
+                    });
+                    
+                    // Handle export button clicks
+                    document.getElementById('exportDataBtn').addEventListener('click', () => {
+                        dashboard.exportData();
+                    });
+                    
+                    // Store dashboard instance for potential later use
+                    window.campaignDashboard = dashboard;
+                }
+            }
+        } catch (error) {
+            console.error('Error initializing campaign dashboard:', error);
+        }
+
+        // Initialize Audience Distribution Chart
+        initializeAudienceDistributionChart();
+        
+        // Handle platform select change
+        const platformSelect = document.querySelector('.platform-select');
+        if (platformSelect) {
+            platformSelect.addEventListener('change', function() {
+                updateAudienceDistributionChart(this.value);
+            });
+        }
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Search functionality for campaign table
+        document.getElementById('campaignSearchInput')?.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('.campaign-table tbody tr');
+            
+            tableRows.forEach(row => {
+                const campaignName = row.querySelector('.campaign-name').textContent.toLowerCase();
+                const jobTitle = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                
+                if (campaignName.includes(searchValue) || jobTitle.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Search functionality for job openings table
+        document.getElementById('jobSearchInput')?.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('.jobs-table tbody tr');
+            
+            tableRows.forEach(row => {
+                const jobTitle = row.querySelector('.job-title').textContent.toLowerCase();
+                const location = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const department = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                
+                if (jobTitle.includes(searchValue) || location.includes(searchValue) || department.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function initializeAudienceDistributionChart() {
+        const ctx = document.getElementById('audienceDistributionChart').getContext('2d');
+        
+        // Platform distribution data
+        const platformData = {
+            labels: ['Meta', 'X', 'Google', 'TikTok', 'Snapchat'],
+            datasets: [{
+                data: [35, 25, 30, 7, 3],
+                backgroundColor: [
+                    'rgba(66, 103, 178, 0.8)',  // Meta blue
+                    'rgba(29, 161, 242, 0.8)',  // X blue
+                    'rgba(234, 67, 53, 0.8)',   // Google red
+                    'rgba(0, 0, 0, 0.8)',       // TikTok black
+                    'rgba(255, 252, 0, 0.8)'    // Snapchat yellow
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        };
+        
+        window.audienceDistributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: platformData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${context.label}: ${percentage}%`;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    function updateAudienceDistributionChart(chartType) {
+        let newData = {
+            datasets: [{
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        };
+        
+        if (chartType === 'segment') {
+            newData.labels = ['Tech Professionals', 'Recent Graduates', 'Creative Professionals', 'Remote Workers', 'Mid-Career'];
+            newData.datasets[0].data = [28, 22, 15, 20, 15];
+            newData.datasets[0].backgroundColor = [
+                'rgba(67, 97, 238, 0.8)',
+                'rgba(46, 196, 182, 0.8)',
+                'rgba(255, 159, 28, 0.8)',
+                'rgba(76, 201, 240, 0.8)',
+                'rgba(147, 51, 234, 0.8)'
+            ];
+        } else if (chartType === 'department') {
+            newData.labels = ['Technology', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance'];
+            newData.datasets[0].data = [35, 20, 15, 12, 10, 8];
+            newData.datasets[0].backgroundColor = [
+                'rgba(0, 153, 204, 0.8)',
+                'rgba(255, 102, 102, 0.8)',
+                'rgba(102, 204, 0, 0.8)',
+                'rgba(204, 102, 204, 0.8)',
+                'rgba(255, 153, 0, 0.8)',
+                'rgba(0, 153, 153, 0.8)'
+            ];
+        } else {
+            // Default to platform view
+            newData.labels = ['Meta', 'X', 'Google', 'TikTok', 'Snapchat'];
+            newData.datasets[0].data = [35, 25, 30, 7, 3];
+            newData.datasets[0].backgroundColor = [
+                'rgba(66, 103, 178, 0.8)',  // Meta blue
+                'rgba(29, 161, 242, 0.8)',  // X blue
+                'rgba(234, 67, 53, 0.8)',   // Google red
+                'rgba(0, 0, 0, 0.8)',       // TikTok black
+                'rgba(255, 252, 0, 0.8)'    // Snapchat yellow
+            ];
+        }
+        
+        // Update chart data
+        window.audienceDistributionChart.data.labels = newData.labels;
+        window.audienceDistributionChart.data.datasets[0].data = newData.datasets[0].data;
+        window.audienceDistributionChart.data.datasets[0].backgroundColor = newData.datasets[0].backgroundColor;
+        window.audienceDistributionChart.update();
+    }
+</script>
+
+<!-- Import service layer scripts -->
+<script type="module" src="{{ url_for('static', filename='js/services/api-config.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/error-handler.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/base-api-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/schemas/schema-validator.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/campaign-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/job-opening-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/candidate-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/segment-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/analytics-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/platform-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/websocket-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/toast-service.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/real-time-api.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/event-hub.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/services/real-time-dashboard.js') }}"></script>
+
+<!-- Real-time dashboard implementation -->
+<script type="module" src="{{ url_for('static', filename='js/real-time-dashboard.js') }}"></script>
+
+<script>
+    // Initialize with server-provided data (for immediate display before real-time data loads)
+    window.initialDashboardData = {
+        platform_names: {{ platform_names|tojson }},
+        impressions_data: {{ impressions_data|tojson }},
+        clicks_data: {{ clicks_data|tojson }},
+        applications_data: {{ applications_data|tojson }}
+    };
+</script>
+{% endblock %}

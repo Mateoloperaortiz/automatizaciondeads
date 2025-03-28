@@ -1,0 +1,1785 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Campaign Management | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="campaigns-dashboard">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Campaign Management</h1>
+            <p class="text-muted">Create, monitor, and optimize your advertising campaigns across platforms</p>
+        </div>
+        <div class="header-actions">
+            <div class="btn-group me-2">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-alt"></i> Last 30 Days
+                </button>
+            </div>
+            <button class="btn btn-primary create-campaign-btn" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
+                <i class="fas fa-plus"></i> New Campaign
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Stats Cards -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon bg-primary-light">
+                <i class="fas fa-bullhorn text-primary"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Active Campaigns</div>
+                <div class="stats-value">{{ campaigns|selectattr('status', 'equalto', 'active')|list|length }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 3 new this month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-success-light">
+                <i class="fas fa-dollar-sign text-success"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Budget</div>
+                <div class="stats-value">${{ '%0.2f'| format(campaigns|sum(attribute='budget')) }}</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 12.8% from previous month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-info-light">
+                <i class="fas fa-eye text-info"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Total Impressions</div>
+                <div class="stats-value">1.2M</div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 8.5% from previous month
+                </div>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon bg-warning-light">
+                <i class="fas fa-exchange-alt text-warning"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-title">Avg. ROI</div>
+                <div class="stats-value">142<span class="percent">%</span></div>
+                <div class="stats-change positive">
+                    <i class="fas fa-arrow-up"></i> 5.3% from previous month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-grid">
+        <!-- Left Column - Charts -->
+        <div class="dashboard-main">
+            <!-- Performance Overview Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Campaign Performance Overview</h2>
+                    <div class="header-actions">
+                        <div class="btn-group chart-view-toggle" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-metric="impressions">Impressions</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-metric="clicks">Clicks</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-metric="conversions">Conversions</button>
+                        </div>
+                        <button class="btn btn-sm btn-icon btn-outline-secondary ms-2" data-bs-toggle="tooltip" title="Download Chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Distribution Chart -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Budget Distribution by Platform</h2>
+                    <div class="header-actions">
+                        <select class="form-select form-select-sm metric-select">
+                            <option value="budget">Budget Allocation</option>
+                            <option value="spend">Current Spend</option>
+                            <option value="impressions">Impressions</option>
+                            <option value="roi">ROI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="platformDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Table -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Campaign Management</h2>
+                    <div class="header-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Search campaigns..." id="campaignSearchInput">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="filterDropdown">
+                                <li><h6 class="dropdown-header">Status</h6></li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="active" id="filterActive" checked>
+                                            <label class="form-check-label" for="filterActive">Active</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="draft" id="filterDraft" checked>
+                                            <label class="form-check-label" for="filterDraft">Draft</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="paused" id="filterPaused" checked>
+                                            <label class="form-check-label" for="filterPaused">Paused</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Platform</h6></li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="all" id="filterAll" checked>
+                                            <label class="form-check-label" for="filterAll">All Platforms</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="Meta" id="filterMeta" checked>
+                                            <label class="form-check-label" for="filterMeta">Meta</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="Google" id="filterGoogle" checked>
+                                            <label class="form-check-label" for="filterGoogle">Google</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="X" id="filterX" checked>
+                                            <label class="form-check-label" for="filterX">X</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="dropdown-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="LinkedIn" id="filterLinkedIn" checked>
+                                            <label class="form-check-label" for="filterLinkedIn">LinkedIn</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item text-primary" id="resetFilters">Reset Filters</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover campaign-management-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Campaign</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Platform</th>
+                                    <th scope="col">Budget</th>
+                                    <th scope="col">Spent</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">Conversions</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in campaigns %}
+                                <tr data-status="{{ campaign.status }}" data-platform="{{ campaign.platform }}">
+                                    <td>
+                                        <div class="campaign-name">
+                                            <div class="campaign-icon">
+                                                {{ campaign.name[:2]|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="name">{{ campaign.name }}</div>
+                                                <div class="campaign-date">{{ campaign.created_at.strftime('%b %d, %Y') }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge {{ campaign.status }}">{{ campaign.status|capitalize }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="platform-badge {{ campaign.platform|lower }}">
+                                            {% if campaign.platform == 'Meta' %}
+                                            <i class="fab fa-facebook"></i>
+                                            {% elif campaign.platform == 'Google' %}
+                                            <i class="fab fa-google"></i>
+                                            {% elif campaign.platform == 'X' %}
+                                            <i class="fab fa-twitter"></i>
+                                            {% elif campaign.platform == 'LinkedIn' %}
+                                            <i class="fab fa-linkedin"></i>
+                                            {% else %}
+                                            <i class="fas fa-bullhorn"></i>
+                                            {% endif %}
+                                            {{ campaign.platform }}
+                                        </div>
+                                    </td>
+                                    <td>${{ '%0.2f'| format(campaign.budget) }}</td>
+                                    <td>${{ '%0.2f'| format(campaign.budget * 0.6) }}</td>
+                                    <td>
+                                        <div class="metric">
+                                            {{ (3 + (loop.index / 20))|round(1) }}%
+                                            <div class="trend-indicator {% if loop.index is divisibleby(2) %}up{% else %}down{% endif %}">
+                                                <i class="fas fa-caret-{% if loop.index is divisibleby(2) %}up{% else %}down{% endif %}"></i>
+                                                {{ (0.1 + (loop.index / 100))|round(1) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ (campaign.budget * 0.02)|round|int }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Analytics">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </button>
+                                            <div class="dropdown d-inline-block">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-share-alt me-2"></i>Share</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    {% if campaign.status == 'active' %}
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-pause me-2"></i>Pause</a></li>
+                                                    {% elif campaign.status == 'paused' %}
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-play me-2"></i>Activate</a></li>
+                                                    {% elif campaign.status == 'draft' %}
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-play me-2"></i>Launch</a></li>
+                                                    {% endif %}
+                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <nav aria-label="Campaign pagination">
+                        <ul class="pagination pagination-sm justify-content-end mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Insights & Tools -->
+        <div class="dashboard-sidebar">
+            <!-- Performance Metrics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Performance Metrics</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quality-metrics">
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Avg. Click-Through Rate</span>
+                                <span class="metric-value">4.2%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 42%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Industry average is 3.1%
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Conversion Rate</span>
+                                <span class="metric-value">2.8%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 56%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Industry average is 2.0%
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Cost per Acquisition</span>
+                                <span class="metric-value">$28.50</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Industry average is $32.25
+                            </div>
+                        </div>
+                        <div class="quality-metric">
+                            <div class="metric-header">
+                                <span>Return on Ad Spend</span>
+                                <span class="metric-value">3.4x</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 70%"></div>
+                            </div>
+                            <div class="metric-description">
+                                <i class="fas fa-info-circle"></i> Industry average is 2.9x
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Insights -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>AI-Powered Campaign Insights</h2>
+                </div>
+                <div class="card-body">
+                    <div class="insights-list">
+                        <div class="insight-item">
+                            <div class="insight-icon bg-primary-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Budget Optimization</h3>
+                                <p>Meta campaigns have 24% higher ROI than Google campaigns. Consider reallocating 15% of Google budget to Meta.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Optimize Budget</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-success-light">
+                                <i class="fas fa-chart-line text-success"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Target Audience Performance</h3>
+                                <p>Tech Professionals segment shows 18% higher engagement than other segments for Developer roles.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">View Segment</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="insight-item">
+                            <div class="insight-icon bg-warning-light">
+                                <i class="fas fa-clock text-warning"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h3>Scheduling Opportunity</h3>
+                                <p>Campaigns for Remote Workers perform 28% better between 7-10 PM on weekdays.</p>
+                                <div class="insight-action">
+                                    <button class="btn btn-sm btn-outline-primary">Adjust Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Quick Actions -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Create Campaign</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-copy"></i>
+                            <span>Duplicate Campaign</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-file-export"></i>
+                            <span>Export Report</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-wrench"></i>
+                            <span>Bulk Operations</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Schedule Campaign</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-action">
+                            <i class="fas fa-robot"></i>
+                            <span>AI Optimization</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Recent Activity</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-icon bg-success-light">
+                                <i class="fas fa-rocket text-success"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <div class="activity-title">Campaign Launched</div>
+                                    <div class="activity-time">2 hours ago</div>
+                                </div>
+                                <div class="activity-description">Spring Marketing Campaign was activated across all platforms</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary-light">
+                                <i class="fas fa-edit text-primary"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <div class="activity-title">Campaign Updated</div>
+                                    <div class="activity-time">Yesterday</div>
+                                </div>
+                                <div class="activity-description">Summer Sale Campaign budget was increased by $1,500</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon bg-warning-light">
+                                <i class="fas fa-pause text-warning"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <div class="activity-title">Campaign Paused</div>
+                                    <div class="activity-time">2 days ago</div>
+                                </div>
+                                <div class="activity-description">Fall Product Launch was temporarily paused for budget reallocation</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon bg-info-light">
+                                <i class="fas fa-share-alt text-info"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <div class="activity-title">Campaign Shared</div>
+                                    <div class="activity-time">3 days ago</div>
+                                </div>
+                                <div class="activity-description">Tech Recruitment Campaign was shared with the marketing team</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="btn btn-sm btn-link">View All Activity</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Campaign Modal -->
+<div class="modal fade" id="createCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="campaignCreationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-panel" type="button" role="tab">
+                            <i class="fas fa-info-circle me-2"></i>Campaign Basics
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="audience-tab" data-bs-toggle="tab" data-bs-target="#audience-panel" type="button" role="tab">
+                            <i class="fas fa-users me-2"></i>Audience
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="creative-tab" data-bs-toggle="tab" data-bs-target="#creative-panel" type="button" role="tab">
+                            <i class="fas fa-paint-brush me-2"></i>Creative
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="budget-tab" data-bs-toggle="tab" data-bs-target="#budget-panel" type="button" role="tab">
+                            <i class="fas fa-dollar-sign me-2"></i>Budget & Schedule
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="campaignCreationContent">
+                    <div class="tab-pane fade show active" id="basics-panel" role="tabpanel">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Campaign Name</label>
+                                <input type="text" class="form-control" placeholder="Enter a descriptive name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Campaign Description</label>
+                                <textarea class="form-control" rows="3" placeholder="Describe your campaign objectives"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Job Opening</label>
+                                <select class="form-select">
+                                    <option value="">Select a job opening...</option>
+                                    <option>Senior Java Developer</option>
+                                    <option>UI/UX Designer</option>
+                                    <option>DevOps Engineer</option>
+                                    <option>Product Manager</option>
+                                    <option>Marketing Specialist</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Platforms</label>
+                                <div class="platform-selection">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="platformMeta" value="Meta" checked>
+                                        <label class="form-check-label" for="platformMeta">
+                                            <i class="fab fa-facebook text-primary"></i> Meta
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="platformGoogle" value="Google" checked>
+                                        <label class="form-check-label" for="platformGoogle">
+                                            <i class="fab fa-google text-danger"></i> Google
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="platformX" value="X">
+                                        <label class="form-check-label" for="platformX">
+                                            <i class="fab fa-twitter text-info"></i> X
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="platformLinkedIn" value="LinkedIn">
+                                        <label class="form-check-label" for="platformLinkedIn">
+                                            <i class="fab fa-linkedin text-primary"></i> LinkedIn
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Campaign Tags</label>
+                                <input type="text" class="form-control" placeholder="E.g., tech, recruitment, spring2025">
+                                <div class="form-text">Separate tags with commas</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="audience-panel" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Choose a pre-defined audience segment or create custom targeting criteria.
+                        </div>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Audience Source</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="audienceSource" id="audienceSegment" checked>
+                                    <label class="form-check-label" for="audienceSegment">
+                                        Use existing audience segment
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="audienceSource" id="audienceCustom">
+                                    <label class="form-check-label" for="audienceCustom">
+                                        Create custom audience
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3" id="segmentSelector">
+                                <label class="form-label">Select Audience Segment</label>
+                                <select class="form-select">
+                                    <option value="">Choose a segment...</option>
+                                    <option>Tech Professionals (24,500 candidates)</option>
+                                    <option>Recent Graduates (18,000 candidates)</option>
+                                    <option>Creative Professionals (15,800 candidates)</option>
+                                    <option>Remote Workers (28,400 candidates)</option>
+                                    <option>Mid-Career Professionals (22,300 candidates)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3" id="customAudience" style="display: none;">
+                                <label class="form-label">Custom Audience Criteria</label>
+                                <div class="criteria-builder">
+                                    <!-- This would be similar to the segment builder -->
+                                    <div class="criteria-row">
+                                        <select class="form-select">
+                                            <option>Age</option>
+                                            <option>Location</option>
+                                            <option>Experience</option>
+                                            <option>Education</option>
+                                            <option>Skills</option>
+                                            <option>Job Title</option>
+                                        </select>
+                                        <select class="form-select">
+                                            <option>is between</option>
+                                            <option>equals</option>
+                                            <option>does not equal</option>
+                                            <option>greater than</option>
+                                            <option>less than</option>
+                                            <option>contains</option>
+                                        </select>
+                                        <input type="text" class="form-control" placeholder="25">
+                                        <input type="text" class="form-control" placeholder="40">
+                                        <button class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-plus"></i> Add Condition
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Estimated Reach</label>
+                                <div class="reach-estimator">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-2">
+                                        <span>0</span>
+                                        <span class="fw-bold">Approx. 22,500 candidates</span>
+                                        <span>50,000+</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="creative-panel" role="tabpanel">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Ad Format</label>
+                                <div class="ad-format-selector">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card format-card active">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-image fa-2x mb-2"></i>
+                                                    <h5>Single Image</h5>
+                                                    <p class="small text-muted">Standard image ad</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card format-card">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-film fa-2x mb-2"></i>
+                                                    <h5>Video</h5>
+                                                    <p class="small text-muted">Video ad with call-to-action</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card format-card">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-images fa-2x mb-2"></i>
+                                                    <h5>Carousel</h5>
+                                                    <p class="small text-muted">Multiple images in one ad</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Ad Creative</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Ad Title</label>
+                                            <input type="text" class="form-control" placeholder="E.g., Join Our Team as a Senior Developer">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Ad Description</label>
+                                            <textarea class="form-control" rows="3" placeholder="Enter compelling ad copy"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Call to Action</label>
+                                            <select class="form-select">
+                                                <option>Apply Now</option>
+                                                <option>Learn More</option>
+                                                <option>Sign Up</option>
+                                                <option>Contact Us</option>
+                                                <option>See Open Positions</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Ad Image</label>
+                                            <div class="image-upload-area">
+                                                <div class="d-flex justify-content-center align-items-center border rounded" style="height: 200px;">
+                                                    <div class="text-center">
+                                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                                                        <p class="mb-0">Drag & drop image here</p>
+                                                        <p class="text-muted small">or click to browse</p>
+                                                        <button class="btn btn-sm btn-outline-primary">Upload Image</button>
+                                                    </div>
+                                                </div>
+                                                <p class="form-text mt-2">Recommended size: 1200 x 628 pixels</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoOptimize" checked>
+                                    <label class="form-check-label" for="autoOptimize">
+                                        Auto-optimize creative for each platform
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="budget-panel" role="tabpanel">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Budget Type</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="budgetType" id="budgetDaily" checked>
+                                    <label class="form-check-label" for="budgetDaily">
+                                        Daily budget
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="budgetType" id="budgetLifetime">
+                                    <label class="form-check-label" for="budgetLifetime">
+                                        Lifetime budget
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Budget Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" value="50">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Campaign Duration</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Start Date</label>
+                                        <input type="date" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">End Date</label>
+                                        <input type="date" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Optimization Goal</label>
+                                <select class="form-select">
+                                    <option>Leads (Applications)</option>
+                                    <option>Link Clicks</option>
+                                    <option>Impressions</option>
+                                    <option>Engagement</option>
+                                    <option>View Content</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Budget Allocation</label>
+                                <div class="range-slider-wrapper">
+                                    <div class="platform-allocation">
+                                        <div class="platform-label">
+                                            <i class="fab fa-facebook text-primary"></i> Meta
+                                        </div>
+                                        <div class="platform-range flex-grow-1">
+                                            <input type="range" class="form-range" min="0" max="100" value="50">
+                                        </div>
+                                        <div class="platform-value">50%</div>
+                                    </div>
+                                    <div class="platform-allocation">
+                                        <div class="platform-label">
+                                            <i class="fab fa-google text-danger"></i> Google
+                                        </div>
+                                        <div class="platform-range flex-grow-1">
+                                            <input type="range" class="form-range" min="0" max="100" value="50">
+                                        </div>
+                                        <div class="platform-value">50%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="aiOptimize" checked>
+                                    <label class="form-check-label" for="aiOptimize">
+                                        Use AI to optimize budget allocation based on performance
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-summary card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Budget Summary</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Daily Budget:</span>
+                                        <span class="fw-bold">$50.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Campaign Duration:</span>
+                                        <span>30 days</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Budget:</span>
+                                        <span class="fw-bold">$1,500.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Create Campaign</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --card-border-radius: 0.5rem;
+        --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        --card-header-bg: rgba(248, 250, 252, 0.5);
+        --sidebar-width: 320px;
+        --grid-gap: 1.5rem;
+        --primary: #4361ee;
+        --success: #2ec4b6;
+        --warning: #ff9f1c;
+        --danger: #e71d36;
+        --info: #4cc9f0;
+        --card-padding: 1.25rem;
+        --text-muted: #6c757d;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --success-light: rgba(46, 196, 182, 0.1);
+        --warning-light: rgba(255, 159, 28, 0.1);
+        --danger-light: rgba(231, 29, 54, 0.1);
+        --info-light: rgba(76, 201, 240, 0.1);
+        --transition-speed: 0.2s;
+    }
+
+    /* Dashboard Layout */
+    .campaigns-dashboard {
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--grid-gap);
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr var(--sidebar-width);
+        gap: var(--grid-gap);
+    }
+
+    .dashboard-main, .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--grid-gap);
+    }
+
+    /* Stats Cards */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: var(--grid-gap);
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        box-shadow: var(--card-shadow);
+        transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-content {
+        flex: 1;
+    }
+
+    .stats-title {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .percent {
+        font-size: 1rem;
+    }
+
+    .stats-change {
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stats-change.positive {
+        color: var(--success);
+    }
+
+    .stats-change.negative {
+        color: var(--danger);
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background-color: white;
+        border-radius: var(--card-border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+
+    .dashboard-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .dashboard-card .card-body {
+        padding: var(--card-padding);
+    }
+
+    .dashboard-card .card-footer {
+        padding: 0.75rem var(--card-padding);
+        background-color: var(--card-header-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    /* Quality Metrics */
+    .quality-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .quality-metric {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .metric-value {
+        font-weight: 600;
+    }
+
+    .metric-description {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .progress {
+        height: 0.5rem;
+        border-radius: 1rem;
+    }
+
+    /* Campaign Insights */
+    .insights-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .insight-item {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-content h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .btn-action i {
+        font-size: 1.25rem;
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-item {
+        display: flex;
+        padding: 1.25rem var(--card-padding);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .activity-description {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    /* Campaign Management Table */
+    .campaign-management-table thead th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        background-color: var(--card-header-bg);
+    }
+
+    .campaign-management-table td {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+    }
+
+    .campaign-name {
+        display: flex;
+        align-items: center;
+    }
+
+    .campaign-icon {
+        width: 36px;
+        height: 36px;
+        background-color: var(--primary-light);
+        color: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .campaign-name .name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .campaign-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-badge.active {
+        background-color: var(--success-light);
+        color: var(--success);
+    }
+
+    .status-badge.draft {
+        background-color: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .status-badge.paused {
+        background-color: var(--info-light);
+        color: var(--info);
+    }
+
+    .platform-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .platform-badge.meta {
+        background-color: rgba(59, 89, 152, 0.1);
+        color: #3b5998;
+    }
+
+    .platform-badge.google {
+        background-color: rgba(234, 67, 53, 0.1);
+        color: #ea4335;
+    }
+
+    .platform-badge.x {
+        background-color: rgba(29, 161, 242, 0.1);
+        color: #1da1f2;
+    }
+
+    .platform-badge.linkedin {
+        background-color: rgba(0, 119, 181, 0.1);
+        color: #0077b5;
+    }
+
+    .metric {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .trend-indicator {
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .trend-indicator.up {
+        color: var(--success);
+    }
+
+    .trend-indicator.down {
+        color: var(--danger);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: flex-end;
+    }
+
+    /* Create Campaign Modal */
+    .ad-format-selector .format-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+
+    .ad-format-selector .format-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .ad-format-selector .format-card.active {
+        border-color: var(--primary);
+        background-color: var(--primary-light);
+    }
+
+    .platform-allocation {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .platform-label {
+        width: 100px;
+    }
+
+    .platform-range {
+        flex: 1;
+    }
+
+    .platform-value {
+        width: 50px;
+        text-align: right;
+    }
+
+    .image-upload-area {
+        cursor: pointer;
+    }
+
+    /* Background Colors */
+    .bg-primary-light { background-color: var(--primary-light); }
+    .bg-success-light { background-color: var(--success-light); }
+    .bg-warning-light { background-color: var(--warning-light); }
+    .bg-danger-light { background-color: var(--danger-light); }
+    .bg-info-light { background-color: var(--info-light); }
+
+    .text-primary { color: var(--primary) !important; }
+    .text-success { color: var(--success) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-info { color: var(--info) !important; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1199px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize ChartJS
+    Chart.defaults.font.family = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.color = '#6c757d';
+    
+    // Initialize charts
+    initializePerformanceChart();
+    initializePlatformDistributionChart();
+    
+    // Initialize campaign filtering
+    initializeCampaignFiltering();
+    
+    // Initialize campaign modal interactions
+    initializeCampaignModal();
+});
+
+function initializePerformanceChart() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    // Impressions data for the last 30 days
+    const dateLabels = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        dateLabels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+    
+    // Generate sample data with some randomness
+    const impressionsData = Array.from({length: 30}, (_, i) => {
+        const base = 50000;
+        const trend = i * 500; // Upward trend
+        const fluctuation = Math.random() * 10000 - 5000; // Random fluctuation
+        return Math.max(0, Math.round(base + trend + fluctuation));
+    });
+    
+    const clicksData = impressionsData.map(imp => Math.round(imp * (0.03 + Math.random() * 0.02)));
+    const conversionsData = clicksData.map(clicks => Math.round(clicks * (0.02 + Math.random() * 0.01)));
+    
+    window.performanceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dateLabels,
+            datasets: [{
+                label: 'Impressions',
+                data: impressionsData,
+                borderColor: 'rgba(67, 97, 238, 1)',
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return (value / 1000) + 'k';
+                            }
+                            return value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle metric toggle
+    const metricToggleButtons = document.querySelectorAll('.chart-view-toggle button');
+    metricToggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            metricToggleButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Get selected metric
+            const metric = this.getAttribute('data-metric');
+            
+            // Update chart data based on selected metric
+            let chartData, chartColor, yAxisConfig;
+            
+            if (metric === 'clicks') {
+                chartData = clicksData;
+                chartColor = 'rgba(46, 196, 182, 1)';
+                chartBgColor = 'rgba(46, 196, 182, 0.1)';
+                yAxisConfig = {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return (value / 1000) + 'k';
+                            }
+                            return value;
+                        }
+                    }
+                };
+            } else if (metric === 'conversions') {
+                chartData = conversionsData;
+                chartColor = 'rgba(255, 159, 28, 1)';
+                chartBgColor = 'rgba(255, 159, 28, 0.1)';
+                yAxisConfig = {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value;
+                        }
+                    }
+                };
+            } else {
+                // Default to impressions
+                chartData = impressionsData;
+                chartColor = 'rgba(67, 97, 238, 1)';
+                chartBgColor = 'rgba(67, 97, 238, 0.1)';
+                yAxisConfig = {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return (value / 1000) + 'k';
+                            }
+                            return value;
+                        }
+                    }
+                };
+            }
+            
+            // Update chart
+            window.performanceChartInstance.data.datasets[0].label = metric.charAt(0).toUpperCase() + metric.slice(1);
+            window.performanceChartInstance.data.datasets[0].data = chartData;
+            window.performanceChartInstance.data.datasets[0].borderColor = chartColor;
+            window.performanceChartInstance.data.datasets[0].backgroundColor = chartBgColor;
+            window.performanceChartInstance.options.scales.y = yAxisConfig;
+            window.performanceChartInstance.update();
+        });
+    });
+}
+
+function initializePlatformDistributionChart() {
+    const ctx = document.getElementById('platformDistributionChart').getContext('2d');
+    
+    // Platform data
+    const platformData = {
+        budget: {
+            labels: ['Meta', 'Google', 'X', 'LinkedIn'],
+            data: [45, 35, 15, 5],
+            colors: ['rgba(59, 89, 152, 0.8)', 'rgba(234, 67, 53, 0.8)', 'rgba(29, 161, 242, 0.8)', 'rgba(0, 119, 181, 0.8)']
+        },
+        spend: {
+            labels: ['Meta', 'Google', 'X', 'LinkedIn'],
+            data: [48, 32, 14, 6],
+            colors: ['rgba(59, 89, 152, 0.8)', 'rgba(234, 67, 53, 0.8)', 'rgba(29, 161, 242, 0.8)', 'rgba(0, 119, 181, 0.8)']
+        },
+        impressions: {
+            labels: ['Meta', 'Google', 'X', 'LinkedIn'],
+            data: [52, 28, 12, 8],
+            colors: ['rgba(59, 89, 152, 0.8)', 'rgba(234, 67, 53, 0.8)', 'rgba(29, 161, 242, 0.8)', 'rgba(0, 119, 181, 0.8)']
+        },
+        roi: {
+            labels: ['Meta', 'Google', 'X', 'LinkedIn'],
+            data: [42, 35, 15, 8],
+            colors: ['rgba(59, 89, 152, 0.8)', 'rgba(234, 67, 53, 0.8)', 'rgba(29, 161, 242, 0.8)', 'rgba(0, 119, 181, 0.8)']
+        }
+    };
+    
+    window.platformDistributionChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: platformData.budget.labels,
+            datasets: [{
+                data: platformData.budget.data,
+                backgroundColor: platformData.budget.colors,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        boxWidth: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw}%`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+    
+    // Handle metric select change
+    const metricSelect = document.querySelector('.metric-select');
+    if (metricSelect) {
+        metricSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            const data = platformData[selectedValue];
+            
+            // Update chart
+            window.platformDistributionChartInstance.data.labels = data.labels;
+            window.platformDistributionChartInstance.data.datasets[0].data = data.data;
+            window.platformDistributionChartInstance.data.datasets[0].backgroundColor = data.colors;
+            window.platformDistributionChartInstance.update();
+        });
+    }
+}
+
+function initializeCampaignFiltering() {
+    const campaignSearchInput = document.getElementById('campaignSearchInput');
+    const statusCheckboxes = document.querySelectorAll('input[type="checkbox"][value="active"], input[type="checkbox"][value="draft"], input[type="checkbox"][value="paused"]');
+    const platformCheckboxes = document.querySelectorAll('input[type="checkbox"][value="Meta"], input[type="checkbox"][value="Google"], input[type="checkbox"][value="X"], input[type="checkbox"][value="LinkedIn"]');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    const allPlatformsCheckbox = document.getElementById('filterAll');
+    
+    const campaignRows = document.querySelectorAll('.campaign-management-table tbody tr');
+    
+    // Function to filter campaigns
+    function filterCampaigns() {
+        const searchTerm = campaignSearchInput.value.toLowerCase();
+        
+        // Get selected statuses
+        const selectedStatuses = Array.from(statusCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+            
+        // Get selected platforms
+        const selectedPlatforms = Array.from(platformCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        // Update all platforms checkbox
+        if (platformCheckboxes.length === selectedPlatforms.length) {
+            allPlatformsCheckbox.checked = true;
+            allPlatformsCheckbox.indeterminate = false;
+        } else if (selectedPlatforms.length === 0) {
+            allPlatformsCheckbox.checked = false;
+            allPlatformsCheckbox.indeterminate = false;
+        } else {
+            allPlatformsCheckbox.indeterminate = true;
+        }
+        
+        // Filter rows
+        campaignRows.forEach(row => {
+            const campaignName = row.querySelector('.campaign-name .name').textContent.toLowerCase();
+            const campaignStatus = row.getAttribute('data-status');
+            const campaignPlatform = row.getAttribute('data-platform');
+            
+            const matchesSearch = campaignName.includes(searchTerm);
+            const matchesStatus = selectedStatuses.includes(campaignStatus);
+            const matchesPlatform = selectedPlatforms.includes(campaignPlatform);
+            
+            if (matchesSearch && matchesStatus && matchesPlatform) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Add event listeners
+    if (campaignSearchInput) {
+        campaignSearchInput.addEventListener('input', filterCampaigns);
+    }
+    
+    statusCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', filterCampaigns);
+    });
+    
+    platformCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', filterCampaigns);
+    });
+    
+    // All platforms checkbox
+    if (allPlatformsCheckbox) {
+        allPlatformsCheckbox.addEventListener('change', function() {
+            platformCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+            filterCampaigns();
+        });
+    }
+    
+    // Reset filters
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', function() {
+            campaignSearchInput.value = '';
+            statusCheckboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            platformCheckboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            allPlatformsCheckbox.checked = true;
+            allPlatformsCheckbox.indeterminate = false;
+            filterCampaigns();
+        });
+    }
+}
+
+function initializeCampaignModal() {
+    // Custom audience toggle
+    const audienceSourceRadios = document.querySelectorAll('input[name="audienceSource"]');
+    const segmentSelector = document.getElementById('segmentSelector');
+    const customAudience = document.getElementById('customAudience');
+    
+    audienceSourceRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.id === 'audienceSegment') {
+                segmentSelector.style.display = 'block';
+                customAudience.style.display = 'none';
+            } else {
+                segmentSelector.style.display = 'none';
+                customAudience.style.display = 'block';
+            }
+        });
+    });
+    
+    // Ad format selection
+    const formatCards = document.querySelectorAll('.format-card');
+    formatCards.forEach(card => {
+        card.addEventListener('click', function() {
+            formatCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+</script>
+{% endblock %}

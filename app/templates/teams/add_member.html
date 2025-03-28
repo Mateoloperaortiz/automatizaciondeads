@@ -1,0 +1,88 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Add Team Member - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('teams.list_teams') }}">Teams</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('teams.detail', team_id=team.id) }}">{{ team.name }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Add Member</li>
+    </ol>
+  </nav>
+  
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Add Team Member</h5>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          
+          {% if available_users %}
+            <form method="POST" action="{{ url_for('teams.add_member', team_id=team.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              
+              <div class="mb-3">
+                <label for="user_id" class="form-label">Select User</label>
+                <select class="form-select" id="user_id" name="user_id" required>
+                  <option value="" selected disabled>Choose a user...</option>
+                  {% for user in available_users %}
+                    <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }} (@{{ user.username }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="role" class="form-label">Assign Role</label>
+                <select class="form-select" id="role" name="role" required>
+                  <option value="owner">Owner</option>
+                  <option value="editor" selected>Editor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <div class="form-text">
+                  <ul class="small mb-0 mt-2">
+                    <li><strong>Owner:</strong> Can manage team settings and members</li>
+                    <li><strong>Editor:</strong> Can edit team resources and campaigns</li>
+                    <li><strong>Viewer:</strong> Can only view team resources and campaigns</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-between">
+                <a href="{{ url_for('teams.detail', team_id=team.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Add Member</button>
+              </div>
+            </form>
+          {% else %}
+            <div class="alert alert-info">
+              <i data-feather="info" class="feather-sm me-2"></i>
+              <span>All available users are already members of this team.</span>
+            </div>
+            <div class="text-center mt-3">
+              <a href="{{ url_for('teams.detail', team_id=team.id) }}" class="btn btn-primary">Back to Team</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize feather icons
+    feather.replace();
+  });
+</script>
+{% endblock %}

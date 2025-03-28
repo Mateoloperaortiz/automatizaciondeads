@@ -1,0 +1,279 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Create Campaign | Ad Automation P-01{% endblock %}
+
+{% block page_title %}Create New Ad Campaign{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-primary">
+    <i class="fas fa-arrow-left"></i> Back to Campaigns
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Campaign Details</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('campaigns.api_create_campaign') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-section">
+                <h3 class="section-title">1. Select Job Opening</h3>
+                <div class="form-group">
+                    <label for="job_opening_id">Job Opening</label>
+                    <select name="job_opening_id" id="job_opening_id" class="form-control" required>
+                        <option value="">-- Select a Job Opening --</option>
+                        {% for job in job_openings %}
+                        <option value="{{ job.id }}" {% if selected_job_id == job.id %}selected{% endif %}>
+                            {{ job.title }} - {{ job.location }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">2. Campaign Information</h3>
+                <div class="form-group">
+                    <label for="title">Campaign Title</label>
+                    <input type="text" name="title" id="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Campaign Description</label>
+                    <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="budget">Campaign Budget ($)</label>
+                    <input type="number" name="budget" id="budget" class="form-control" step="0.01" min="5.00" required>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">3. Select Platforms</h3>
+                <div class="platform-selection">
+                    <div class="platform-option">
+                        <input type="checkbox" name="platforms" id="platform_meta" value="1" class="platform-checkbox">
+                        <label for="platform_meta" class="platform-label">
+                            <i class="fab fa-facebook-square"></i>
+                            <span>Meta (Facebook/Instagram)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="platform-option">
+                        <input type="checkbox" name="platforms" id="platform_x" value="2" class="platform-checkbox">
+                        <label for="platform_x" class="platform-label">
+                            <i class="fab fa-twitter"></i>
+                            <span>X (Twitter)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="platform-option">
+                        <input type="checkbox" name="platforms" id="platform_google" value="3" class="platform-checkbox">
+                        <label for="platform_google" class="platform-label">
+                            <i class="fab fa-google"></i>
+                            <span>Google Ads</span>
+                        </label>
+                    </div>
+                    
+                    <div class="platform-option">
+                        <input type="checkbox" name="platforms" id="platform_tiktok" value="4" class="platform-checkbox">
+                        <label for="platform_tiktok" class="platform-label">
+                            <i class="fab fa-tiktok"></i>
+                            <span>TikTok</span>
+                        </label>
+                    </div>
+                    
+                    <div class="platform-option">
+                        <input type="checkbox" name="platforms" id="platform_snapchat" value="5" class="platform-checkbox">
+                        <label for="platform_snapchat" class="platform-label">
+                            <i class="fab fa-snapchat"></i>
+                            <span>Snapchat</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">4. Target Audience</h3>
+                <div class="segments-selection">
+                    <div class="form-group">
+                        <label>Audience Segments</label>
+                        {% for segment in segments %}
+                        <div class="segment-option">
+                            <input type="checkbox" name="segments" id="segment_{{ segment.id }}" value="{{ segment.id }}" class="segment-checkbox">
+                            <label for="segment_{{ segment.id }}" class="segment-label">
+                                {{ segment.name }}
+                                <span class="segment-description">{{ segment.description }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="section-title">5. Ad Content</h3>
+                <div class="form-group">
+                    <label for="ad_headline">Ad Headline</label>
+                    <input type="text" name="ad_headline" id="ad_headline" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="ad_text">Ad Text</label>
+                    <textarea name="ad_text" id="ad_text" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ad_cta">Call to Action</label>
+                    <select name="ad_cta" id="ad_cta" class="form-control">
+                        <option value="Apply Now">Apply Now</option>
+                        <option value="Learn More">Learn More</option>
+                        <option value="Sign Up">Sign Up</option>
+                        <option value="Contact Us">Contact Us</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-paper-plane"></i> Create Campaign
+                </button>
+                <a href="{{ url_for('campaigns.list_campaigns') }}" class="btn btn-danger">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #eaedf3;
+    }
+    
+    .section-title {
+        margin-bottom: 1.25rem;
+        color: var(--dark);
+        font-size: 1.2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--dark);
+        background-color: var(--white);
+        border: 1px solid #d1d7dc;
+        border-radius: 4px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--secondary);
+        outline: none;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--dark);
+    }
+    
+    .platform-selection, .segments-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .platform-option, .segment-option {
+        position: relative;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .platform-option:hover, .segment-option:hover {
+        background-color: #ecf0f1;
+    }
+    
+    .platform-checkbox, .segment-checkbox {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .platform-label, .segment-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0.5rem;
+        font-weight: normal;
+    }
+    
+    .platform-label i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .platform-checkbox:checked + .platform-label,
+    .segment-checkbox:checked + .segment-label {
+        background-color: rgba(52, 152, 219, 0.15);
+        border-radius: 4px;
+    }
+    
+    .segment-description {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--gray);
+        margin-top: 0.25rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-generate campaign title when job is selected
+        const jobSelect = document.getElementById('job_opening_id');
+        const titleInput = document.getElementById('title');
+        
+        jobSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                const jobTitle = selectedOption.textContent.trim().split('-')[0].trim();
+                titleInput.value = `${jobTitle} - Ad Campaign`;
+            }
+        });
+        
+        // Auto-populate ad content based on job selection (could be enhanced with AJAX)
+        jobSelect.addEventListener('change', function() {
+            if (this.value) {
+                const headlineInput = document.getElementById('ad_headline');
+                if (!headlineInput.value) {
+                    const jobTitle = this.options[this.selectedIndex].textContent.trim().split('-')[0].trim();
+                    headlineInput.value = `Join our team as a ${jobTitle}`;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

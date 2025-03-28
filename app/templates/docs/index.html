@@ -1,0 +1,986 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}Documentation - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Documentation Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Documentation</h5>
+                </div>
+                <div class="list-group list-group-flush" id="doc-nav">
+                    <a href="#overview" class="list-group-item list-group-item-action active" data-bs-toggle="list">Overview</a>
+                    <a href="#campaign-management" class="list-group-item list-group-item-action" data-bs-toggle="list">Campaign Management</a>
+                    <a href="#audience-segmentation" class="list-group-item list-group-item-action" data-bs-toggle="list">Audience Segmentation</a>
+                    <a href="#collaboration" class="list-group-item list-group-item-action" data-bs-toggle="list">Team Collaboration</a>
+                    <a href="#api-documentation" class="list-group-item list-group-item-action" data-bs-toggle="list">API Documentation</a>
+                    <a href="#integrations" class="list-group-item list-group-item-action" data-bs-toggle="list">Platform Integrations</a>
+                    <a href="#faq" class="list-group-item list-group-item-action" data-bs-toggle="list">FAQ</a>
+                </div>
+            </div>
+            
+            {% if current_user.is_admin() %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Admin</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('docs.edit_documentation') }}" class="list-group-item list-group-item-action">Edit Documentation</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Documentation Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="tab-content" id="doc-content">
+                <!-- Overview Section -->
+                <div class="tab-pane fade show active" id="overview">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1>MagnetoCursor Documentation</h1>
+                        <span class="badge bg-secondary">Version 1.0</span>
+                    </div>
+                    
+                    <p class="lead">Welcome to the MagnetoCursor platform documentation. This guide will help you navigate the system and make the most of its features.</p>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">What is MagnetoCursor?</h5>
+                                    <p class="card-text">MagnetoCursor is an ad automation system designed to publish job opening ads on social media platforms and segment audiences for targeted advertising. The platform integrates with Meta, X, Google APIs to automate ad publishing for job openings.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Key Features</h5>
+                                    <ul>
+                                        <li>Multi-platform campaign management</li>
+                                        <li>Audience segmentation using ML</li>
+                                        <li>Team collaboration tools</li>
+                                        <li>Detailed campaign analytics</li>
+                                        <li>API for external integrations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-5 mb-3">Getting Started</h3>
+                    <p>To get started with MagnetoCursor, follow these simple steps:</p>
+                    
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <h2 class="mb-0">1</h2>
+                                    </div>
+                                    <h5 class="card-title">Create Job Openings</h5>
+                                    <p class="card-text small">Add your job openings with detailed descriptions and requirements.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <h2 class="mb-0">2</h2>
+                                    </div>
+                                    <h5 class="card-title">Configure Segments</h5>
+                                    <p class="card-text small">Define audience segments based on demographics and interests.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <h2 class="mb-0">3</h2>
+                                    </div>
+                                    <h5 class="card-title">Create Campaigns</h5>
+                                    <p class="card-text small">Set up ad campaigns targeting specific segments on social platforms.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                        <h2 class="mb-0">4</h2>
+                                    </div>
+                                    <h5 class="card-title">Analyze Results</h5>
+                                    <p class="card-text small">Track performance and optimize your campaigns for better results.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaign Management Section -->
+                <div class="tab-pane fade" id="campaign-management">
+                    <h1 class="mb-4">Campaign Management</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Campaigns allow you to promote job openings on multiple social media platforms with targeted messaging.
+                    </div>
+                    
+                    <h3 class="mt-4">Creating a Campaign</h3>
+                    <p>To create a new campaign, follow these steps:</p>
+                    <ol>
+                        <li>Navigate to the <a href="{{ url_for('campaigns.list_campaigns') }}">Campaigns</a> section</li>
+                        <li>Click on the "Create New Campaign" button</li>
+                        <li>Select the job opening you want to promote</li>
+                        <li>Choose the social media platform(s)</li>
+                        <li>Select your target audience segment</li>
+                        <li>Set your budget and campaign duration</li>
+                        <li>Customize the ad creative or use auto-generated content</li>
+                        <li>Review and save as draft or publish immediately</li>
+                    </ol>
+                    
+                    <div class="card mt-4 mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Understanding Campaign Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Description</th>
+                                            <th>Available Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="badge bg-secondary">Draft</span></td>
+                                            <td>Campaign is created but not yet published to any platform</td>
+                                            <td>Edit, Publish, Delete</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                            <td>Campaign is currently running on the selected platform(s)</td>
+                                            <td>Pause, View Stats</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-warning text-dark">Paused</span></td>
+                                            <td>Campaign has been temporarily stopped</td>
+                                            <td>Resume, View Stats</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-info">Completed</span></td>
+                                            <td>Campaign has finished its scheduled run</td>
+                                            <td>View Stats, Clone</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-danger">Rejected</span></td>
+                                            <td>Campaign was rejected by the platform(s)</td>
+                                            <td>Edit and Resubmit, View Rejection Reason</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-4">Campaign Collaboration</h3>
+                    <p>MagnetoCursor allows team collaboration on campaigns:</p>
+                    <ul>
+                        <li><strong>Sharing</strong>: Share campaigns with team members or individuals</li>
+                        <li><strong>Permission Levels</strong>: Assign editor or viewer roles to collaborators</li>
+                        <li><strong>Real-time Collaboration</strong>: See who's currently viewing or editing a campaign</li>
+                        <li><strong>Activity Tracking</strong>: Track changes made by different team members</li>
+                    </ul>
+                    
+                    <div class="mt-5 mb-3">
+                        <h3>Campaign Analytics</h3>
+                        <p>Each campaign provides detailed analytics on performance:</p>
+                        <ul>
+                            <li>Impressions, clicks, and conversions</li>
+                            <li>Cost per click (CPC) and cost per application</li>
+                            <li>Audience engagement metrics</li>
+                            <li>Performance by platform and segment</li>
+                            <li>ROI calculations</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Audience Segmentation Section -->
+                <div class="tab-pane fade" id="audience-segmentation">
+                    <h1 class="mb-4">Audience Segmentation</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Audience segmentation uses machine learning to group potential candidates into targetable segments.
+                    </div>
+                    
+                    <h3 class="mt-4">How Segmentation Works</h3>
+                    <p>MagnetoCursor uses k-means clustering to identify natural groupings within your candidate data:</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Data Collection</h5>
+                                    <p class="card-text">System collects demographic data, job preferences, education, and experience from candidate profiles.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pattern Analysis</h5>
+                                    <p class="card-text">ML algorithm identifies patterns and relationships within the data.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Segment Creation</h5>
+                                    <p class="card-text">Candidates are grouped into segments with similar characteristics and preferences.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-5">Segment Types</h3>
+                    <p>The system creates several types of segments automatically:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Segment Type</th>
+                                    <th>Description</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Demographic Segments</td>
+                                    <td>Based on age, location, education level</td>
+                                    <td>Target specific demographic groups</td>
+                                </tr>
+                                <tr>
+                                    <td>Experience-Based Segments</td>
+                                    <td>Based on years of experience, skills, industries</td>
+                                    <td>Target candidates with specific experience levels</td>
+                                </tr>
+                                <tr>
+                                    <td>Interest-Based Segments</td>
+                                    <td>Based on job preferences, career interests</td>
+                                    <td>Target candidates interested in specific roles</td>
+                                </tr>
+                                <tr>
+                                    <td>Behavior-Based Segments</td>
+                                    <td>Based on application history, engagement patterns</td>
+                                    <td>Target candidates based on past behavior</td>
+                                </tr>
+                                <tr>
+                                    <td>Custom Segments</td>
+                                    <td>User-defined segments with custom criteria</td>
+                                    <td>Create specialized targeting groups</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-5">Using Segments in Campaigns</h3>
+                    <p>When creating a campaign, you can select one or more segments to target:</p>
+                    <ol>
+                        <li>Navigate to the campaign creation form</li>
+                        <li>Under "Target Audience," select from available segments</li>
+                        <li>The system will optimize ad delivery to the selected segments</li>
+                        <li>Review segment-specific performance in campaign analytics</li>
+                    </ol>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Best Practices</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul>
+                                <li>Use different messaging for different segments</li>
+                                <li>Start with broad segments, then refine based on performance</li>
+                                <li>Regularly review segment analytics to identify high-performing groups</li>
+                                <li>Create custom segments for specialized campaign needs</li>
+                                <li>Test different segments with A/B testing to optimize results</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collaboration Section -->
+                <div class="tab-pane fade" id="collaboration">
+                    <h1 class="mb-4">Team Collaboration</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        MagnetoCursor supports team-based collaboration with role-based permissions and real-time features.
+                    </div>
+                    
+                    <h3 class="mt-4">Creating and Managing Teams</h3>
+                    <p>Teams allow you to organize users and control access to resources:</p>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Team Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Creating a Team</h6>
+                            <ol>
+                                <li>Navigate to the Teams section</li>
+                                <li>Click "Create New Team"</li>
+                                <li>Add a team name and description</li>
+                                <li>Save to create the team</li>
+                            </ol>
+                            
+                            <h6 class="mt-3">Adding Members</h6>
+                            <ol>
+                                <li>Go to the team details page</li>
+                                <li>Click "Add Member"</li>
+                                <li>Select users from the list</li>
+                                <li>Assign appropriate roles (Owner, Editor, or Viewer)</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-4">Understanding Roles and Permissions</h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Description</th>
+                                    <th>Permissions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-primary">Owner</span></td>
+                                    <td>Full administrative control</td>
+                                    <td>Create, edit, delete, share, manage collaborators</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">Editor</span></td>
+                                    <td>Can make changes to resources</td>
+                                    <td>View, edit, and publish, but cannot delete or manage collaborators</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-secondary">Viewer</span></td>
+                                    <td>Read-only access</td>
+                                    <td>View resources but cannot make changes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-5">Sharing Resources</h3>
+                    <p>You can share campaigns and other resources with teams or individual users:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Sharing with Teams</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>When you share a resource with a team:</p>
+                                    <ul>
+                                        <li>All team members get access according to their assigned role</li>
+                                        <li>New team members automatically get access</li>
+                                        <li>Removing someone from the team revokes their access</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Sharing with Individuals</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>When you share a resource with individuals:</p>
+                                    <ul>
+                                        <li>You can assign specific roles to each person</li>
+                                        <li>Access is managed on a per-resource basis</li>
+                                        <li>You can revoke access at any time</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-4">Real-time Collaboration Features</h3>
+                    <p>MagnetoCursor supports several real-time collaboration features:</p>
+                    <ul>
+                        <li><strong>Presence Indicators</strong>: See who is currently viewing a campaign</li>
+                        <li><strong>Change Tracking</strong>: See who made recent changes to resources</li>
+                        <li><strong>Notifications</strong>: Get alerts when collaborators make changes or comments</li>
+                    </ul>
+                </div>
+
+                <!-- API Documentation Section -->
+                <div class="tab-pane fade" id="api-documentation">
+                    <h1 class="mb-4">API Documentation</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        MagnetoCursor provides a RESTful API for integrating with external systems and automating workflows.
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">API Basics</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Base URL:</strong> <code>https://app.magnetocursor.com/api/v1</code></p>
+                            <p><strong>Authentication:</strong> All API requests require an API key that should be included in the header:</p>
+                            <pre><code>Authorization: Bearer YOUR_API_KEY</code></pre>
+                            <p><strong>Content Type:</strong> All requests and responses use JSON:</p>
+                            <pre><code>Content-Type: application/json</code></pre>
+                        </div>
+                    </div>
+                    
+                    <h3>API Endpoints</h3>
+                    
+                    <div class="accordion" id="apiEndpointsAccordion">
+                        <!-- Campaigns Endpoints -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="campaignsHeading">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#campaignsCollapse" aria-expanded="true" aria-controls="campaignsCollapse">
+                                    Campaigns
+                                </button>
+                            </h2>
+                            <div id="campaignsCollapse" class="accordion-collapse collapse show" aria-labelledby="campaignsHeading">
+                                <div class="accordion-body">
+                                    <div class="api-endpoint mb-4">
+                                        <h5>List Campaigns</h5>
+                                        <p><code>GET /api/campaigns</code></p>
+                                        <p>Returns a list of all campaigns the authenticated user has access to.</p>
+                                        <p><strong>Query Parameters:</strong></p>
+                                        <ul>
+                                            <li><code>status</code> - Filter by campaign status (draft, active, paused, completed)</li>
+                                            <li><code>platform_id</code> - Filter by social media platform</li>
+                                            <li><code>page</code> - Page number for pagination</li>
+                                            <li><code>per_page</code> - Number of results per page</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="api-endpoint mb-4">
+                                        <h5>Get Campaign</h5>
+                                        <p><code>GET /api/campaigns/{campaign_id}</code></p>
+                                        <p>Returns detailed information about a specific campaign.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint mb-4">
+                                        <h5>Create Campaign</h5>
+                                        <p><code>POST /api/campaigns</code></p>
+                                        <p>Creates a new campaign.</p>
+                                        <p><strong>Request Body:</strong></p>
+                                        <pre><code>{
+  "title": "Example Campaign",
+  "description": "Campaign description",
+  "platform_id": 1,
+  "job_opening_id": 42,
+  "segment_id": 3,
+  "budget": 500,
+  "ad_headline": "Job Opportunity",
+  "ad_text": "Join our team!",
+  "ad_cta": "Apply Now",
+  "ad_image_url": "https://example.com/image.jpg"
+}</code></pre>
+                                    </div>
+                                    
+                                    <div class="api-endpoint mb-4">
+                                        <h5>Update Campaign</h5>
+                                        <p><code>PUT /api/campaigns/{campaign_id}</code></p>
+                                        <p>Updates an existing campaign.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint">
+                                        <h5>Delete Campaign</h5>
+                                        <p><code>DELETE /api/campaigns/{campaign_id}</code></p>
+                                        <p>Deletes a campaign (only available for draft campaigns).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Job Openings Endpoints -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="jobsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#jobsCollapse" aria-expanded="false" aria-controls="jobsCollapse">
+                                    Job Openings
+                                </button>
+                            </h2>
+                            <div id="jobsCollapse" class="accordion-collapse collapse" aria-labelledby="jobsHeading">
+                                <div class="accordion-body">
+                                    <div class="api-endpoint mb-4">
+                                        <h5>List Job Openings</h5>
+                                        <p><code>GET /api/job_openings</code></p>
+                                        <p>Returns a list of all job openings.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint mb-4">
+                                        <h5>Get Job Opening</h5>
+                                        <p><code>GET /api/job_openings/{job_id}</code></p>
+                                        <p>Returns detailed information about a specific job opening.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint">
+                                        <h5>Create Job Opening</h5>
+                                        <p><code>POST /api/job_openings</code></p>
+                                        <p>Creates a new job opening.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Segments Endpoints -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="segmentsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#segmentsCollapse" aria-expanded="false" aria-controls="segmentsCollapse">
+                                    Segments
+                                </button>
+                            </h2>
+                            <div id="segmentsCollapse" class="accordion-collapse collapse" aria-labelledby="segmentsHeading">
+                                <div class="accordion-body">
+                                    <div class="api-endpoint mb-4">
+                                        <h5>List Segments</h5>
+                                        <p><code>GET /api/segments</code></p>
+                                        <p>Returns a list of all audience segments.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint mb-4">
+                                        <h5>Get Segment</h5>
+                                        <p><code>GET /api/segments/{segment_id}</code></p>
+                                        <p>Returns detailed information about a specific segment.</p>
+                                    </div>
+                                    
+                                    <div class="api-endpoint">
+                                        <h5>Create Custom Segment</h5>
+                                        <p><code>POST /api/segments</code></p>
+                                        <p>Creates a new custom audience segment.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-5">API Code Examples</h3>
+                    
+                    <ul class="nav nav-tabs mt-4" id="apiExampleTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="python-tab" data-bs-toggle="tab" data-bs-target="#python" type="button" role="tab" aria-controls="python" aria-selected="true">Python</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="javascript-tab" data-bs-toggle="tab" data-bs-target="#javascript" type="button" role="tab" aria-controls="javascript" aria-selected="false">JavaScript</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="curl-tab" data-bs-toggle="tab" data-bs-target="#curl" type="button" role="tab" aria-controls="curl" aria-selected="false">cURL</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="apiExampleTabsContent">
+                        <div class="tab-pane fade show active" id="python" role="tabpanel" aria-labelledby="python-tab">
+                            <pre><code>import requests
+
+API_KEY = "your_api_key"
+BASE_URL = "https://app.magnetocursor.com/api/v1"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+# List all campaigns
+def get_campaigns():
+    response = requests.get(f"{BASE_URL}/campaigns", headers=headers)
+    return response.json()
+
+# Create a new campaign
+def create_campaign(campaign_data):
+    response = requests.post(
+        f"{BASE_URL}/campaigns",
+        json=campaign_data,
+        headers=headers
+    )
+    return response.json()
+
+# Example usage
+campaigns = get_campaigns()
+print(f"Found {len(campaigns['data'])} campaigns")
+
+new_campaign = {
+    "title": "Developer Position",
+    "description": "Senior developer role",
+    "platform_id": 1,
+    "job_opening_id": 42,
+    "segment_id": 3,
+    "budget": 1000
+}
+
+result = create_campaign(new_campaign)
+print(f"Created campaign with ID: {result['data']['id']}")</code></pre>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="javascript" role="tabpanel" aria-labelledby="javascript-tab">
+                            <pre><code>const API_KEY = 'your_api_key';
+const BASE_URL = 'https://app.magnetocursor.com/api/v1';
+
+const headers = {
+  'Authorization': `Bearer ${API_KEY}`,
+  'Content-Type': 'application/json'
+};
+
+// List all campaigns
+async function getCampaigns() {
+  const response = await fetch(`${BASE_URL}/campaigns`, { headers });
+  return response.json();
+}
+
+// Create a new campaign
+async function createCampaign(campaignData) {
+  const response = await fetch(`${BASE_URL}/campaigns`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(campaignData)
+  });
+  return response.json();
+}
+
+// Example usage
+getCampaigns().then(result => {
+  console.log(`Found ${result.data.length} campaigns`);
+});
+
+const newCampaign = {
+  title: 'Developer Position',
+  description: 'Senior developer role',
+  platform_id: 1,
+  job_opening_id: 42,
+  segment_id: 3,
+  budget: 1000
+};
+
+createCampaign(newCampaign).then(result => {
+  console.log(`Created campaign with ID: ${result.data.id}`);
+});</code></pre>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="curl" role="tabpanel" aria-labelledby="curl-tab">
+                            <pre><code># List all campaigns
+curl -X GET "https://app.magnetocursor.com/api/v1/campaigns" \
+  -H "Authorization: Bearer your_api_key" \
+  -H "Content-Type: application/json"
+
+# Create a new campaign
+curl -X POST "https://app.magnetocursor.com/api/v1/campaigns" \
+  -H "Authorization: Bearer your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Developer Position",
+    "description": "Senior developer role",
+    "platform_id": 1,
+    "job_opening_id": 42,
+    "segment_id": 3,
+    "budget": 1000
+  }'</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-5 text-center">
+                        <a href="/api/docs" class="btn btn-primary" target="_blank">
+                            <i class="bi bi-file-earmark-code me-2"></i> View Full API Documentation
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Integrations Section -->
+                <div class="tab-pane fade" id="integrations">
+                    <h1 class="mb-4">Platform Integrations</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        MagnetoCursor integrates with multiple social media platforms for ad publishing and management.
+                    </div>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Meta (Facebook & Instagram)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Post job ads to Facebook and Instagram.</p>
+                                    <h6>Features</h6>
+                                    <ul>
+                                        <li>News feed and stories placement</li>
+                                        <li>Detailed targeting options</li>
+                                        <li>Carousel and video ads</li>
+                                        <li>Lead generation forms</li>
+                                    </ul>
+                                    <h6>Setup Requirements</h6>
+                                    <ul>
+                                        <li>Facebook Business Manager account</li>
+                                        <li>Ad account with payment method</li>
+                                        <li>API credentials with ads_management permission</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-outline-primary btn-sm">Setup Instructions</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">X (Twitter)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Publish job ads on the X platform.</p>
+                                    <h6>Features</h6>
+                                    <ul>
+                                        <li>Timeline placement</li>
+                                        <li>Keyword and interest targeting</li>
+                                        <li>Follower lookalike targeting</li>
+                                        <li>Website click campaigns</li>
+                                    </ul>
+                                    <h6>Setup Requirements</h6>
+                                    <ul>
+                                        <li>Twitter Ads account</li>
+                                        <li>Developer account with Ads API access</li>
+                                        <li>OAuth credentials</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-outline-info btn-sm">Setup Instructions</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">Google Ads</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Run job ads on Google Search and Display network.</p>
+                                    <h6>Features</h6>
+                                    <ul>
+                                        <li>Search and display network campaigns</li>
+                                        <li>Keyword and job title targeting</li>
+                                        <li>Automated bidding strategies</li>
+                                        <li>Responsive search ads</li>
+                                    </ul>
+                                    <h6>Setup Requirements</h6>
+                                    <ul>
+                                        <li>Google Ads account</li>
+                                        <li>Google Ads API access</li>
+                                        <li>OAuth credentials</li>
+                                        <li>Payment method setup</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-outline-danger btn-sm">Setup Instructions</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-5">Managing Platform Credentials</h3>
+                    <p>To set up or update your social media platform credentials:</p>
+                    <ol>
+                        <li>Navigate to the <strong>Settings</strong> section</li>
+                        <li>Select <strong>Platform Integrations</strong></li>
+                        <li>Click on the platform you want to configure</li>
+                        <li>Follow the guided setup process for each platform</li>
+                        <li>Enter your API keys, tokens, and other required credentials</li>
+                        <li>Click <strong>Save</strong> to store your credentials securely</li>
+                    </ol>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Important:</strong> All API credentials are encrypted before storage and are never exposed in plaintext.
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="tab-pane fade" id="faq">
+                    <h1 class="mb-4">Frequently Asked Questions</h1>
+                    
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    How are my social media credentials stored and secured?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    All API keys, tokens, and credentials are encrypted using AES-256 encryption before being stored in our database. They are only decrypted when needed to make API calls to the respective platforms. We follow industry best practices for credential storage and management, including regular rotation of encryption keys and secure access controls.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    What happens if a campaign is rejected by a social media platform?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    If a campaign is rejected by a platform, the system will automatically update the campaign status to "Rejected" and notify you via email and in-app notification. The notification will include the reason for rejection as provided by the platform. You can then edit the campaign to address the issues and resubmit it for approval. Common reasons for rejection include policy violations, inappropriate content, or targeting issues.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    How often are audience segments updated?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    The system updates audience segments weekly by default, running the clustering algorithm on the latest candidate data. This ensures that your segments are always based on current information. You can also manually trigger a segment update from the Segments page by clicking the "Refresh Segments" button. Custom segments are updated according to your defined rules and criteria.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    Can I schedule campaigns to run in the future?
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes, you can schedule campaigns to start and end at specific dates and times. When creating or editing a campaign, use the "Schedule" section to set your preferred start and end dates. You can also set daily budgets and dayparting (specific hours of the day) for your campaigns. The system will automatically activate and deactivate the campaign according to your schedule.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqFive">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                    How do I track the performance of my campaigns?
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="faqFive" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    MagnetoCursor provides detailed analytics for each campaign. Navigate to the campaign detail page and click on the "Analytics" tab to view metrics like impressions, clicks, CTR, conversions, and cost data. You can also access the Analytics dashboard to view aggregate performance across all campaigns, filter by platform or time period, and export reports in CSV or PDF format. Real-time data is retrieved from the respective platforms every few hours.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqSix">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                                    What roles and permissions are available in the system?
+                                </button>
+                            </h2>
+                            <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="faqSix" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>MagnetoCursor supports the following user roles:</p>
+                                    <ul>
+                                        <li><strong>Admin:</strong> Full access to all features, including user management and system settings</li>
+                                        <li><strong>Manager:</strong> Can create and manage campaigns, manage teams, and access analytics</li>
+                                        <li><strong>Analyst:</strong> Can create and edit campaigns, but cannot manage users or teams</li>
+                                        <li><strong>Viewer:</strong> Read-only access to campaigns and analytics</li>
+                                    </ul>
+                                    <p>Additionally, for specific resources like campaigns, the following collaboration roles can be assigned:</p>
+                                    <ul>
+                                        <li><strong>Owner:</strong> Full control over the resource</li>
+                                        <li><strong>Editor:</strong> Can make changes to the resource</li>
+                                        <li><strong>Viewer:</strong> Can only view the resource</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-5">
+                        <div class="card-header">
+                            <h5 class="mb-0">Still Have Questions?</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>If you can't find an answer to your question, you can:</p>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <a href="#" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-chat-dots me-2"></i>Contact Support
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <a href="#" class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-book me-2"></i>Browse Knowledge Base
+                                    </a>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <a href="#" class="btn btn-outline-info w-100">
+                                        <i class="bi bi-people me-2"></i>Community Forum
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle sidebar navigation
+        const navLinks = document.querySelectorAll('#doc-nav a');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                navLinks.forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Show the corresponding tab pane
+                const target = this.getAttribute('href').substring(1);
+                tabPanes.forEach(pane => {
+                    if (pane.id === target) {
+                        pane.classList.add('show', 'active');
+                    } else {
+                        pane.classList.remove('show', 'active');
+                    }
+                });
+            });
+        });
+        
+        // Update active link based on URL hash
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            const link = document.querySelector(`#doc-nav a[href="#${hash}"]`);
+            if (link) {
+                link.click();
+            }
+        }
+    });
+</script>
+{% endblock %}

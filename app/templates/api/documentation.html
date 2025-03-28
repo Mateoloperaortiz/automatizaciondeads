@@ -1,0 +1,1051 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}API Documentation - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- API Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">API Reference</h5>
+                </div>
+                <div class="list-group list-group-flush" id="api-nav">
+                    <a href="#introduction" class="list-group-item list-group-item-action active" data-bs-toggle="list">Introduction</a>
+                    <a href="#authentication" class="list-group-item list-group-item-action" data-bs-toggle="list">Authentication</a>
+                    <a href="#rate-limits" class="list-group-item list-group-item-action" data-bs-toggle="list">Rate Limits</a>
+                    <a href="#error-handling" class="list-group-item list-group-item-action" data-bs-toggle="list">Error Handling</a>
+                    <a href="#pagination" class="list-group-item list-group-item-action" data-bs-toggle="list">Pagination</a>
+                    <div class="list-group-item list-group-item-secondary">Endpoints</div>
+                    <a href="#campaigns" class="list-group-item list-group-item-action" data-bs-toggle="list">Campaigns</a>
+                    <a href="#job-openings" class="list-group-item list-group-item-action" data-bs-toggle="list">Job Openings</a>
+                    <a href="#segments" class="list-group-item list-group-item-action" data-bs-toggle="list">Segments</a>
+                    <a href="#teams" class="list-group-item list-group-item-action" data-bs-toggle="list">Teams</a>
+                    <a href="#users" class="list-group-item list-group-item-action" data-bs-toggle="list">Users</a>
+                    <a href="#analytics" class="list-group-item list-group-item-action" data-bs-toggle="list">Analytics</a>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Tools</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('api.api_playground') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-braces me-2"></i>API Playground
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="generateApiKey()">
+                        <i class="bi bi-key me-2"></i>Generate API Key
+                    </a>
+                    <a href="{{ url_for('docs.index') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-book me-2"></i>Main Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="tab-content" id="api-content">
+                <!-- Introduction Section -->
+                <div class="tab-pane fade show active" id="introduction">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1>MagnetoCursor API</h1>
+                        <span class="badge bg-secondary">v1.0</span>
+                    </div>
+                    
+                    <p class="lead">The MagnetoCursor API provides programmatic access to campaigns, job openings, audience segments, and analytics data.</p>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Getting Started</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>All API access is over HTTPS, and accessed from the following base URL:</p>
+                            <pre><code>https://app.magnetocursor.com/api/v1</code></pre>
+                            
+                            <p>All data is sent and received as JSON.</p>
+                            <pre><code>Content-Type: application/json</code></pre>
+                            
+                            <p>To use the API, you'll need to:</p>
+                            <ol>
+                                <li>Generate an API key from your account settings</li>
+                                <li>Include the API key in the Authorization header</li>
+                                <li>Make requests to the appropriate endpoints</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Response Format</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>All responses follow a standard format:</p>
+                            <pre><code>{
+  "success": true,
+  "data": { ... },      // Present for successful responses
+  "message": "...",     // Optional message about the operation
+  "error": "...",       // Present only for errors
+  "pagination": { ... } // Present when results are paginated
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authentication Section -->
+                <div class="tab-pane fade" id="authentication">
+                    <h1 class="mb-4">Authentication</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        All API requests require authentication using an API key.
+                    </div>
+                    
+                    <h3 class="mt-4">API Keys</h3>
+                    <p>To authenticate with the API, you need to include your API key in the Authorization header:</p>
+                    <pre><code>Authorization: Bearer YOUR_API_KEY</code></pre>
+                    
+                    <div class="card mt-4 mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Generating API Keys</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>To generate an API key:</p>
+                            <ol>
+                                <li>Navigate to your Account Settings</li>
+                                <li>Go to the "API Keys" tab</li>
+                                <li>Click "Generate New API Key"</li>
+                                <li>Give your key a description (e.g., "Development", "Production")</li>
+                                <li>Set appropriate permissions for the key</li>
+                                <li>Click "Create Key"</li>
+                            </ol>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Important:</strong> API keys are displayed only once when created. Store it securely as you won't be able to retrieve it later.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-4">API Key Permissions</h3>
+                    <p>When generating an API key, you can specify what actions it can perform:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Permission</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Read</td>
+                                    <td>Can only perform GET requests</td>
+                                </tr>
+                                <tr>
+                                    <td>Write</td>
+                                    <td>Can perform POST, PUT, PATCH, and DELETE requests</td>
+                                </tr>
+                                <tr>
+                                    <td>Admin</td>
+                                    <td>Full access to all endpoints, including user management</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-4">Key Rotation</h3>
+                    <p>For security reasons, we recommend rotating your API keys periodically. To rotate a key:</p>
+                    <ol>
+                        <li>Generate a new API key</li>
+                        <li>Update your applications to use the new key</li>
+                        <li>Verify everything works correctly</li>
+                        <li>Delete the old key</li>
+                    </ol>
+                </div>
+
+                <!-- Rate Limits Section -->
+                <div class="tab-pane fade" id="rate-limits">
+                    <h1 class="mb-4">Rate Limits</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        To ensure system stability, the API has rate limits that vary by endpoint and subscription level.
+                    </div>
+                    
+                    <p>The API uses a token bucket algorithm for rate limiting. Each API key has a bucket of tokens that refills at a steady rate. Different endpoints consume different numbers of tokens.</p>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Rate Limit Headers</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>All API responses include headers that provide information about your current rate limit status:</p>
+                            <ul>
+                                <li><code>X-RateLimit-Limit</code>: The maximum number of requests you're permitted to make per hour</li>
+                                <li><code>X-RateLimit-Remaining</code>: The number of requests remaining in the current rate limit window</li>
+                                <li><code>X-RateLimit-Reset</code>: The time at which the current rate limit window resets, in UTC epoch seconds</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-4">Rate Limit By Plan</h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Plan</th>
+                                    <th>Requests per Hour</th>
+                                    <th>Requests per Day</th>
+                                    <th>Concurrent Requests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Basic</td>
+                                    <td>1,000</td>
+                                    <td>10,000</td>
+                                    <td>5</td>
+                                </tr>
+                                <tr>
+                                    <td>Professional</td>
+                                    <td>5,000</td>
+                                    <td>50,000</td>
+                                    <td>10</td>
+                                </tr>
+                                <tr>
+                                    <td>Enterprise</td>
+                                    <td>10,000</td>
+                                    <td>100,000</td>
+                                    <td>20</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-4">Handling Rate Limits</h3>
+                    <p>If you exceed the rate limit, you'll receive a <code>429 Too Many Requests</code> response with a JSON error message:</p>
+                    <pre><code>{
+  "success": false,
+  "error": "Rate limit exceeded",
+  "message": "You have exceeded the rate limit. Please try again in 36 seconds."
+}</code></pre>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Best Practices</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul>
+                                <li>Implement exponential backoff when rate limited</li>
+                                <li>Cache responses when appropriate</li>
+                                <li>Use bulk operations when possible</li>
+                                <li>Distribute requests evenly over time</li>
+                                <li>Monitor your usage with the rate limit headers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Handling Section -->
+                <div class="tab-pane fade" id="error-handling">
+                    <h1 class="mb-4">Error Handling</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The API uses conventional HTTP response codes to indicate the success or failure of an API request.
+                    </div>
+                    
+                    <h3 class="mt-4">HTTP Status Codes</h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>200 OK</td>
+                                    <td>The request was successful</td>
+                                </tr>
+                                <tr>
+                                    <td>201 Created</td>
+                                    <td>The resource was successfully created</td>
+                                </tr>
+                                <tr>
+                                    <td>204 No Content</td>
+                                    <td>The request was successful but no content to return</td>
+                                </tr>
+                                <tr>
+                                    <td>400 Bad Request</td>
+                                    <td>The request was invalid or cannot be otherwise served</td>
+                                </tr>
+                                <tr>
+                                    <td>401 Unauthorized</td>
+                                    <td>Authentication credentials were missing or invalid</td>
+                                </tr>
+                                <tr>
+                                    <td>403 Forbidden</td>
+                                    <td>The authenticated user doesn't have permissions</td>
+                                </tr>
+                                <tr>
+                                    <td>404 Not Found</td>
+                                    <td>The requested resource doesn't exist</td>
+                                </tr>
+                                <tr>
+                                    <td>422 Unprocessable Entity</td>
+                                    <td>The request was well-formed but unable to be followed due to semantic errors</td>
+                                </tr>
+                                <tr>
+                                    <td>429 Too Many Requests</td>
+                                    <td>Rate limit exceeded</td>
+                                </tr>
+                                <tr>
+                                    <td>500 Internal Server Error</td>
+                                    <td>Something went wrong on our end</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-4">Error Response Format</h3>
+                    <p>Error responses follow a standard format:</p>
+                    <pre><code>{
+  "success": false,
+  "error": "Error type or code",
+  "message": "Human-readable error message",
+  "details": {           // Optional field with additional error details
+    "field_name": "Specific error for this field"
+  }
+}</code></pre>
+
+                    <h3 class="mt-4">Validation Errors</h3>
+                    <p>When sending invalid data, you'll receive a <code>400 Bad Request</code> response with details about the validation errors:</p>
+                    <pre><code>{
+  "success": false,
+  "error": "Validation Failed",
+  "message": "The submitted data contains errors",
+  "details": {
+    "title": "This field is required",
+    "budget": "Must be a positive number"
+  }
+}</code></pre>
+                </div>
+
+                <!-- Pagination Section -->
+                <div class="tab-pane fade" id="pagination">
+                    <h1 class="mb-4">Pagination</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Endpoints that return multiple items use cursor-based pagination to manage large result sets.
+                    </div>
+                    
+                    <h3 class="mt-4">Pagination Parameters</h3>
+                    <p>You can control pagination using the following query parameters:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Description</th>
+                                    <th>Default</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>page</code></td>
+                                    <td>Page number to return (starting from 1)</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td><code>per_page</code></td>
+                                    <td>Number of items per page (max 100)</td>
+                                    <td>20</td>
+                                </tr>
+                                <tr>
+                                    <td><code>cursor</code></td>
+                                    <td>Cursor token for cursor-based pagination</td>
+                                    <td>null</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 class="mt-4">Pagination Response</h3>
+                    <p>Paginated responses include a <code>pagination</code> object with information about the current page and links to adjacent pages:</p>
+                    <pre><code>{
+  "success": true,
+  "data": [ ... ],
+  "pagination": {
+    "total_items": 235,
+    "total_pages": 12,
+    "current_page": 3,
+    "per_page": 20,
+    "next_cursor": "Y3Vyc29yXzQw",
+    "prev_cursor": "Y3Vyc29yXzAw",
+    "links": {
+      "first": "/api/v1/campaigns?page=1&per_page=20",
+      "prev": "/api/v1/campaigns?page=2&per_page=20",
+      "next": "/api/v1/campaigns?page=4&per_page=20",
+      "last": "/api/v1/campaigns?page=12&per_page=20"
+    }
+  }
+}</code></pre>
+
+                    <h3 class="mt-4">Cursor-Based Pagination</h3>
+                    <p>For large datasets, we recommend using cursor-based pagination, which is more efficient and reliable:</p>
+                    <ol>
+                        <li>Make your first request without a cursor parameter</li>
+                        <li>In the response, get the <code>next_cursor</code> value</li>
+                        <li>Include that cursor in your next request: <code>/api/v1/campaigns?cursor=Y3Vyc29yXzQw</code></li>
+                        <li>Continue until there's no <code>next_cursor</code> in the response</li>
+                    </ol>
+                </div>
+
+                <!-- Campaigns Endpoints Section -->
+                <div class="tab-pane fade" id="campaigns">
+                    <h1 class="mb-4">Campaigns API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Campaigns API allows you to create, retrieve, update, and delete ad campaigns.
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3 class="mt-4 mb-3">List Campaigns</h3>
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between">
+                                <span class="method GET">GET</span>
+                                <code>/api/v1/campaigns</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns a list of campaigns the authenticated user has access to.</p>
+                                
+                                <h5 class="mt-3">Query Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>status</code></td>
+                                                <td>Filter by campaign status (draft, active, paused, completed)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>platform_id</code></td>
+                                                <td>Filter by social media platform</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>job_opening_id</code></td>
+                                                <td>Filter by job opening</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>segment_id</code></td>
+                                                <td>Filter by audience segment</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>created_after</code></td>
+                                                <td>Filter by creation date (ISO 8601 format)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>page</code></td>
+                                                <td>Page number</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>per_page</code></td>
+                                                <td>Items per page (max 100)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-3">Response</h5>
+                                <pre><code>{
+  "success": true,
+  "data": [
+    {
+      "id": 123,
+      "title": "Software Engineer Position",
+      "description": "Campaign for software engineer job opening",
+      "platform_id": 1,
+      "job_opening_id": 456,
+      "segment_id": 789,
+      "budget": 1000.00,
+      "status": "active",
+      "ad_headline": "Join Our Engineering Team",
+      "ad_text": "We are looking for talented software engineers...",
+      "ad_cta": "Apply Now",
+      "ad_image_url": "https://example.com/images/engineer.jpg",
+      "platform_ad_id": "fb_12345",
+      "created_at": "2023-06-15T10:30:00Z",
+      "updated_at": "2023-06-16T08:15:22Z",
+      "owner": {
+        "id": 42,
+        "username": "jane.doe"
+      }
+    },
+    // More campaigns...
+  ],
+  "pagination": {
+    "total_items": 28,
+    "total_pages": 2,
+    "current_page": 1,
+    "per_page": 20
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3 class="mt-4 mb-3">Get Campaign</h3>
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between">
+                                <span class="method GET">GET</span>
+                                <code>/api/v1/campaigns/{campaign_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Returns detailed information about a specific campaign.</p>
+                                
+                                <h5 class="mt-3">Path Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>campaign_id</code></td>
+                                                <td>The ID of the campaign to retrieve</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-3">Query Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>include_collaborators</code></td>
+                                                <td>Include collaborator information (true/false)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>include_stats</code></td>
+                                                <td>Include campaign statistics (true/false)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-3">Response</h5>
+                                <pre><code>{
+  "success": true,
+  "data": {
+    "id": 123,
+    "title": "Software Engineer Position",
+    "description": "Campaign for software engineer job opening",
+    "platform_id": 1,
+    "platform": {
+      "id": 1,
+      "name": "Facebook"
+    },
+    "job_opening_id": 456,
+    "job_opening": {
+      "id": 456,
+      "title": "Senior Software Engineer",
+      "company": "Acme Inc.",
+      "location": "San Francisco, CA"
+    },
+    "segment_id": 789,
+    "segment": {
+      "id": 789,
+      "name": "Tech Professionals"
+    },
+    "budget": 1000.00,
+    "status": "active",
+    "ad_headline": "Join Our Engineering Team",
+    "ad_text": "We are looking for talented software engineers...",
+    "ad_cta": "Apply Now",
+    "ad_image_url": "https://example.com/images/engineer.jpg",
+    "platform_specific_content": {
+      "facebook": {
+        "placement": "feed",
+        "targeting": { ... }
+      }
+    },
+    "platform_ad_id": "fb_12345",
+    "created_at": "2023-06-15T10:30:00Z",
+    "updated_at": "2023-06-16T08:15:22Z",
+    "owner": {
+      "id": 42,
+      "username": "jane.doe",
+      "full_name": "Jane Doe"
+    },
+    "collaborators": [
+      {
+        "id": 5,
+        "user_id": 101,
+        "username": "john.smith",
+        "full_name": "John Smith",
+        "role": "editor",
+        "last_viewed": "2023-06-16T14:22:10Z"
+      }
+    ],
+    "stats": {
+      "impressions": 12500,
+      "clicks": 350,
+      "ctr": 0.028,
+      "conversions": 15,
+      "cost_per_click": 2.85,
+      "spend": 998.75
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3 class="mt-4 mb-3">Create Campaign</h3>
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between">
+                                <span class="method POST">POST</span>
+                                <code>/api/v1/campaigns</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Creates a new campaign.</p>
+                                
+                                <h5 class="mt-3">Request Body</h5>
+                                <pre><code>{
+  "title": "Software Engineer Position",
+  "description": "Campaign for software engineer job opening",
+  "platform_id": 1,
+  "job_opening_id": 456,
+  "segment_id": 789,
+  "budget": 1000.00,
+  "ad_headline": "Join Our Engineering Team",
+  "ad_text": "We are looking for talented software engineers...",
+  "ad_cta": "Apply Now",
+  "ad_image_url": "https://example.com/images/engineer.jpg",
+  "platform_specific": {
+    "facebook": {
+      "placement": "feed",
+      "targeting": { ... }
+    }
+  }
+}</code></pre>
+                                
+                                <h5 class="mt-3">Required Fields</h5>
+                                <ul>
+                                    <li><code>title</code></li>
+                                    <li><code>platform_id</code></li>
+                                    <li><code>job_opening_id</code></li>
+                                </ul>
+                                
+                                <h5 class="mt-3">Response</h5>
+                                <pre><code>{
+  "success": true,
+  "message": "Campaign created successfully",
+  "data": {
+    "id": 124,
+    "title": "Software Engineer Position",
+    "description": "Campaign for software engineer job opening",
+    "platform_id": 1,
+    "job_opening_id": 456,
+    "segment_id": 789,
+    "budget": 1000.00,
+    "status": "draft",
+    "ad_headline": "Join Our Engineering Team",
+    "ad_text": "We are looking for talented software engineers...",
+    "ad_cta": "Apply Now",
+    "ad_image_url": "https://example.com/images/engineer.jpg",
+    "platform_specific_content": {
+      "facebook": {
+        "placement": "feed",
+        "targeting": { ... }
+      }
+    },
+    "created_at": "2023-06-18T09:45:10Z",
+    "updated_at": "2023-06-18T09:45:10Z",
+    "owner": {
+      "id": 42,
+      "username": "jane.doe"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3 class="mt-4 mb-3">Update Campaign</h3>
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between">
+                                <span class="method PUT">PUT</span>
+                                <code>/api/v1/campaigns/{campaign_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Updates an existing campaign.</p>
+                                
+                                <h5 class="mt-3">Path Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>campaign_id</code></td>
+                                                <td>The ID of the campaign to update</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-3">Request Body</h5>
+                                <pre><code>{
+  "title": "Updated Software Engineer Position",
+  "description": "Updated campaign description",
+  "budget": 1500.00,
+  "status": "active",
+  "ad_headline": "Join Our Engineering Team Today!",
+  "ad_text": "New improved ad text..."
+}</code></pre>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    You only need to include the fields you want to update. Omitted fields will retain their current values.
+                                </div>
+                                
+                                <h5 class="mt-3">Response</h5>
+                                <pre><code>{
+  "success": true,
+  "message": "Campaign updated successfully",
+  "data": {
+    "id": 123,
+    "title": "Updated Software Engineer Position",
+    "description": "Updated campaign description",
+    "platform_id": 1,
+    "job_opening_id": 456,
+    "segment_id": 789,
+    "budget": 1500.00,
+    "status": "active",
+    "ad_headline": "Join Our Engineering Team Today!",
+    "ad_text": "New improved ad text...",
+    "ad_cta": "Apply Now",
+    "ad_image_url": "https://example.com/images/engineer.jpg",
+    "platform_specific_content": {
+      "facebook": {
+        "placement": "feed",
+        "targeting": { ... }
+      }
+    },
+    "platform_ad_id": "fb_12345",
+    "created_at": "2023-06-15T10:30:00Z",
+    "updated_at": "2023-06-18T11:20:45Z",
+    "owner": {
+      "id": 42,
+      "username": "jane.doe"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3 class="mt-4 mb-3">Delete Campaign</h3>
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between">
+                                <span class="method DELETE">DELETE</span>
+                                <code>/api/v1/campaigns/{campaign_id}</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Deletes a campaign. Only draft campaigns can be deleted.</p>
+                                
+                                <h5 class="mt-3">Path Parameters</h5>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Parameter</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>campaign_id</code></td>
+                                                <td>The ID of the campaign to delete</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <h5 class="mt-3">Response</h5>
+                                <pre><code>{
+  "success": true,
+  "message": "Campaign deleted successfully"
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Openings Endpoints Section -->
+                <div class="tab-pane fade" id="job-openings">
+                    <!-- Similar structure to Campaigns API -->
+                    <h1 class="mb-4">Job Openings API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Job Openings API allows you to work with job opening data.
+                    </div>
+                    
+                    <!-- Endpoints would go here -->
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-tools me-2"></i>
+                        Full Job Openings API documentation is under development. For now, please refer to the <a href="#introduction">main API introduction</a>.
+                    </div>
+                </div>
+
+                <!-- Segments Endpoints Section -->
+                <div class="tab-pane fade" id="segments">
+                    <h1 class="mb-4">Segments API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Segments API allows you to work with audience segments.
+                    </div>
+                    
+                    <!-- Endpoints would go here -->
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-tools me-2"></i>
+                        Full Segments API documentation is under development. For now, please refer to the <a href="#introduction">main API introduction</a>.
+                    </div>
+                </div>
+
+                <!-- Teams Endpoints Section -->
+                <div class="tab-pane fade" id="teams">
+                    <h1 class="mb-4">Teams API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Teams API allows you to manage teams and team memberships.
+                    </div>
+                    
+                    <!-- Endpoints would go here -->
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-tools me-2"></i>
+                        Full Teams API documentation is under development. For now, please refer to the <a href="#introduction">main API introduction</a>.
+                    </div>
+                </div>
+
+                <!-- Users Endpoints Section -->
+                <div class="tab-pane fade" id="users">
+                    <h1 class="mb-4">Users API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Users API allows administrators to manage user accounts.
+                    </div>
+                    
+                    <!-- Endpoints would go here -->
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-tools me-2"></i>
+                        Full Users API documentation is under development. For now, please refer to the <a href="#introduction">main API introduction</a>.
+                    </div>
+                </div>
+
+                <!-- Analytics Endpoints Section -->
+                <div class="tab-pane fade" id="analytics">
+                    <h1 class="mb-4">Analytics API</h1>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The Analytics API provides access to campaign performance data.
+                    </div>
+                    
+                    <!-- Endpoints would go here -->
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-tools me-2"></i>
+                        Full Analytics API documentation is under development. For now, please refer to the <a href="#introduction">main API introduction</a>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .method {
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: white;
+    }
+    .GET {
+        background-color: #28a745;
+    }
+    .POST {
+        background-color: #007bff;
+    }
+    .PUT {
+        background-color: #fd7e14;
+    }
+    .DELETE {
+        background-color: #dc3545;
+    }
+    .PATCH {
+        background-color: #6f42c1;
+    }
+    .endpoint-section {
+        scroll-margin-top: 20px;
+    }
+    pre {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+    }
+    code {
+        font-size: 90%;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle sidebar navigation
+        const navLinks = document.querySelectorAll('#api-nav a');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                navLinks.forEach(l => {
+                    if (!l.classList.contains('list-group-item-secondary')) {
+                        l.classList.remove('active');
+                    }
+                });
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Show the corresponding tab pane
+                const target = this.getAttribute('href').substring(1);
+                tabPanes.forEach(pane => {
+                    if (pane.id === target) {
+                        pane.classList.add('show', 'active');
+                    } else {
+                        pane.classList.remove('show', 'active');
+                    }
+                });
+            });
+        });
+        
+        // Update active link based on URL hash
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            const link = document.querySelector(`#api-nav a[href="#${hash}"]`);
+            if (link) {
+                link.click();
+            }
+        }
+        
+        // API Key Generation Demo
+        window.generateApiKey = function() {
+            // In a real app, this would be an API call
+            const apiKey = 'mc_' + Math.random().toString(36).substring(2, 15) + 
+                           Math.random().toString(36).substring(2, 15);
+            
+            // Show a modal with the API key
+            const modal = new bootstrap.Modal(document.getElementById('apiKeyModal') || createApiKeyModal(apiKey));
+            document.getElementById('generatedApiKey').textContent = apiKey;
+            modal.show();
+        };
+        
+        // Create API Key Modal if it doesn't exist
+        function createApiKeyModal(apiKey) {
+            const modalDiv = document.createElement('div');
+            modalDiv.className = 'modal fade';
+            modalDiv.id = 'apiKeyModal';
+            modalDiv.tabIndex = '-1';
+            modalDiv.setAttribute('aria-labelledby', 'apiKeyModalLabel');
+            modalDiv.setAttribute('aria-hidden', 'true');
+            
+            modalDiv.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="apiKeyModalLabel">Your New API Key</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Important:</strong> This key will only be shown once. Please copy it now.
+                            </div>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="generatedApiKey" value="${apiKey}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalDiv);
+            return modalDiv;
+        }
+        
+        // Copy API Key function
+        window.copyApiKey = function() {
+            const apiKeyInput = document.getElementById('generatedApiKey');
+            apiKeyInput.select();
+            apiKeyInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(apiKeyInput.value);
+            
+            const copyButton = apiKeyInput.nextElementSibling;
+            const originalText = copyButton.innerHTML;
+            copyButton.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            setTimeout(() => {
+                copyButton.innerHTML = originalText;
+            }, 2000);
+        };
+    });
+</script>
+{% endblock %}

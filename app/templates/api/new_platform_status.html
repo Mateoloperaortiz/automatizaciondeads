@@ -1,0 +1,966 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Platform Status - MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="platform-dashboard">
+    <!-- Header -->
+    <div class="platform-header">
+        <div class="header-content">
+            <h1 class="header-title">Platform Connection Status</h1>
+            <p class="header-subtitle">Monitor the health and connection status of all integrated platforms</p>
+        </div>
+        <div class="header-actions">
+            <button id="refresh-status" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Overview Cards -->
+    <div class="status-overview">
+        <div class="status-card">
+            <div class="card-icon bg-primary">
+                <i class="fas fa-plug"></i>
+            </div>
+            <div class="card-content">
+                <h2 class="card-value">3/5</h2>
+                <p class="card-label">Platforms Connected</p>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="card-icon bg-success">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="card-content">
+                <h2 class="card-value">243<span class="unit">ms</span></h2>
+                <p class="card-label">Average Response Time</p>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="card-icon bg-warning">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="card-content">
+                <h2 class="card-value">47<span class="unit">%</span></h2>
+                <p class="card-label">API Rate Limit Usage</p>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="card-icon bg-info">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="card-content">
+                <h2 class="card-value">99.7<span class="unit">%</span></h2>
+                <p class="card-label">Uptime (30 days)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="platform-content">
+        <!-- Platform List -->
+        <div class="platform-list-container">
+            <div class="section-header">
+                <h2>Platform Status</h2>
+                <div class="search-container">
+                    <input type="text" class="form-control" placeholder="Search platforms...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            
+            <div class="platforms-wrapper">
+                <!-- Meta -->
+                <div class="platform-item">
+                    <div class="platform-icon facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </div>
+                    <div class="platform-details">
+                        <div class="platform-name">
+                            <h3>Meta (Facebook)</h3>
+                            <span class="status-badge connected">Connected</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Response:</span>
+                                <span class="metric-value">218ms</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rate Limit:</span>
+                                <span class="metric-value">68%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">API Version:</span>
+                                <span class="metric-value">v14.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plug"></i> Test
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Google -->
+                <div class="platform-item">
+                    <div class="platform-icon google">
+                        <i class="fab fa-google"></i>
+                    </div>
+                    <div class="platform-details">
+                        <div class="platform-name">
+                            <h3>Google</h3>
+                            <span class="status-badge connected">Connected</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Response:</span>
+                                <span class="metric-value">145ms</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rate Limit:</span>
+                                <span class="metric-value">32%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">API Version:</span>
+                                <span class="metric-value">v11.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plug"></i> Test
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Twitter -->
+                <div class="platform-item">
+                    <div class="platform-icon twitter">
+                        <i class="fab fa-twitter"></i>
+                    </div>
+                    <div class="platform-details">
+                        <div class="platform-name">
+                            <h3>Twitter (X)</h3>
+                            <span class="status-badge connected">Connected</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Response:</span>
+                                <span class="metric-value">235ms</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rate Limit:</span>
+                                <span class="metric-value">41%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">API Version:</span>
+                                <span class="metric-value">v2.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plug"></i> Test
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TikTok -->
+                <div class="platform-item">
+                    <div class="platform-icon tiktok">
+                        <i class="fab fa-tiktok"></i>
+                    </div>
+                    <div class="platform-details">
+                        <div class="platform-name">
+                            <h3>TikTok</h3>
+                            <span class="status-badge disconnected">Disconnected</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Response:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rate Limit:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">API Version:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plug"></i> Connect
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Snapchat -->
+                <div class="platform-item">
+                    <div class="platform-icon snapchat">
+                        <i class="fab fa-snapchat-ghost"></i>
+                    </div>
+                    <div class="platform-details">
+                        <div class="platform-name">
+                            <h3>Snapchat</h3>
+                            <span class="status-badge disconnected">Disconnected</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Response:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rate Limit:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">API Version:</span>
+                                <span class="metric-value">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plug"></i> Connect
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Time Chart -->
+        <div class="performance-chart-container">
+            <div class="section-header">
+                <h2>Response Time History</h2>
+                <div class="time-range-selector">
+                    <button class="btn btn-sm btn-outline-secondary active">24h</button>
+                    <button class="btn btn-sm btn-outline-secondary">7d</button>
+                    <button class="btn btn-sm btn-outline-secondary">30d</button>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="responseTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="platform-content-secondary">
+        <!-- Rate Limits -->
+        <div class="rate-limits-container">
+            <div class="section-header">
+                <h2>API Rate Limits</h2>
+                <div class="platform-selector">
+                    <select class="form-select form-select-sm">
+                        <option>All Platforms</option>
+                        <option>Meta (Facebook)</option>
+                        <option>Google</option>
+                        <option>Twitter (X)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="rate-limits-wrapper">
+                <div class="rate-limit-item">
+                    <div class="limit-info">
+                        <h3>Meta (Facebook)</h3>
+                        <div class="limit-details">
+                            <span class="limit-reset">Resets in 6h 45m</span>
+                            <span class="limit-usage">68% used</span>
+                        </div>
+                    </div>
+                    <div class="limit-bar">
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 68%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rate-limit-item">
+                    <div class="limit-info">
+                        <h3>Google</h3>
+                        <div class="limit-details">
+                            <span class="limit-reset">Resets at midnight UTC</span>
+                            <span class="limit-usage">32% used</span>
+                        </div>
+                    </div>
+                    <div class="limit-bar">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 32%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rate-limit-item">
+                    <div class="limit-info">
+                        <h3>Twitter (X)</h3>
+                        <div class="limit-details">
+                            <span class="limit-reset">Resets in 15m</span>
+                            <span class="limit-usage">41% used</span>
+                        </div>
+                    </div>
+                    <div class="limit-bar">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 41%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Insights -->
+        <div class="health-insights-container">
+            <div class="section-header">
+                <h2>Health Insights</h2>
+            </div>
+            <div class="health-insights-wrapper">
+                <div class="insight-item warning">
+                    <div class="insight-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h3>Meta API Rate Limit Warning</h3>
+                        <p>The Meta API is approaching its rate limit (68%). Consider throttling campaign creation API calls until the limit resets.</p>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-link">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-item success">
+                    <div class="insight-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h3>All Platforms Operational</h3>
+                        <p>All connected platforms are operational with good response times. No service disruptions detected in the last 24 hours.</p>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-link">View History</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-item info">
+                    <div class="insight-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h3>Google API Update Available</h3>
+                        <p>Google Ads API v11 is being deprecated. Consider updating to v12 before the end of the quarter.</p>
+                        <div class="insight-actions">
+                            <button class="btn btn-sm btn-link">View Documentation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeResponseTimeChart();
+    
+    // Add listeners for test buttons
+    document.querySelectorAll('.platform-item .btn-outline-primary').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const platformName = this.closest('.platform-item').querySelector('.platform-name h3').textContent;
+            testPlatformConnection(platformName);
+        });
+    });
+    
+    // Refresh button
+    document.getElementById('refresh-status').addEventListener('click', function() {
+        refreshAllPlatforms();
+    });
+});
+
+function initializeResponseTimeChart() {
+    const ctx = document.getElementById('responseTimeChart').getContext('2d');
+    
+    // Sample data
+    const labels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+    const metaData = [280, 310, 290, 350, 270, 230];
+    const googleData = [180, 165, 200, 185, 190, 175];
+    const twitterData = [250, 270, 220, 210, 230, 240];
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Meta',
+                    data: metaData,
+                    borderColor: '#1877F2',
+                    backgroundColor: 'rgba(24, 119, 242, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Google',
+                    data: googleData,
+                    borderColor: '#DB4437',
+                    backgroundColor: 'rgba(219, 68, 55, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Twitter',
+                    data: twitterData,
+                    borderColor: '#1DA1F2',
+                    backgroundColor: 'rgba(29, 161, 242, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw}ms`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Response Time (ms)'
+                    },
+                    suggestedMin: 100,
+                    suggestedMax: 400
+                }
+            }
+        }
+    });
+}
+
+function testPlatformConnection(platformName) {
+    // In a real application, this would make an API call to test the connection
+    const buttonElement = event.target;
+    const originalText = buttonElement.innerHTML;
+    
+    // Update button state
+    buttonElement.disabled = true;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    
+    // Simulate API call delay
+    setTimeout(() => {
+        // Restore button state
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = originalText;
+        
+        // Show success message (in a real app, this would be based on the actual result)
+        alert(`Connection to ${platformName} tested successfully!`);
+    }, 1500);
+}
+
+function refreshAllPlatforms() {
+    // In a real application, this would refresh all platform statuses
+    const refreshButton = document.getElementById('refresh-status');
+    const originalText = refreshButton.innerHTML;
+    
+    // Update button state
+    refreshButton.disabled = true;
+    refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    
+    // Simulate refresh delay
+    setTimeout(() => {
+        // Restore button state
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = originalText;
+        
+        // Show success message
+        alert('All platform statuses refreshed!');
+    }, 1500);
+}
+</script>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+:root {
+    --primary: #4361ee;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --warning: #f72585;
+    --danger: #ef233c;
+    --info: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    
+    --facebook: #1877F2;
+    --google: #DB4437;
+    --twitter: #1DA1F2;
+    --tiktok: #000000;
+    --snapchat: #FFFC00;
+    
+    --border-radius: 10px;
+    --transition-speed: 0.2s;
+    --box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* === Main Layout === */
+.platform-dashboard {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* === Header === */
+.platform-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--dark);
+}
+
+.header-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* === Status Overview === */
+.status-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.status-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    transition: transform var(--transition-speed);
+}
+
+.status-card:hover {
+    transform: translateY(-4px);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    font-size: 1.8rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.bg-primary { background-color: var(--primary); }
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+.bg-info { background-color: var(--info); }
+
+.card-content {
+    flex: 1;
+}
+
+.card-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+}
+
+.unit {
+    font-size: 1rem;
+    font-weight: normal;
+    margin-left: 2px;
+}
+
+.card-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* === Main Content === */
+.platform-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.platform-content-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* === Section Headers === */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* === Search Box === */
+.search-container {
+    position: relative;
+    width: 250px;
+}
+
+.search-container input {
+    padding-right: 30px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.search-container i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* === Time Range Selector === */
+.time-range-selector {
+    display: flex;
+    gap: 5px;
+}
+
+/* === Platform List === */
+.platform-list-container, 
+.performance-chart-container, 
+.rate-limits-container, 
+.health-insights-container {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+}
+
+.platforms-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.platform-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    transition: background-color var(--transition-speed);
+    border: 1px solid #f0f0f0;
+}
+
+.platform-item:hover {
+    background-color: #f8f9fa;
+}
+
+.platform-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.platform-icon.facebook { background-color: var(--facebook); }
+.platform-icon.google { background-color: var(--google); }
+.platform-icon.twitter { background-color: var(--twitter); }
+.platform-icon.tiktok { background-color: var(--tiktok); }
+.platform-icon.snapchat { 
+    background-color: var(--snapchat); 
+    color: black;
+}
+
+.platform-details {
+    flex: 1;
+}
+
+.platform-name {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.platform-name h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    margin-right: 10px;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.status-badge.connected {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: var(--success);
+}
+
+.status-badge.disconnected {
+    background-color: rgba(239, 35, 60, 0.1);
+    color: var(--danger);
+}
+
+.platform-metrics {
+    display: flex;
+    gap: 15px;
+}
+
+.metric {
+    font-size: 0.85rem;
+}
+
+.metric-label {
+    color: #6c757d;
+    margin-right: 4px;
+}
+
+.metric-value {
+    font-weight: 500;
+}
+
+.platform-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* === Chart Container === */
+.chart-wrapper {
+    height: 300px;
+}
+
+/* === Rate Limits === */
+.rate-limits-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.rate-limit-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.limit-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.limit-info h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.limit-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+}
+
+.limit-reset {
+    color: #6c757d;
+}
+
+.limit-usage {
+    font-weight: 500;
+}
+
+.limit-bar .progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+/* === Health Insights === */
+.health-insights-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.insight-item {
+    display: flex;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid #f0f0f0;
+}
+
+.insight-item.warning {
+    border-left: 4px solid var(--warning);
+}
+
+.insight-item.success {
+    border-left: 4px solid var(--success);
+}
+
+.insight-item.info {
+    border-left: 4px solid var(--info);
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.insight-item.warning .insight-icon {
+    color: var(--warning);
+    background-color: rgba(247, 37, 133, 0.1);
+}
+
+.insight-item.success .insight-icon {
+    color: var(--success);
+    background-color: rgba(76, 201, 240, 0.1);
+}
+
+.insight-item.info .insight-icon {
+    color: var(--info);
+    background-color: rgba(72, 149, 239, 0.1);
+}
+
+.insight-content {
+    flex: 1;
+}
+
+.insight-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.insight-content p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0 0 10px 0;
+}
+
+.insight-actions {
+    margin-top: 5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .status-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .platform-content,
+    .platform-content-secondary {
+        grid-template-columns: 1fr;
+    }
+    
+    .platform-metrics {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+@media (max-width: 768px) {
+    .platform-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .status-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .platform-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .platform-icon {
+        margin-bottom: 10px;
+    }
+    
+    .platform-details {
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    .platform-actions {
+        align-self: flex-end;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .search-container,
+    .time-range-selector,
+    .platform-selector {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

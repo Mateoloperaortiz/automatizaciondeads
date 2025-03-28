@@ -1,0 +1,104 @@
+<!-- Platform Status Navbar Component (Simplified) -->
+
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle position-relative" id="navbar-platform-status" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fas fa-plug"></i>
+    {% if total_platforms > 0 %}
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill 
+        {% if connected_platforms == 0 %}
+          bg-danger
+        {% elif connected_platforms < total_platforms %}
+          bg-warning
+        {% else %}
+          bg-success
+        {% endif %}">
+        {{ connected_platforms }}/{{ total_platforms }}
+      </span>
+    {% endif %}
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end py-0 overflow-hidden" style="width: 320px;">
+    <li>
+      <div class="px-3 py-2 bg-light border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="dropdown-header m-0 p-0">Platform Status</h6>
+        <button class="btn btn-sm btn-outline-primary" id="refresh-platform-status">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+    </li>
+    
+    <!-- Simplified platform status list -->
+    <li class="platform-status-dropdown-content">
+      <ul class="platform-status-list" id="navbar-platform-list">
+        <li class="platform-item">
+          <div class="platform-icon">
+            <i class="fab fa-facebook"></i>
+          </div>
+          <div class="platform-info">
+            <div class="platform-name">Meta</div>
+            <div class="platform-status">
+              <span class="status-indicator connected"></span>
+              Connected
+            </div>
+          </div>
+        </li>
+        <li class="platform-item">
+          <div class="platform-icon">
+            <i class="fab fa-twitter"></i>
+          </div>
+          <div class="platform-info">
+            <div class="platform-name">X (Twitter)</div>
+            <div class="platform-status">
+              <span class="status-indicator connected"></span>
+              Connected
+            </div>
+          </div>
+        </li>
+        <li class="platform-item">
+          <div class="platform-icon">
+            <i class="fab fa-google"></i>
+          </div>
+          <div class="platform-info">
+            <div class="platform-name">Google Ads</div>
+            <div class="platform-status">
+              <span class="status-indicator connected"></span>
+              Connected
+            </div>
+          </div>
+        </li>
+        <li class="platform-item">
+          <div class="platform-icon">
+            <i class="fab fa-linkedin"></i>
+          </div>
+          <div class="platform-info">
+            <div class="platform-name">LinkedIn</div>
+            <div class="platform-status">
+              <span class="status-indicator disconnected"></span>
+              Disconnected
+            </div>
+          </div>
+        </li>
+        <li class="platform-item">
+          <div class="platform-icon">
+            <i class="fab fa-tiktok"></i>
+          </div>
+          <div class="platform-info">
+            <div class="platform-name">TikTok</div>
+            <div class="platform-status">
+              <span class="status-indicator disconnected"></span>
+              Disconnected
+            </div>
+          </div>
+        </li>
+      </ul>
+    </li>
+    
+    <li><hr class="dropdown-divider m-0"></li>
+    
+    <!-- Footer with link -->
+    <li>
+      <a href="#" class="dropdown-item text-center py-2">
+        View Detailed Status
+      </a>
+    </li>
+  </ul>
+</li>

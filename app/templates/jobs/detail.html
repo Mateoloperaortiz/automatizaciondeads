@@ -1,0 +1,79 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}{{ job.title }} - {{ job.company }}{% endblock %}
+
+{% block styles %}
+<style>
+    .job-detail {
+        max-width: 800px;
+        margin: 2rem auto;
+    }
+    .back-btn {
+        margin-bottom: 1.5rem;
+    }
+    .job-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+    }
+    .job-section {
+        margin: 2rem 0;
+    }
+    .job-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="job-detail">
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-secondary back-btn">&laquo; Back to Job Listings</a>
+        
+        <h1>{{ job.title }}</h1>
+        
+        <div class="job-meta">
+            <div class="job-meta-item">
+                <strong>Company:</strong> {{ job.company }}
+            </div>
+            <div class="job-meta-item">
+                <strong>Location:</strong> {{ job.location }}
+            </div>
+            <div class="job-meta-item">
+                <strong>Job Type:</strong> {{ job.job_type }}
+            </div>
+            <div class="job-meta-item">
+                <strong>Experience Level:</strong> {{ job.experience_level }}
+            </div>
+            {% if job.salary_range %}
+            <div class="job-meta-item">
+                <strong>Salary Range:</strong> {{ job.salary_range }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="job-section">
+            <h2>Description</h2>
+            <p>{{ job.description }}</p>
+        </div>
+        
+        {% if job.requirements %}
+        <div class="job-section">
+            <h2>Requirements</h2>
+            <p>{{ job.requirements }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="job-actions">
+            <button class="btn btn-primary">Apply Now</button>
+            <button class="btn btn-secondary">Save Job</button>
+        </div>
+    </div>
+</div>
+{% endblock %} 

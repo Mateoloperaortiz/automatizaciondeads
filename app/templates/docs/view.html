@@ -1,0 +1,332 @@
+{% extends 'simple_base.html' %}
+
+{% block title %}{{ document.title }} - MagnetoCursor Documentation{% endblock %}
+
+{% block styles %}
+<style>
+  .doc-content {
+    line-height: 1.6;
+  }
+  
+  .doc-content img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .doc-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  .doc-content th, .doc-content td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+  }
+  
+  .doc-content pre {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  
+  .doc-content blockquote {
+    border-left: 3px solid #6c757d;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+  }
+  
+  .doc-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+  
+  .doc-toc {
+    position: sticky;
+    top: 1rem;
+  }
+  
+  .doc-toc ul {
+    padding-left: 1rem;
+  }
+  
+  .doc-toc li {
+    margin-bottom: 0.5rem;
+  }
+  
+  @media (max-width: 991.98px) {
+    .doc-toc {
+      position: static;
+      margin-bottom: 2rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Documentation Sidebar -->
+    <div class="col-md-3 col-lg-2 d-md-block sidebar">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Documentation</h5>
+        </div>
+        <div class="list-group list-group-flush">
+          <a href="{{ url_for('docs.index') }}" class="list-group-item list-group-item-action">
+            <i class="bi bi-house-door me-2"></i>Home
+          </a>
+          
+          {% for doc_type, docs in documents_by_type.items() %}
+            <div class="list-group-item list-group-item-secondary">{{ doc_type|title }}</div>
+            {% for doc in docs %}
+              <a href="{{ url_for('docs.view_document', doc_slug=doc.slug) }}" 
+                 class="list-group-item list-group-item-action {% if doc.id == document.id %}active{% endif %}">
+                {{ doc.title }}
+              </a>
+              {% if doc.children %}
+                {% for child in doc.children %}
+                  <a href="{{ url_for('docs.view_document', doc_slug=child.slug) }}" 
+                     class="list-group-item list-group-item-action ps-4 {% if child.id == document.id %}active{% endif %}">
+                    {{ child.title }}
+                  </a>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      {% if current_user.is_authenticated and current_user.is_admin() %}
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5 class="mb-0">Admin</h5>
+        </div>
+        <div class="list-group list-group-flush">
+          <a href="{{ url_for('docs.edit_documentation', doc_id=document.id) }}" class="list-group-item list-group-item-action">
+            <i class="bi bi-pencil me-2"></i>Edit This Document
+          </a>
+          <a href="{{ url_for('docs.edit_documentation') }}" class="list-group-item list-group-item-action">
+            <i class="bi bi-folder-plus me-2"></i>Manage Documents
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Documentation Content -->
+    <div class="col-md-9 col-lg-7 ms-sm-auto px-md-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>{{ document.title }}</h1>
+        <div>
+          {% if document.doc_type %}
+            <span class="badge bg-info">{{ document.doc_type|replace('_', ' ')|title }}</span>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="doc-meta mb-4">
+        <div>Last updated: {{ document.updated_at.strftime('%B %d, %Y') }}</div>
+        {% if document.published_version %}
+          <div>Version: {{ document.published_version.version_number }}</div>
+        {% endif %}
+      </div>
+      
+      <div class="doc-content">
+        {{ document.content|safe }}
+      </div>
+      
+      {% if document.children %}
+      <div class="mt-5">
+        <h4>Related Documents</h4>
+        <div class="list-group">
+          {% for child in document.children %}
+          <a href="{{ url_for('docs.view_document', doc_slug=child.slug) }}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ child.title }}</h5>
+              <small>{{ child.updated_at.strftime('%b %d, %Y') }}</small>
+            </div>
+            <p class="mb-1">{{ child.published_version.content|striptags|truncate(100) if child.published_version else '' }}</p>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      
+      <div class="d-flex justify-content-between mt-5 border-top pt-3">
+        {% if prev_doc %}
+        <a href="{{ url_for('docs.view_document', doc_slug=prev_doc.slug) }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-2"></i>{{ prev_doc.title }}
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+        
+        {% if next_doc %}
+        <a href="{{ url_for('docs.view_document', doc_slug=next_doc.slug) }}" class="btn btn-outline-primary">
+          {{ next_doc.title }}<i class="bi bi-arrow-right ms-2"></i>
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Table of Contents -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="doc-toc">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Table of Contents</h5>
+          </div>
+          <div class="card-body" id="toc">
+            <!-- Table of contents will be generated dynamically -->
+            <div class="text-center text-muted p-3">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              Loading...
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5 class="mb-0">Feedback</h5>
+          </div>
+          <div class="card-body">
+            <p class="small text-muted">Was this documentation helpful?</p>
+            <div class="btn-group w-100 mb-3">
+              <button type="button" class="btn btn-outline-success" id="helpfulBtn">
+                <i class="bi bi-hand-thumbs-up me-1"></i> Yes
+              </button>
+              <button type="button" class="btn btn-outline-danger" id="notHelpfulBtn">
+                <i class="bi bi-hand-thumbs-down me-1"></i> No
+              </button>
+            </div>
+            <div id="feedbackForm" style="display: none;">
+              <textarea class="form-control mb-2" rows="3" placeholder="How can we improve this document?" id="feedbackText"></textarea>
+              <button class="btn btn-sm btn-primary w-100" id="submitFeedbackBtn">
+                Submit Feedback
+              </button>
+            </div>
+            <div id="feedbackThanks" class="alert alert-success mt-3" style="display: none;">
+              Thank you for your feedback!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Generate table of contents
+    generateTableOfContents();
+    
+    // Feedback handling
+    const helpfulBtn = document.getElementById('helpfulBtn');
+    const notHelpfulBtn = document.getElementById('notHelpfulBtn');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const feedbackThanks = document.getElementById('feedbackThanks');
+    const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+    
+    if (helpfulBtn && notHelpfulBtn) {
+      helpfulBtn.addEventListener('click', function() {
+        recordFeedback(true);
+        showThanks();
+      });
+      
+      notHelpfulBtn.addEventListener('click', function() {
+        feedbackForm.style.display = 'block';
+        this.disabled = true;
+        helpfulBtn.disabled = true;
+      });
+      
+      if (submitFeedbackBtn) {
+        submitFeedbackBtn.addEventListener('click', function() {
+          const feedback = document.getElementById('feedbackText').value;
+          recordFeedback(false, feedback);
+          showThanks();
+          feedbackForm.style.display = 'none';
+        });
+      }
+    }
+    
+    function showThanks() {
+      feedbackThanks.style.display = 'block';
+      setTimeout(function() {
+        feedbackThanks.style.display = 'none';
+      }, 3000);
+    }
+    
+    function recordFeedback(helpful, comment = '') {
+      // Send feedback to server
+      fetch('/docs/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_id: '{{ document.id }}',
+          helpful: helpful,
+          comment: comment,
+          csrf_token: '{{ csrf_token() }}'
+        })
+      }).then(response => {
+        // Handle response if needed
+      }).catch(error => {
+        console.error('Error submitting feedback:', error);
+      });
+    }
+    
+    function generateTableOfContents() {
+      const tocContainer = document.getElementById('toc');
+      const docContent = document.querySelector('.doc-content');
+      
+      if (!tocContainer || !docContent) return;
+      
+      // Find all headings in the document
+      const headings = docContent.querySelectorAll('h2, h3, h4');
+      
+      if (headings.length === 0) {
+        tocContainer.innerHTML = '<p class="text-muted">No sections found in this document.</p>';
+        return;
+      }
+      
+      // Create TOC structure
+      const toc = document.createElement('ul');
+      toc.className = 'list-unstyled';
+      
+      headings.forEach((heading, index) => {
+        // Add ID to heading if it doesn't have one
+        if (!heading.id) {
+          heading.id = 'toc-' + index;
+        }
+        
+        const listItem = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        link.className = 'text-decoration-none';
+        
+        // Indent based on heading level
+        if (heading.tagName === 'H3') {
+          listItem.style.paddingLeft = '1rem';
+        } else if (heading.tagName === 'H4') {
+          listItem.style.paddingLeft = '2rem';
+        }
+        
+        listItem.appendChild(link);
+        toc.appendChild(listItem);
+      });
+      
+      tocContainer.innerHTML = '';
+      tocContainer.appendChild(toc);
+    }
+  });
+</script>
+{% endblock %}

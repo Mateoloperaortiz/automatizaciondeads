@@ -1,0 +1,1340 @@
+{% extends "simple_base.html" %}
+
+{% block title %}MagnetoCursor | Social Media Ad Automation Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="hero-title">Automate Your <span class="gradient-text">Job Ad Campaigns</span> Across Social Media</h1>
+                    <p class="hero-description">MagnetoCursor helps you publish, manage, and optimize job opening ads on Meta, X, Google, and more—all from a single platform with AI-powered audience segmentation.</p>
+                    <div class="hero-actions">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i> Launch Dashboard
+                        </a>
+                        <a href="#features" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-info-circle me-2"></i> Learn More
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">5+</div>
+                            <div class="stat-label">Platforms</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1000+</div>
+                            <div class="stat-label">Campaigns</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">89%</div>
+                            <div class="stat-label">ROI Boost</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image">
+                    <div class="dashboard-preview">
+                        <img src="{{ url_for('static', filename='img/dashboard-preview.png') }}" alt="MagnetoCursor Dashboard" loading="eager" onerror="this.src='https://via.placeholder.com/600x400/4361ee/ffffff?text=MagnetoCursor+Dashboard'">
+                        <div class="floating-card card-1">
+                            <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="card-content">
+                                <div class="card-title">Engagement Up</div>
+                                <div class="card-value">+42%</div>
+                            </div>
+                        </div>
+                        <div class="floating-card card-2">
+                            <div class="card-icon"><i class="fas fa-users"></i></div>
+                            <div class="card-content">
+                                <div class="card-title">New Applicants</div>
+                                <div class="card-value">184</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="shape-divider">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+        </svg>
+    </div>
+</section>
+
+<!-- Platforms Section -->
+<section class="platforms-section">
+    <div class="container">
+        <div class="section-heading text-center">
+            <h2>All Your <span class="gradient-text">Platforms</span> in One Place</h2>
+            <p>Manage campaigns across all major social media platforms from a unified dashboard</p>
+        </div>
+        <div class="platform-logos">
+            <div class="platform-logo">
+                <div class="logo-container meta">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+                <span>Meta</span>
+            </div>
+            <div class="platform-logo">
+                <div class="logo-container google">
+                    <i class="fab fa-google"></i>
+                </div>
+                <span>Google</span>
+            </div>
+            <div class="platform-logo">
+                <div class="logo-container twitter">
+                    <i class="fab fa-twitter"></i>
+                </div>
+                <span>X / Twitter</span>
+            </div>
+            <div class="platform-logo">
+                <div class="logo-container linkedin">
+                    <i class="fab fa-linkedin-in"></i>
+                </div>
+                <span>LinkedIn</span>
+            </div>
+            <div class="platform-logo">
+                <div class="logo-container tiktok">
+                    <i class="fab fa-tiktok"></i>
+                </div>
+                <span>TikTok</span>
+            </div>
+            <div class="platform-logo">
+                <div class="logo-container snapchat">
+                    <i class="fab fa-snapchat-ghost"></i>
+                </div>
+                <span>Snapchat</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <div class="container">
+        <div class="section-heading text-center">
+            <h2>Powerful <span class="gradient-text">Features</span> for Recruitment Success</h2>
+            <p>Elevate your job ad campaigns with our comprehensive toolset</p>
+        </div>
+        <div class="row features-grid">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <h3>Multi-Platform Publishing</h3>
+                    <p>Create and publish job opening ads across multiple social media platforms simultaneously with just a few clicks.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>AI-Powered Segmentation</h3>
+                    <p>Leverage machine learning algorithms to automatically segment your audience for more targeted and effective job ads.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Real-Time Analytics</h3>
+                    <p>Track campaign performance in real-time with detailed analytics dashboards showing engagement, conversions, and ROI.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3>Automated Optimization</h3>
+                    <p>Automatically optimize your campaigns based on real-time performance data to maximize results and minimize costs.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-paint-brush"></i>
+                    </div>
+                    <h3>Creative Templates</h3>
+                    <p>Access a library of pre-designed ad templates specifically optimized for job openings across different industries.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Team Collaboration</h3>
+                    <p>Collaborate seamlessly with team members with role-based access controls and shared campaign workflows.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Preview Section -->
+<section class="dashboard-preview-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5">
+                <div class="dashboard-info">
+                    <h2>Intuitive <span class="gradient-text">Dashboard</span> for Maximum Efficiency</h2>
+                    <p>Our user-friendly interface puts the power of multi-platform ad management at your fingertips.</p>
+                    <ul class="dashboard-features">
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Drag-and-drop campaign builder</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Customizable reporting dashboards</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Real-time platform status monitoring</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Automated budget allocation</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>AI-powered campaign recommendations</span>
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i> Explore Dashboard
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="dashboard-screenshots">
+                    <div class="screenshot-tabs">
+                        <div class="tab-header">
+                            <button class="tab-btn active" data-tab="tab-campaigns">
+                                <i class="fas fa-ad"></i> Campaigns
+                            </button>
+                            <button class="tab-btn" data-tab="tab-analytics">
+                                <i class="fas fa-chart-pie"></i> Analytics
+                            </button>
+                            <button class="tab-btn" data-tab="tab-segments">
+                                <i class="fas fa-users"></i> Segments
+                            </button>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab-campaigns">
+                                <img src="{{ url_for('static', filename='img/campaign-dashboard.png') }}" alt="Campaign Dashboard" loading="lazy" onerror="this.src='https://via.placeholder.com/800x500/4361ee/ffffff?text=Campaign+Dashboard'">
+                            </div>
+                            <div class="tab-pane" id="tab-analytics">
+                                <img src="{{ url_for('static', filename='img/analytics-dashboard.png') }}" alt="Analytics Dashboard" loading="lazy" onerror="this.src='https://via.placeholder.com/800x500/4361ee/ffffff?text=Analytics+Dashboard'">
+                            </div>
+                            <div class="tab-pane" id="tab-segments">
+                                <img src="{{ url_for('static', filename='img/segments-dashboard.png') }}" alt="Segments Dashboard" loading="lazy" onerror="this.src='https://via.placeholder.com/800x500/4361ee/ffffff?text=Segments+Dashboard'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Segmentation Section -->
+<section class="ai-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="ai-visualization">
+                    <div class="visualization-container">
+                        <img src="{{ url_for('static', filename='img/segment-visualization.png') }}" alt="AI Segmentation" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400/4361ee/ffffff?text=AI+Segmentation'">
+                        <div class="node node-1"></div>
+                        <div class="node node-2"></div>
+                        <div class="node node-3"></div>
+                        <div class="node node-4"></div>
+                        <div class="connection connection-1"></div>
+                        <div class="connection connection-2"></div>
+                        <div class="connection connection-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="ai-content">
+                    <h2>AI-Powered <span class="gradient-text">Audience Segmentation</span></h2>
+                    <p class="lead">Find the perfect candidates with machine learning algorithms that automatically segment your audience based on skills, experience, and preferences.</p>
+                    <div class="segment-features">
+                        <div class="segment-feature">
+                            <div class="feature-number">01</div>
+                            <div class="feature-info">
+                                <h4>Smart Clustering</h4>
+                                <p>Automatically group candidates with similar backgrounds and preferences for more targeted ad campaigns.</p>
+                            </div>
+                        </div>
+                        <div class="segment-feature">
+                            <div class="feature-number">02</div>
+                            <div class="feature-info">
+                                <h4>Behavioral Analysis</h4>
+                                <p>Target candidates based on their actual behavior and interaction patterns across platforms.</p>
+                            </div>
+                        </div>
+                        <div class="segment-feature">
+                            <div class="feature-number">03</div>
+                            <div class="feature-info">
+                                <h4>Real-time Adaptation</h4>
+                                <p>Segmentation models that continuously learn and adapt based on campaign performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section">
+    <div class="container">
+        <div class="section-heading text-center">
+            <h2>Trusted by <span class="gradient-text">Recruitment Leaders</span></h2>
+            <p>See what our users are saying about MagnetoCursor</p>
+        </div>
+        <div class="testimonials-slider">
+            <div class="testimonial-card">
+                <div class="testimonial-content">
+                    <p>"MagnetoCursor has transformed our recruitment advertising strategy. We're now reaching exactly the right candidates on the platforms they use most."</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <img src="{{ url_for('static', filename='img/avatar-1.png') }}" alt="Avatar" loading="lazy" onerror="this.src='https://via.placeholder.com/60x60/4361ee/ffffff?text=JD'">
+                    </div>
+                    <div class="author-info">
+                        <h4>Jane Doe</h4>
+                        <p>HR Director, TechGrowth Inc.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-content">
+                    <p>"The AI segmentation is a game-changer. We've reduced our cost per qualified applicant by 48% while increasing the quality of candidates."</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <img src="{{ url_for('static', filename='img/avatar-2.png') }}" alt="Avatar" loading="lazy" onerror="this.src='https://via.placeholder.com/60x60/4361ee/ffffff?text=MS'">
+                    </div>
+                    <div class="author-info">
+                        <h4>Michael Smith</h4>
+                        <p>Recruitment Manager, Global Logistics</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-content">
+                    <p>"Being able to manage all our job ad campaigns across multiple platforms from a single dashboard has saved us countless hours of work."</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <img src="{{ url_for('static', filename='img/avatar-3.png') }}" alt="Avatar" loading="lazy" onerror="this.src='https://via.placeholder.com/60x60/4361ee/ffffff?text=AR'">
+                    </div>
+                    <div class="author-info">
+                        <h4>Amanda Rodriguez</h4>
+                        <p>Talent Acquisition Lead, HealthPlus</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content text-center">
+            <h2>Ready to Transform Your <span class="gradient-text">Recruitment Advertising?</span></h2>
+            <p>Get started with MagnetoCursor today and see the difference intelligent, automated ad management can make.</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket me-2"></i> Get Started
+                </a>
+                <a href="{{ url_for('api_platform_status') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-server me-2"></i> Check Platform Status
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Performance optimization - Debounce function to limit expensive operations
+        function debounce(func, wait = 20, immediate = true) {
+            let timeout;
+            return function() {
+                const context = this, args = arguments;
+                const later = function() {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                const callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            };
+        }
+        
+        // Tab functionality for dashboard screenshots - optimized
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        // Initialize tab system with performance optimizations
+        function initTabs() {
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    requestAnimationFrame(() => {
+                        // Remove active class from all buttons
+                        tabBtns.forEach(b => b.classList.remove('active'));
+                        // Add active class to clicked button
+                        this.classList.add('active');
+                        
+                        // Hide all tab panes
+                        tabPanes.forEach(pane => pane.classList.remove('active'));
+                        // Show the selected tab pane
+                        const tabId = this.getAttribute('data-tab');
+                        const targetPane = document.getElementById(tabId);
+                        if (targetPane) {
+                            targetPane.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+        
+        // Initialize tabs
+        initTabs();
+        
+        // Animate numbers in stats - simplified for better performance
+        const statValues = document.querySelectorAll('.stat-value');
+        
+        // Set initial state immediately
+        statValues.forEach(stat => {
+            stat.setAttribute('data-final', stat.textContent);
+            
+            if (stat.textContent.includes('%')) {
+                stat.textContent = '0%';
+            } else if (stat.textContent.includes('+')) {
+                stat.textContent = '0+';
+            } else {
+                stat.textContent = '0';
+            }
+        });
+        
+        // Use requestAnimationFrame for smoother animation
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                statValues.forEach(stat => {
+                    stat.textContent = stat.getAttribute('data-final');
+                });
+            });
+        }, 500);
+        
+        // Only animate AI visualization when it's in viewport - with performance optimization
+        let aiAnimationDone = false;
+        
+        function animateAISection() {
+            if (aiAnimationDone) return;
+            
+            const aiSection = document.querySelector('.ai-section');
+            if (!aiSection) return;
+            
+            const rect = aiSection.getBoundingClientRect();
+            
+            // Check if element is in viewport
+            if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+                requestAnimationFrame(() => {
+                    const nodes = document.querySelectorAll('.node');
+                    const connections = document.querySelectorAll('.connection');
+                    
+                    // Add active class to all nodes at once
+                    nodes.forEach(node => node.classList.add('active'));
+                    
+                    // Stagger connection animations
+                    connections.forEach((connection, index) => {
+                        setTimeout(() => connection.classList.add('active'), 150 * (index + 1));
+                    });
+                    
+                    aiAnimationDone = true;
+                    window.removeEventListener('scroll', debouncedAIAnimation);
+                });
+            }
+        }
+        
+        // Use debounced version for scroll handler
+        const debouncedAIAnimation = debounce(animateAISection, 20);
+        
+        // Add scroll listener for AI section animation with passive option for better performance
+        window.addEventListener('scroll', debouncedAIAnimation, { passive: true });
+        
+        // Initial check in case AI section is already in viewport
+        animateAISection();
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #4cc9f0;
+        --accent: #f72585;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --gradient-start: #4361ee;
+        --gradient-mid: #3a0ca3;
+        --gradient-end: #7209b7;
+        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        
+        /* Performance optimizations */
+        scroll-behavior: auto; /* Smooth scroll can cause lag */
+    }
+
+    /* Global Styles - with performance optimization */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color: var(--text-primary);
+        line-height: 1.6;
+        overflow-x: hidden;
+        will-change: scroll-position;
+    }
+    
+    section {
+        padding: 5rem 0;
+        position: relative;
+        contain: content;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    
+    p {
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        will-change: transform;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+    }
+    
+    .btn-outline-primary {
+        color: var(--primary);
+        border-color: var(--primary);
+        will-change: transform;
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+    }
+    
+    .btn-outline-light {
+        color: white;
+        border-color: white;
+        will-change: transform;
+    }
+    
+    .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .gradient-text {
+        background-image: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    .section-heading {
+        margin-bottom: 3rem;
+    }
+    
+    .section-heading h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-heading p {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 6rem 0 9rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+    
+    .hero-description {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .hero-stats {
+        display: flex;
+        gap: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .hero-image {
+        position: relative;
+    }
+    
+    .dashboard-preview {
+        position: relative;
+        box-shadow: var(--shadow);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .dashboard-preview img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 12px;
+    }
+    
+    .floating-card {
+        position: absolute;
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: var(--shadow);
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    .card-1 {
+        top: 20px;
+        right: -30px;
+    }
+    
+    .card-2 {
+        bottom: 30px;
+        left: -40px;
+    }
+    
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .card-1 .card-icon {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+    }
+    
+    .card-2 .card-icon {
+        background: rgba(76, 201, 240, 0.1);
+        color: var(--secondary);
+    }
+    
+    .card-content {
+        flex: 1;
+    }
+    
+    .card-title {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .card-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .shape-divider {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
+    }
+    
+    .shape-divider svg {
+        position: relative;
+        display: block;
+        width: calc(100% + 1.3px);
+        height: 80px;
+    }
+    
+    .shape-divider .shape-fill {
+        fill: #FFFFFF;
+    }
+
+    /* Platforms Section */
+    .platforms-section {
+        padding-top: 3rem;
+    }
+    
+    .platform-logos {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 3rem;
+        margin-top: 3rem;
+    }
+    
+    .platform-logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .logo-container {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    @media (hover: hover) {
+        .logo-container:hover {
+            transform: translateY(-5px) translateZ(0);
+            box-shadow: var(--shadow);
+        }
+    }
+    
+    .meta {
+        background: rgba(66, 103, 178, 0.1);
+        color: #4267B2;
+    }
+    
+    .google {
+        background: rgba(219, 68, 55, 0.1);
+        color: #DB4437;
+    }
+    
+    .twitter {
+        background: rgba(29, 161, 242, 0.1);
+        color: #1DA1F2;
+    }
+    
+    .linkedin {
+        background: rgba(0, 119, 181, 0.1);
+        color: #0077B5;
+    }
+    
+    .tiktok {
+        background: rgba(0, 0, 0, 0.1);
+        color: #000000;
+    }
+    
+    .snapchat {
+        background: rgba(255, 252, 0, 0.1);
+        color: #FFFC00;
+    }
+    
+    .platform-logo span {
+        font-weight: 600;
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 6rem 0;
+    }
+    
+    .features-grid {
+        row-gap: 2rem;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    @media (hover: hover) {
+        .feature-card:hover {
+            transform: translateY(-10px) translateZ(0);
+            box-shadow: var(--shadow);
+            border-color: var(--primary);
+        }
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+        color: white;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-card p {
+        color: var(--text-secondary);
+        margin-bottom: 0;
+    }
+
+    /* Dashboard Preview Section */
+    .dashboard-preview-section {
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .dashboard-info h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-info p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-features {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-features li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+    
+    .dashboard-features i {
+        color: var(--primary);
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+    
+    .dashboard-features span {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .dashboard-screenshots {
+        position: relative;
+    }
+    
+    .screenshot-tabs {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .tab-header {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .tab-btn {
+        padding: 1rem 1.5rem;
+        background: none;
+        border: none;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .tab-btn:hover {
+        color: var(--primary);
+    }
+    
+    .tab-btn.active {
+        color: var(--primary);
+        background: white;
+        box-shadow: 0 2px 0 var(--primary);
+    }
+    
+    .tab-content {
+        padding: 1rem;
+        flex: 1;
+        background: white;
+        position: relative;
+    }
+    
+    .tab-pane {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+    }
+    
+    .tab-pane.active {
+        display: block;
+    }
+    
+    .tab-pane img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* AI Segmentation Section */
+    .ai-section {
+        padding: 6rem 0;
+    }
+    
+    .ai-content h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ai-content .lead {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 2.5rem;
+    }
+    
+    .segment-features {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .segment-feature {
+        display: flex;
+        gap: 1.5rem;
+    }
+    
+    .feature-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        color: rgba(67, 97, 238, 0.15);
+    }
+    
+    .feature-info h4 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-info p {
+        color: var(--text-secondary);
+        margin-bottom: 0;
+    }
+    
+    .ai-visualization {
+        position: relative;
+    }
+    
+    .visualization-container {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+    
+    .visualization-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .node {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary);
+        transform: scale(0);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        will-change: transform;
+    }
+    
+    .node.active {
+        transform: scale(1);
+    }
+    
+    .node-1 {
+        top: 30%;
+        left: 25%;
+    }
+    
+    .node-2 {
+        top: 20%;
+        right: 30%;
+    }
+    
+    .node-3 {
+        bottom: 35%;
+        left: 20%;
+    }
+    
+    .node-4 {
+        bottom: 25%;
+        right: 25%;
+    }
+    
+    .connection {
+        position: absolute;
+        background: var(--primary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        will-change: opacity;
+        transform: translateZ(0);
+    }
+    
+    .connection.active {
+        opacity: 0.6;
+    }
+    
+    .connection-1 {
+        top: 25%;
+        left: 30%;
+        width: 100px;
+        height: 3px;
+        transform: rotate(15deg) translateZ(0);
+    }
+    
+    .connection-2 {
+        top: 40%;
+        left: 20%;
+        width: 3px;
+        height: 80px;
+        transform: translateZ(0);
+    }
+    
+    .connection-3 {
+        bottom: 30%;
+        right: 30%;
+        width: 120px;
+        height: 3px;
+        transform: rotate(-20deg) translateZ(0);
+    }
+
+    /* Testimonials Section */
+    .testimonials-section {
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .testimonials-slider {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .testimonial-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 350px;
+        transition: transform 0.2s ease;
+        border-top: 4px solid var(--primary);
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    @media (hover: hover) {
+        .testimonial-card:hover {
+            transform: translateY(-10px) translateZ(0);
+        }
+    }
+    
+    .testimonial-content {
+        margin-bottom: 1.5rem;
+    }
+    
+    .testimonial-content p {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+    
+    .testimonial-author {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .author-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+    
+    .author-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .author-info h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .author-info p {
+        color: var(--text-secondary);
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        padding: 5rem 0;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+        color: white;
+    }
+    
+    .cta-content h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-content p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .section-heading h2 {
+            font-size: 2rem;
+        }
+        
+        .ai-content h2, .dashboard-info h2, .cta-content h2 {
+            font-size: 2rem;
+        }
+        
+        .hero-section {
+            padding: 4rem 0 7rem;
+        }
+        
+        .hero-content {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        
+        .hero-actions, .hero-stats {
+            justify-content: center;
+        }
+        
+        .card-1 {
+            top: 10px;
+            right: 10px;
+        }
+        
+        .card-2 {
+            bottom: 10px;
+            left: 10px;
+        }
+        
+        .dashboard-info {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        
+        .dashboard-features li {
+            justify-content: center;
+        }
+        
+        .ai-content {
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .segment-feature {
+            justify-content: center;
+            text-align: left;
+        }
+        
+        .testimonials-slider {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Dashboard preview fixes for tablets */
+        .dashboard-preview-section {
+            padding: 4rem 0;
+        }
+        
+        .tab-pane img {
+            height: 350px;
+        }
+    }
+    
+    @media (max-width: 767px) {
+        .hero-actions {
+            flex-direction: column;
+        }
+        
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .platform-logos {
+            gap: 2rem;
+        }
+        
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .tab-btn i {
+            margin-right: 0.25rem;
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
+        
+        /* Mobile dashboard fixes */
+        .tab-pane img {
+            height: 250px;
+        }
+        
+        .dashboard-screenshots {
+            margin-top: 2rem;
+        }
+        
+        .dashboard-preview-section {
+            padding: 3rem 0;
+        }
+    }
+</style>
+{% endblock %}

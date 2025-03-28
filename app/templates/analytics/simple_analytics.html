@@ -1,0 +1,616 @@
+{% extends "simple_base.html" %}
+
+{% block title %}Analytics Dashboard | MagnetoCursor{% endblock %}
+
+{% block content %}
+<div class="analytics-dashboard mb-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Analytics Dashboard</h1>
+            <p class="text-muted">Track performance metrics across all platforms and campaigns</p>
+        </div>
+        <div class="d-flex">
+            <div class="dropdown me-2">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar-alt me-1"></i> Last 30 Days
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                    <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                    <li><a class="dropdown-item" href="#">Last 90 Days</a></li>
+                    <li><a class="dropdown-item" href="#">Year to Date</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-primary">
+                <i class="fas fa-download me-1"></i> Export Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-eye text-primary"></i>
+                        </div>
+                        <span class="text-muted">Impressions</span>
+                    </div>
+                    <h3 class="mb-1">1.54M</h3>
+                    <div class="d-flex align-items-center text-success">
+                        <i class="fas fa-arrow-up me-1 small"></i>
+                        <span class="small">12.3% from last period</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-mouse-pointer text-success"></i>
+                        </div>
+                        <span class="text-muted">Click-Through Rate</span>
+                    </div>
+                    <h3 class="mb-1">4.8%</h3>
+                    <div class="d-flex align-items-center text-success">
+                        <i class="fas fa-arrow-up me-1 small"></i>
+                        <span class="small">0.5% from last period</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-exchange-alt text-warning"></i>
+                        </div>
+                        <span class="text-muted">Conversion Rate</span>
+                    </div>
+                    <h3 class="mb-1">2.3%</h3>
+                    <div class="d-flex align-items-center text-danger">
+                        <i class="fas fa-arrow-down me-1 small"></i>
+                        <span class="small">0.2% from last period</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-dollar-sign text-info"></i>
+                        </div>
+                        <span class="text-muted">Cost per Conversion</span>
+                    </div>
+                    <h3 class="mb-1">$24.82</h3>
+                    <div class="d-flex align-items-center text-success">
+                        <i class="fas fa-arrow-down me-1 small"></i>
+                        <span class="small">$1.47 from last period</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="m-0 fw-bold">Performance Over Time</h5>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-primary">Impressions</button>
+                <button type="button" class="btn btn-outline-primary">Clicks</button>
+                <button type="button" class="btn btn-outline-primary">Conversions</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div style="height: 280px;">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Comparison -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <!-- Platform Comparison Table -->
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold">Platform Comparison</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Platform</th>
+                                    <th>Impressions</th>
+                                    <th>CTR</th>
+                                    <th>Conv. Rate</th>
+                                    <th>ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="bg-primary bg-opacity-10 p-2 rounded me-2">
+                                                <i class="fab fa-facebook text-primary"></i>
+                                            </span>
+                                            <span>Meta</span>
+                                        </div>
+                                    </td>
+                                    <td>958,362</td>
+                                    <td>4.8%</td>
+                                    <td>2.6%</td>
+                                    <td><span class="text-success">+142%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="bg-danger bg-opacity-10 p-2 rounded me-2">
+                                                <i class="fab fa-google text-danger"></i>
+                                            </span>
+                                            <span>Google</span>
+                                        </div>
+                                    </td>
+                                    <td>624,785</td>
+                                    <td>3.9%</td>
+                                    <td>3.1%</td>
+                                    <td><span class="text-success">+128%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="bg-info bg-opacity-10 p-2 rounded me-2">
+                                                <i class="fab fa-twitter text-info"></i>
+                                            </span>
+                                            <span>X (Twitter)</span>
+                                        </div>
+                                    </td>
+                                    <td>214,673</td>
+                                    <td>3.2%</td>
+                                    <td>1.8%</td>
+                                    <td><span class="text-success">+115%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="bg-primary bg-opacity-10 p-2 rounded me-2">
+                                                <i class="fab fa-linkedin text-primary"></i>
+                                            </span>
+                                            <span>LinkedIn</span>
+                                        </div>
+                                    </td>
+                                    <td>56,801</td>
+                                    <td>5.7%</td>
+                                    <td>4.2%</td>
+                                    <td><span class="text-success">+168%</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center py-2">
+                    <a href="#" class="text-decoration-none">View Detailed Comparison</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <!-- ROI by Platform -->
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold">ROI by Platform</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 260px; width: 100%;">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Shortcuts -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="m-0 fw-bold">Analytics Tools</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                                <i class="fas fa-chart-line text-primary fa-2x"></i>
+                            </div>
+                            <h5>Platform Comparison</h5>
+                            <p class="text-muted mb-3">Compare performance metrics across different platforms</p>
+                            <a href="/analytics/platform-comparison" class="btn btn-sm btn-primary">View Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                                <i class="fas fa-flask text-success fa-2x"></i>
+                            </div>
+                            <h5>A/B Testing</h5>
+                            <p class="text-muted mb-3">Compare audience segments and optimize campaign effectiveness</p>
+                            <a href="/analytics/ab-testing" class="btn btn-sm btn-primary">Launch A/B Tests</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                                <i class="fas fa-dollar-sign text-warning fa-2x"></i>
+                            </div>
+                            <h5>ROI Dashboard</h5>
+                            <p class="text-muted mb-3">Track conversions, revenue, and return on investment metrics</p>
+                            <a href="/analytics/roi-dashboard" class="btn btn-sm btn-primary">View ROI Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Campaigns -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="m-0 fw-bold">Top Performing Campaigns</h5>
+            <div class="input-group input-group-sm w-auto">
+                <input type="text" class="form-control" placeholder="Search campaigns..." id="campaignSearchInput">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Campaign</th>
+                            <th>Platform</th>
+                            <th>Impressions</th>
+                            <th>CTR</th>
+                            <th>Conversions</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 rounded me-2 p-2 text-center" style="width: 36px; height: 36px;">SD</div>
+                                    <div>Senior Java Developer</div>
+                                </div>
+                            </td>
+                            <td>Meta</td>
+                            <td>245,621</td>
+                            <td>5.8%</td>
+                            <td>128</td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-info bg-opacity-10 rounded me-2 p-2 text-center" style="width: 36px; height: 36px;">UX</div>
+                                    <div>UI/UX Designer</div>
+                                </div>
+                            </td>
+                            <td>Google</td>
+                            <td>198,453</td>
+                            <td>4.9%</td>
+                            <td>96</td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-warning bg-opacity-10 rounded me-2 p-2 text-center" style="width: 36px; height: 36px;">DE</div>
+                                    <div>DevOps Engineer</div>
+                                </div>
+                            </td>
+                            <td>LinkedIn</td>
+                            <td>178,965</td>
+                            <td>4.2%</td>
+                            <td>74</td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-secondary bg-opacity-10 rounded me-2 p-2 text-center" style="width: 36px; height: 36px;">PM</div>
+                                    <div>Product Manager</div>
+                                </div>
+                            </td>
+                            <td>X</td>
+                            <td>156,782</td>
+                            <td>3.7%</td>
+                            <td>58</td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white text-center py-2">
+            <a href="/campaigns" class="text-decoration-none">View All Campaigns</a>
+        </div>
+    </div>
+
+    <!-- Demographics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold text-center">Age Distribution</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div class="w-100" style="height: 220px;">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold text-center">Education Level</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div class="w-100" style="height: 220px;">
+                        <canvas id="educationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 fw-bold text-center">Experience Level</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div class="w-100" style="height: 220px;">
+                        <canvas id="experienceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-3">
+        <a href="/segments" class="btn btn-primary">
+            <i class="fas fa-users me-1"></i> View Audience Segments
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart');
+    if (performanceCtx) {
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Impressions',
+                    data: [125000, 145000, 160000, 180000, 210000, 190000, 200000, 220000, 240000, 230000, 250000, 270000],
+                    borderColor: '#4361ee',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return value >= 1000 ? value / 1000 + 'k' : value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ROI Chart
+    const roiCtx = document.getElementById('roiChart');
+    if (roiCtx) {
+        new Chart(roiCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Meta', 'Google', 'X', 'LinkedIn', 'TikTok'],
+                datasets: [{
+                    label: 'ROI (%)',
+                    data: [142, 128, 115, 168, 105],
+                    backgroundColor: [
+                        'rgba(66, 133, 244, 0.7)',
+                        'rgba(219, 68, 55, 0.7)',
+                        'rgba(15, 157, 88, 0.7)',
+                        'rgba(0, 119, 181, 0.7)',
+                        'rgba(244, 67, 54, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Age Chart - Simple Bar Chart
+    const ageCtx = document.getElementById('ageChart');
+    if (ageCtx) {
+        new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['18-24', '25-34', '35-44', '45-54', '55+'],
+                datasets: [{
+                    label: 'Distribution',
+                    data: [15, 38, 25, 12, 10],
+                    backgroundColor: [
+                        'rgba(67, 97, 238, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(243, 156, 18, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Education Chart - Simple Pie
+    const educationCtx = document.getElementById('educationChart');
+    if (educationCtx) {
+        new Chart(educationCtx, {
+            type: 'pie',
+            data: {
+                labels: ['High School', 'Associate', 'Bachelor', 'Master', 'PhD'],
+                datasets: [{
+                    data: [10, 15, 45, 25, 5],
+                    backgroundColor: [
+                        'rgba(231, 76, 60, 0.7)',
+                        'rgba(243, 156, 18, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(155, 89, 182, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Experience Chart - Simple Doughnut
+    const experienceCtx = document.getElementById('experienceChart');
+    if (experienceCtx) {
+        new Chart(experienceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Entry', 'Mid-level', 'Senior', 'Executive'],
+                datasets: [{
+                    data: [28, 35, 25, 12],
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(230, 126, 34, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Campaign search functionality
+    const searchInput = document.getElementById('campaignSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('tbody tr');
+            
+            tableRows.forEach(row => {
+                const campaignName = row.querySelector('td:first-child').textContent.toLowerCase();
+                if (campaignName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
