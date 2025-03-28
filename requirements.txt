@@ -37,7 +37,7 @@ gunicorn==21.2.0
 pandas-stubs==2.2.3.250308
 
 # Security
-cryptography==41.0.7
+cryptography==44.0.1
 google-cloud-secret-manager==2.18.2
 pyjwt==2.8.0
 
