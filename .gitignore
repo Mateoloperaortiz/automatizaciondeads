@@ -164,4 +164,5 @@ CELERY_README.md
 CLAUDE.md
 /docs
 /phases
+.cursor/
 googleScript.py
