@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% macro render_field(field, field_type='text') %}
+    <div class="mb-4">
+        {{ field.label(class='block text-sm font-medium text-gray-700 mb-1') }}
+        {% if field_type == 'textarea' %}
+            {{ field(class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', **(field.render_kw or {})) }}
+        {% elif field_type == 'select' %}
+             {{ field(class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white', **(field.render_kw or {})) }}
+        {% elif field_type == 'file' %}
+            {{ field(class='mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400', **(field.render_kw or {})) }}
+        {% else %}
+            {{ field(class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', type=field_type, **(field.render_kw or {})) }}
+        {% endif %}
+        {% if field.errors %}
+            <ul class="mt-1 text-xs text-red-600">
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if field.description %}
+            <p class="mt-1 text-xs text-gray-500">{{ field.description }}</p>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% block content %}
+<h1 class="text-3xl font-semibold text-gray-800 mb-6">{{ title }}</h1>
+
+<div class="bg-white p-8 rounded-lg shadow max-w-3xl mx-auto">
+    <form method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+        {{ form.hidden_tag() }} {# Incluir token CSRF #}
+
+        {{ render_field(form.name) }}
+        {{ render_field(form.description, field_type='textarea') }}
+        {{ render_field(form.platform, field_type='select') }}
+        {{ render_field(form.daily_budget, field_type='number') }}
+        {{ render_field(form.job_opening, field_type='select') }}
+        {{ render_field(form.status, field_type='select') }}
+        
+        {# Renderizar Casillas de Verificación de Segmentos Objetivo #}
+        <div class="mb-4">
+             {{ form.target_segment_ids.label(class='block text-sm font-medium text-gray-700 mb-2') }}
+             <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
+                {% if form.target_segment_ids.choices %}
+                    {% for value, label in form.target_segment_ids.choices %}
+                        <label class="flex items-center">
+                            {# Usar iteración de WTForms directamente para las casillas de verificación #}
+                            <input type="checkbox" name="{{ form.target_segment_ids.name }}" value="{{ value }}" 
+                                   {% if value|int in (form.target_segment_ids.data or []) %}checked{% endif %} 
+                                   class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-sm text-gray-500 italic">No se encontraron segmentos de candidatos. Ejecute primero la segmentación ML.</p>
+                {% endif %}
+            </div>
+            {% if form.target_segment_ids.errors %}
+                <ul class="mt-1 text-xs text-red-600">
+                    {% for error in form.target_segment_ids.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        {# Sección de Creativo de Anuncio #}
+        <div class="mt-8 border-t pt-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Ad Creative</h2>
+            <div class="mb-4">
+                <button type="button" id="generateAdCreative" class="mb-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" {% if not form.job_opening.data %}disabled{% endif %}>
+                    <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                    Generate Ad Creative
+                </button>
+                <p id="generateHint" class="text-sm text-gray-500 mb-4 {% if form.job_opening.data %}hidden{% endif %}">Select a job opening to enable ad creative generation</p>
+                
+                {# Entrada de Audiencia Objetivo #}
+                <div class="mb-4">
+                    <label for="targetAudienceInput" class="block text-sm font-medium text-gray-700 mb-1">Target Audience (Optional)</label>
+                    <input type="text" id="targetAudienceInput" name="target_audience_input" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                           placeholder="e.g., experienced developers, recent graduates">
+                    <p class="mt-1 text-xs text-gray-500">Specify the target audience for the generated ad.</p>
+                </div>
+                {# Div para mostrar estado/errores de generación #}
+                <div id="generateStatus" class="text-sm mt-2 mb-4"></div>
+            </div>
+            {{ render_field(form.primary_text, field_type='textarea') }}
+            {{ render_field(form.headline) }}
+            {{ render_field(form.link_description) }}
+            {{ render_field(form.creative_image, field_type='file') }}
+            {% if form.instance and form.instance.creative_image_filename %}
+                <div class="mb-4">
+                     <p class="text-sm font-medium text-gray-700 mb-1">Current Image:</p>
+                     <img src="{{ url_for('static', filename='uploads/' + form.instance.creative_image_filename) }}" alt="Current Creative Image" class="max-h-40 rounded border">
+                     <p class="mt-1 text-xs text-gray-500">Uploading a new image will replace the current one.</p>
+                 </div>
+             {% endif %}
+        </div>
+
+        <div class="flex justify-end mt-6">
+            <a href="{{ url_for('main.list_campaigns') }}" class="mr-4 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancel
+            </a>
+            {{ form.submit(class='py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer') }}
+        </div>
+    </form>
+</div>
+
+{# Añadir JavaScript para Generación de Creativo de Anuncio #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generateAdCreative');
+    const generateHint = document.getElementById('generateHint');
+    const generateStatusDiv = document.getElementById('generateStatus'); // Obtener el div de estado
+    const jobSelect = document.querySelector('select[name="job_opening"]');
+    const primaryText = document.querySelector('textarea[name="primary_text"]');
+    const headline = document.querySelector('input[name="headline"]');
+    const linkDescription = document.querySelector('input[name="link_description"]');
+    const targetAudienceInput = document.getElementById('targetAudienceInput'); // Obtener la entrada de audiencia objetivo
+
+    // Función para actualizar el estado del botón
+    function updateGenerateButton() {
+        const jobSelected = jobSelect.value !== '';
+        generateBtn.disabled = !jobSelected;
+        generateHint.classList.toggle('hidden', jobSelected);
+    }
+
+    // Actualizar estado del botón cuando cambia la selección de trabajo
+    jobSelect.addEventListener('change', updateGenerateButton);
+
+    // Manejar clic en el botón de generar
+    generateBtn.addEventListener('click', async function() {
+        const selectedJob = jobSelect.selectedOptions[0];
+        if (!selectedJob.value) return;
+
+        generateBtn.disabled = true;
+        generateStatusDiv.textContent = 'Generating...'; // Mostrar estado de generación
+        generateStatusDiv.className = 'text-sm mt-2 mb-4 text-blue-600'; // Estilizar estado
+        generateBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
+
+        // Obtener el valor de la audiencia objetivo, predeterminado si está vacío
+        const targetAudience = targetAudienceInput.value.trim() || 'general job seekers';
+
+        try {
+            const response = await fetch('/api/generate-ad-creative', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Añadir cabecera de token CSRF si es necesario (asumiendo que Flask-WTF se usa globalmente)
+                    // 'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({
+                    job_title: selectedJob.text,
+                    job_description: document.querySelector('textarea[name="description"]').value || 'No description provided',
+                    target_audience: targetAudience // Enviar la audiencia objetivo
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                primaryText.value = data.content.primary_text || '';
+                headline.value = data.content.headline || '';
+                linkDescription.value = data.content.link_description || '';
+                generateStatusDiv.textContent = 'Ad creative generated successfully!'; // Mostrar éxito
+                generateStatusDiv.className = 'text-sm mt-2 mb-4 text-green-600'; // Estilizar éxito
+            } else {
+                generateStatusDiv.textContent = 'Error: ' + data.message; // Mostrar mensaje de error
+                generateStatusDiv.className = 'text-sm mt-2 mb-4 text-red-600'; // Estilizar error
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            generateStatusDiv.textContent = 'An unexpected error occurred. Please try again.'; // Mostrar error genérico
+            generateStatusDiv.className = 'text-sm mt-2 mb-4 text-red-600'; // Estilizar error
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg> Generate Ad Creative';
+            // Opcionalmente limpiar estado después de unos segundos
+            // setTimeout(() => { generateStatusDiv.textContent = ''; }, 5000);
+        }
+    });
+
+    // Estado inicial del botón
+    updateGenerateButton();
+});
+</script>
+{% endblock %} 

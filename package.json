@@ -1,0 +1,27 @@
+{
+  "name": "adflux",
+  "version": "1.0.0",
+  "description": "AdFlux is a university project aiming to automate the publishing of job opening advertisements onto social media platforms. It is designed as a proof-of-concept inspired by the needs of platforms like Magneto365, focusing on fetching simulated job openings, segmenting potential candidate audiences using machine learning, and creating targeted ad campaigns on selected platforms via their APIs (using sandbox/test environments).",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tailwind:init": "tailwindcss init -p",
+    "build:css": "tailwindcss -i ./adflux/static/css/input.css -o ./adflux/static/css/output.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "alpinejs": "^3.14.9",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "adflux": "file:"
+  }
+}

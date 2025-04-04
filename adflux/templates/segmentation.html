@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> #}
+{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-semibold text-gray-800">{{ title }}</h1>
+    {# Añadir Botón de Disparo #}
+    <form action="{{ url_for('main.trigger_segmentation') }}" method="POST">
+        {# Renderizar campo oculto de token CSRF #}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+        <button type="submit" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+            Re-run Segmentation
+        </button>
+    </form>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- Tarjeta de Gráfico -->
+    <div class="md:col-span-2 bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Segment Distribution</h2>
+        {# El elemento canvas donde se dibujará el gráfico #}
+        {% if chart_data %}
+            <canvas id="segmentDistributionChart"></canvas>
+        {% else %}
+            <p class="text-gray-500">No segmentation data available to display chart.</p>
+        {% endif %}
+    </div>
+
+    <!-- Tarjeta de Estadísticas Resumidas -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Summary</h2>
+        {% if summary_stats %}
+            <dl>
+                <div class="py-2 flex justify-between">
+                    <dt class="text-sm font-medium text-gray-500">Total Candidates</dt>
+                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('total_candidates', 'N/A') }}</dd>
+                </div>
+                <div class="py-2 flex justify-between">
+                    <dt class="text-sm font-medium text-gray-500">Segmented Candidates</dt>
+                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('segmented_candidates', 'N/A') }}</dd>
+                </div>
+                <div class="py-2 flex justify-between">
+                    <dt class="text-sm font-medium text-gray-500">Active Segments</dt>
+                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('num_segments', 'N/A') }}</dd>
+                </div>
+            </dl>
+        {% else %}
+             <p class="text-gray-500">Summary statistics could not be loaded.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tabla Resumen de Segmentos -->
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+     <h2 class="text-xl font-semibold text-gray-700 p-6">Segment Details</h2>
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="w-4 px-4 py-3"></th> {# Interruptor de Expansión #}
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segment</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Exp.</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        {# Mover x-data a tbody para gestionar el estado de todas las filas #}
+        <tbody x-data="{ openSegmentId: null }" class="bg-white divide-y divide-gray-200">
+            {% if segment_summary %}
+                {% for segment in segment_summary %}
+                {# --- Fila Principal (Visible) --- #}
+                <tr class="hover:bg-gray-50">
+                    {# Botón de Expansión - Alterna openSegmentId #}
+                    <td class="px-4 py-4">
+                        <button @click="openSegmentId = openSegmentId === {{ segment.id|default(-1) }} ? null : {{ segment.id|default(-1) }}" 
+                                class="text-gray-400 hover:text-gray-600">
+                            <svg :class="{ 'rotate-90': openSegmentId === {{ segment.id|default(-1) }} }" 
+                                 class="h-5 w-5 transform transition-transform duration-200" 
+                                 xmlns="http://www.w3.org/2000/svg" 
+                                 viewBox="0 0 20 20" 
+                                 fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </td>
+                    {# Nombre e ID del Segmento #}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div>{{ segment.name }}</div>
+                        <div class="text-xs text-gray-500">(ID: {{ segment.id if segment.id is not none else 'N/A' }})</div>
+                    </td>
+                    {# Recuento #}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ segment.count }}</td>
+                    {# Exp. Promedio #}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ "%.1f yrs"|format(segment.avg_experience) if segment.avg_experience is not none else 'N/A' }}
+                    </td>
+                    {# Acciones #}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                        <a href="{{ segment.view_url }}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                        {% if segment.id is not none %}
+                        <a href="{{ url_for('main.edit_segment', segment_id=segment.id) }}" class="text-yellow-600 hover:text-yellow-900">Edit</a>
+                        <a href="{{ url_for('main.create_campaign', target_segment_id=segment.id) }}" 
+                           class="text-green-600 hover:text-green-900" 
+                           title="Create new campaign targeting {{ segment.name }}">
+                           + Campaign
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {# --- Fila de Detalles (Oculta por defecto) --- #}
+                <tr x-show="openSegmentId === {{ segment.id|default(-1) }}" 
+                    x-cloak
+                    class="bg-gray-50">
+                    <td colspan="5" class="px-6 py-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                            {# Descripción #}
+                            <div>
+                                <h4 class="font-semibold text-gray-600 mb-1">Description</h4>
+                                <p class="text-gray-800">{{ segment.description | default('-', true) | nl2br }}</p>
+                            </div>
+                            {# Habilidades Principales #}
+                            <div>
+                                <h4 class="font-semibold text-gray-600 mb-1">Top Skills</h4>
+                                {% if segment.top_skills %}
+                                    <ul class="list-disc list-inside text-gray-800">
+                                    {% for skill, count in segment.top_skills %}
+                                        <li>{{ skill }} ({{ count }})</li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-gray-500 italic">-</p>
+                                {% endif %}
+                            </div>
+                            {# Ubicaciones Principales #}
+                            <div>
+                                <h4 class="font-semibold text-gray-600 mb-1">Top Locations</h4>
+                                {% if segment.top_locations %}
+                                    <ul class="list-disc list-inside text-gray-800">
+                                    {% for loc, count in segment.top_locations %}
+                                        <li>{{ loc }} ({{ count }})</li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-gray-500 italic">-</p>
+                                {% endif %}
+                            </div>
+                            {# Educación #}
+                            <div>
+                                <h4 class="font-semibold text-gray-600 mb-1">Education</h4>
+                                 {% if segment.education_distribution %}
+                                    <ul class="list-disc list-inside text-gray-800">
+                                    {% for level, count in segment.education_distribution.items() %}
+                                        <li>{{ level }}: {{ count }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-gray-500 italic">-</p>
+                                {% endif %}
+                            </div>
+                            {# Dirigido Por #}
+                            <div class="md:col-span-2 lg:col-span-4"> {# Permitir que esto ocupe más en pantallas más anchas #}
+                                <h4 class="font-semibold text-gray-600 mb-1">Targeted By Campaigns</h4>
+                                 {% if segment.associated_campaigns %}
+                                    <ul class="list-disc list-inside text-gray-800 space-y-1">
+                                    {% for campaign in segment.associated_campaigns %}
+                                        <li><a href="{{ url_for('main.campaign_details', campaign_id=campaign.id) }}" class="text-blue-600 hover:underline">{{ campaign.name }}</a></li>
+                                    {% endfor %}
+                                     {% if segment.total_campaign_count > segment.associated_campaigns|length %}
+                                        <li class="text-gray-500 italic">... and {{ segment.total_campaign_count - segment.associated_campaigns|length }} more ({{ segment.total_campaign_count }} total)</li>
+                                     {% endif %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-gray-500 italic">Not targeted by any current campaigns.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                     {# Actualizar colspan para que coincida con las nuevas columnas visibles #}
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No segment data found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{# Cargar biblioteca Chart.js *e* inicializar gráfico dentro del bloque body_scripts #}
+{% block body_scripts %}
+{{ super() }} {# Incluir scripts del bloque body_scripts de base.html #}
+
+<!-- Asegurarse de que Chart.js esté cargado antes de usarlo -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if chart_data %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Verificar si el elemento canvas existe
+    const canvasElement = document.getElementById('segmentDistributionChart');
+    if (!canvasElement) {
+        console.error("Canvas element 'segmentDistributionChart' not found!");
+        return;
+    }
+    const ctx = canvasElement.getContext('2d');
+    if (!ctx) {
+        console.error("Failed to get 2D context for canvas!");
+        return;
+    }
+
+    // Verificar si Chart está definido justo antes de usarlo
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js library is not loaded or not defined (should have been loaded just before this script)!");
+        return;
+    }
+
+    try {
+        const segmentChart = new Chart(ctx, {
+            type: 'pie', // O 'doughnut' o 'bar'
+            data: {
+                labels: {{ chart_data.labels | tojson | safe }}, // Aplicar filtro safe
+                datasets: [{
+                    label: '# of Candidates',
+                    data: {{ chart_data.data | tojson | safe }}, // Aplicar filtro safe
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)', // Azul
+                        'rgba(75, 192, 192, 0.6)', // Verde
+                        'rgba(255, 206, 86, 0.6)',  // Amarillo
+                        'rgba(153, 102, 255, 0.6)', // Púrpura
+                        'rgba(255, 159, 64, 0.6)',  // Naranja
+                        'rgba(255, 99, 132, 0.6)',   // Rojo
+                        'rgba(201, 203, 207, 0.6)'  // Gris
+                        // Añadir más colores si tienes más segmentos
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false, // El título ya está en el encabezado de la tarjeta
+                        text: 'Candidate Segment Distribution'
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error creating Chart:", error);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

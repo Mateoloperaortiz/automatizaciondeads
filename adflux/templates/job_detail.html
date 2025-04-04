@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-semibold text-gray-800">{{ job.title }}</h1>
+    <a href="{{ url_for('main.list_jobs') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Jobs List</a>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Job Details - {{ job.job_id }}
+            </h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                Information about the job opening.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('main.create_campaign', job_id=job.job_id) }}" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Create Ad Campaign
+            </a>
+        </div>
+    </div>
+    <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+        <dl class="sm:divide-y sm:divide-gray-200">
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Company</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ job.company | default('N/A') }}</dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ job.location | default('N/A') }}</dd>
+            </div>
+             <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if job.status == 'open' %} bg-green-100 text-green-800 
+                                {% elif job.status == 'closed' %} bg-red-100 text-red-800 
+                                {% else %} bg-yellow-100 text-yellow-800 {% endif %}">
+                        {{ job.status | default('N/A') }}
+                    </span>
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Posted Date</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ job.posted_date.strftime('%Y-%m-%d') if job.posted_date else 'N/A' }}</dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Salary Range</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if job.salary_min and job.salary_max %}
+                        ${{ "{:,}".format(job.salary_min) }} - ${{ "{:,}".format(job.salary_max) }}
+                    {% elif job.salary_min %}
+                         ${{ "{:,}".format(job.salary_min) }} +
+                    {% elif job.salary_max %}
+                        Up to ${{ "{:,}".format(job.salary_max) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Required Skills</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if job.required_skills %}
+                        {% for skill in job.required_skills %}
+                            <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xs font-semibold text-gray-700 mr-2 mb-2">{{ skill }}</span>
+                        {% endfor %}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </dd>
+            </div>
+              <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Target Segments</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if job.target_segments %}
+                         {% for segment in job.target_segments %}
+                            <span class="inline-block bg-blue-100 rounded-full px-3 py-1 text-xs font-semibold text-blue-800 mr-2 mb-2">Segment {{ segment }}</span>
+                        {% endfor %}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Description</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {{ job.description | default('N/A') | nl2br }}
+                </dd>
+            </div>
+             <!-- Añadir sección para campañas AdFlux vinculadas si es necesario -->
+            {# <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Campañas AdFlux</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if job.adflux_campaigns %}
+                        <ul class="list-disc pl-5">
+                        {% for campaign in job.adflux_campaigns %}
+                            <li><a href="{{ url_for('main.edit_campaign', campaign_id=campaign.id) }}" class="text-indigo-600 hover:text-indigo-900">{{ campaign.name }} ({{ campaign.platform }})</a></li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        No hay campañas asociadas.
+                    {% endif %}
+                </dd>
+            </div> #}
+        </dl>
+    </div>
+</div>
+
+{% endblock %} 

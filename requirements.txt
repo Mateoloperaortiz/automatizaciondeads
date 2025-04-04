@@ -1,0 +1,42 @@
+Flask>=2.0.0,<3.0.0
+Flask-RESTful>=0.3.9,<0.4.0
+Flask-SQLAlchemy>=3.0.0,<4.0.0 # Añadido para ORM
+SQLAlchemy>=2.0.0,<2.1.0     # Añadido para ORM Core
+# scikit-learn>=1.0.0,<1.5.0 # Restricción original que causaba problemas de compilación
+scikit-learn==1.6.1         # Versión binaria exacta instalada
+numpy==2.2.4                # Versión binaria exacta instalada
+joblib==1.4.0
+scipy==1.15.2               # Dependencia de scikit-learn
+threadpoolctl==3.6.0        # Dependencia de scikit-learn
+pandas==2.2.2
+psycopg2-binary>=2.9.0,<2.10.0
+click>=8.0.0,<9.0.0
+Faker>=10.0.0,<20.0.0
+flask-restx>=1.0 # Para API REST y Swagger
+Flask-Migrate>=4.0 # Para migraciones de base de datos
+marshmallow>=3.0.0
+python-dotenv>=0.15.0
+python-dateutil>=2.8.0
+Flask-APScheduler>=1.12.0 # Añadir planificador
+Flask-Marshmallow>=0.14.0 # Para serialización
+marshmallow-sqlalchemy # Añadido para generar esquemas automáticamente desde modelos
+facebook_business>=22.0.0 # Añadido SDK de la API de Marketing de Meta
+yarl==1.9.4
+# Añade otras dependencias encima de esta línea
+
+# Para SQLite (si no se usa la instalación del sistema)
+# pysqlite3==0.5.2 
+
+# Considera añadir para drivers de base de datos específicos si no es SQLite
+# psycopg2-binary # Para PostgreSQL
+# mysql-connector-python # Para MySQL
+
+google-generativeai>=0.5.0 # Añadir librería Gemini
+
+requests==2.32.3
+Flask-WTF>=1.0 # Añadir Flask-WTF para formularios
+WTForms-SQLAlchemy>=0.3 # Añadir para QuerySelectField
+celery
+redis
+gevent
+google-ads

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-semibold text-gray-800">{{ candidate.name }}</h1>
+    <a href="{{ url_for('main.list_candidates') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Candidates List</a>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+            Candidate Information
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            Details for {{ candidate.name }} ({{ candidate.candidate_id }})
+        </p>
+    </div>
+    <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+        <dl class="sm:divide-y sm:divide-gray-200">
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Candidate ID</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.candidate_id }}</dd>
+            </div>
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Name</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.name }}</dd>
+            </div>
+             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.location | default('N/A') }}</dd>
+            </div>
+             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Years Experience</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.years_experience if candidate.years_experience is not none else 'N/A' }}</dd>
+            </div>
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Education Level</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.education_level | default('N/A') }}</dd>
+            </div>
+             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Primary Skill</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ candidate.primary_skill | default('N/A') }}</dd>
+            </div>
+             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Skills</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if candidate.skills %}
+                        {% for skill in candidate.skills %}
+                            <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xs font-semibold text-gray-700 mr-2 mb-2">{{ skill }}</span>
+                        {% endfor %}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </dd>
+            </div>
+             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Desired Salary</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">${{ "{:,}".format(candidate.desired_salary) if candidate.desired_salary else 'N/A' }}</dd>
+            </div>
+            <!-- Segment Information -->
+            <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Assigned Segment</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if candidate.segment is not none %}
+                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {{ 'bg-green-100 text-green-800' if candidate.segment == 1 else 
+                                       'bg-yellow-100 text-yellow-800' if candidate.segment == 2 else 
+                                       'bg-blue-100 text-blue-800' if candidate.segment == 0 else 
+                                       'bg-gray-100 text-gray-800' }}">
+                            {{ segment_map.get(candidate.segment, 'Unknown') }}
+                         </span>
+                         (ID: {{ candidate.segment }})
+                    {% else %}
+                        Unsegmented
+                    {% endif %}
+                </dd>
+            </div>
+             {# TODO: Añadir aplicaciones/historial de trabajos relacionados más tarde #}
+        </dl>
+    </div>
+</div>
+
+{% endblock %} 

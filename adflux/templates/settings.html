@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Settings & Connections</h1>
+
+    <!-- Meta API Credentials Card -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-3">Meta API Credentials</h2>
+        <form action="{{ url_for('main.settings') }}" method="POST" class="space-y-4">
+             {# Añadir campo oculto para identificar qué formulario se envió #}
+             <input type="hidden" name="platform" value="meta"> 
+             {# Añadir Token CSRF Manual #}
+             <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="meta_app_id" class="block text-sm font-medium text-gray-700">App ID</label>
+                    <input type="text" name="meta_app_id" id="meta_app_id" value="{{ config.get('META_APP_ID', '') }}" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="meta_app_secret" class="block text-sm font-medium text-gray-700">App Secret</label>
+                    <input type="password" name="meta_app_secret" id="meta_app_secret" value="{{ config.get('META_APP_SECRET', '') }}" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+            </div>
+
+             <div>
+                <label for="meta_access_token" class="block text-sm font-medium text-gray-700">Access Token</label>
+                <input type="password" name="meta_access_token" id="meta_access_token" value="{{ config.get('META_ACCESS_TOKEN', '') }}" 
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Long-lived user access token">
+            </div>
+
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="meta_ad_account_id" class="block text-sm font-medium text-gray-700">Ad Account ID</label>
+                    <input type="text" name="meta_ad_account_id" id="meta_ad_account_id" value="{{ config.get('META_AD_ACCOUNT_ID', '') }}" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="act_xxxxxxxxxxxx">
+                </div>
+                <div>
+                    <label for="meta_page_id" class="block text-sm font-medium text-gray-700">Facebook Page ID</label>
+                    <input type="text" name="meta_page_id" id="meta_page_id" value="{{ config.get('META_PAGE_ID', '') }}" 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-4">
+                 {# Este botón guarda #}
+                 <button type="submit" name="action" value="save_meta" class="btn btn-primary">Save Meta Settings</button>
+                 {# Este botón prueba - envía el mismo formulario #}
+                 <button type="submit" name="action" value="test_meta" class="btn btn-secondary">Test Connection</button> 
+            </div>
+        </form>
+    </div>
+
+    <!-- Gemini API Card -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-3">Gemini API Key</h2>
+        {# Apuntar acción del formulario al endpoint correcto y añadir campos ocultos #}
+        <form action="{{ url_for('main.settings') }}" method="POST" class="space-y-4">
+            <input type="hidden" name="platform" value="gemini">
+            {# Añadir Token CSRF Manual #}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+
+            <div>
+                <label for="gemini_api_key" class="block text-sm font-medium text-gray-700">API Key</label>
+                <div class="mt-1">
+                    <input type="password" name="gemini_api_key" id="gemini_api_key"
+                           value="{{ form_values.gemini_api_key if form_values else config.get('GEMINI_API_KEY', '') }}"
+                           class="form-input" 
+                           placeholder="Enter your Google AI Studio API Key">
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Your Gemini API key is stored securely and used for AI features.</p>
+            </div>
+
+            <div>
+                <label for="gemini_model" class="block text-sm font-medium text-gray-700">Model</label>
+                <div class="mt-1">
+                    <select name="gemini_model" id="gemini_model" class="form-select">
+                        {% if not available_models %}
+                            <option value="">Test connection to see available models</option>
+                        {% else %}
+                            {% for model in available_models %}
+                                <option value="{{ model.name }}" 
+                                        {% if model.name == (form_values.gemini_model if form_values else config.get('GEMINI_MODEL', '')) %}selected{% endif %}
+                                        title="{{ model.description }}">
+                                    {{ model.display_name }}
+                                    {% if model.input_image %} (Supports images){% endif %}
+                                </option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Select the Gemini model to use for generating ad creatives.</p>
+            </div>
+            
+            <div class="flex justify-between items-center pt-4">
+                 {# Añadir botón de Prueba junto al botón Guardar #}
+                 <button type="submit" name="action" value="save_gemini" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Save Gemini Settings</button>
+                 <button type="submit" name="action" value="test_gemini" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">Test Connection</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %} 

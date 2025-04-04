@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% from "macros.html" import pagination_widget, render_sort_link %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Candidates</h1>
+
+    {# Envolver tabla en tarjeta estilizada #}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segment</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                    <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">Actions</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% if candidates %}
+                    {% for candidate in candidates %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ candidate.candidate_id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <a href="{{ url_for('main.candidate_detail', candidate_id=candidate.candidate_id) }}" class="text-indigo-600 hover:text-indigo-900">{{ candidate.name }}</a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ candidate.email if candidate.email else 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if candidate.segment_id is not none %}
+                                {% set segment_name = segment_map.get(candidate.segment_id) %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {{ 'bg-green-100 text-green-800' if candidate.segment_id == 1 else 
+                                               'bg-yellow-100 text-yellow-800' if candidate.segment_id == 2 else 
+                                               'bg-blue-100 text-blue-800' if candidate.segment_id == 0 else 
+                                               'bg-gray-100 text-gray-800' }}">
+                                    {{ segment_name if segment_name else 'Unknown' }}
+                                </span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    Unsegmented
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ candidate.location | default('N/A') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{{ url_for('main.candidate_detail', candidate_id=candidate.candidate_id) }}" class="text-blue-600 hover:text-blue-900">Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No candidates found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Añadir paginación #}
+    <div class="mt-6">
+        {{ pagination_widget(pagination, 'main.list_candidates') }}
+    </div>
+
+</div>
+{% endblock %} 

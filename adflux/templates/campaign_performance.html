@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block head_extra %}
+    {# Incluir Chart.js desde CDN #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    {# Incluir adaptador de fecha y biblioteca date-fns (opcional, para mejores ejes de tiempo) #}
+    {# <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script> #}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    {# Sección de Encabezado #}
+    <div class="mb-6 border-b border-gray-200 pb-4">
+        <nav aria-label="Breadcrumb" class="mb-2">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{{ url_for('main.list_campaigns') }}" class="hover:text-gray-700">Campaigns</a></li>
+                <li>
+                    <svg class="h-5 w-5 flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
+                    </svg>
+                </li>
+                 <li><a href="{{ url_for('main.campaign_details', campaign_id=campaign.id) }}" class="hover:text-gray-700">{{ campaign.name }}</a></li>
+                 <li>
+                    <svg class="h-5 w-5 flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
+                    </svg>
+                </li>
+                <li class="font-medium text-gray-700">Performance Report</li>
+            </ol>
+        </nav>
+        <div class="flex justify-between items-center">
+            <div>
+                 <h1 class="text-3xl font-bold text-gray-800">Campaign Performance: {{ campaign.name }}</h1>
+                <p class="text-sm text-gray-500 mt-1">Status: {{ campaign.status | title }} | Platform: {{ campaign.platform | title }}</p>
+                {% if campaign.external_campaign_id %}
+                    <p class="text-sm text-gray-500">External ID: {{ campaign.external_campaign_id }}</p>
+                {% endif %}
+            </div>
+             {# --- Filtro de Rango de Fechas --- #}
+            <form method="GET" action="{{ url_for('main.campaign_performance_report', campaign_id=campaign.id) }}" class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1"><label for="start_date" class="text-sm font-medium text-gray-600">From:</label><input type="date" id="start_date" name="start_date" value="{{ default_start_date }}" class="input-sm"></div>
+                <div class="flex items-center space-x-1"><label for="end_date" class="text-sm font-medium text-gray-600">To:</label><input type="date" id="end_date" name="end_date" value="{{ default_end_date }}" class="input-sm"></div>
+                <button type="submit" class="btn-primary-sm">Apply</button>
+            </form>
+            {# --- Fin Filtro de Rango de Fechas --- #}
+        </div>
+    </div>
+
+    {# --- Fila de Métricas Resumidas --- #}
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="stat-title">Total Spend</h2>
+            <p class="stat-value text-orange-600 font-bold text-2xl">${{ "%.2f"|format(stats.total_spend) }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="stat-title">Impressions</h2>
+            <p class="stat-value text-teal-600 font-bold text-2xl">{{ "{:,}".format(stats.total_impressions) }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="stat-title">Clicks</h2>
+            <p class="stat-value text-blue-600 font-bold text-2xl">{{ "{:,}".format(stats.total_clicks) }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="stat-title">CTR</h2>
+            <p class="stat-value text-yellow-600 font-bold text-2xl">{{ "%.2f"|format(stats.ctr) }}%</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="stat-title">Avg. CPC</h2>
+            <p class="stat-value text-red-600 font-bold text-2xl">${{ "%.2f"|format(stats.cpc) }}</p>
+        </div>
+    </div>
+    {# --- Fin Fila de Métricas Resumidas --- #}
+
+    <!-- Tarjeta de Gráfico de Gasto a lo Largo del Tiempo -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Spend Over Time</h2>
+        <div class="chart-container" style="position: relative; height:40vh;">
+             <canvas id="spendOverTimeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tarjeta de Tabla de Rendimiento de Conjunto de Anuncios -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <h2 class="text-lg font-semibold text-gray-700 p-6 border-b border-gray-200">Ad Set Performance</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="th-std">Ad Set Name</th>
+                        <th scope="col" class="th-std text-right">Spend</th>
+                        <th scope="col" class="th-std text-right">Impressions</th>
+                        <th scope="col" class="th-std text-right">Clicks</th>
+                        <th scope="col" class="th-std text-right">CTR (%)</th>
+                        <th scope="col" class="th-std text-right">CPC ($)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% if stats.ad_set_performance %}
+                        {% for ad_set in stats.ad_set_performance %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ad_set.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${{ "%.2f"|format(ad_set.spend) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ "{:,}".format(ad_set.impressions) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ "{:,}".format(ad_set.clicks) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ "%.2f"|format(ad_set.ctr) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ "%.2f"|format(ad_set.cpc) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No ad set performance data available for this period.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block body_scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const spendChartData = {{ stats.spend_over_time_chart | tojson }};
+        
+        // --- Gráfico de Gasto a lo Largo del Tiempo --- 
+        const spendCtx = document.getElementById('spendOverTimeChart')?.getContext('2d');
+        if (spendCtx && spendChartData && spendChartData.labels && spendChartData.labels.length > 0) {
+            new Chart(spendCtx, {
+                type: 'line',
+                data: spendChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                // Formatear marcas del eje Y como moneda
+                                callback: function(value, index, values) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        },
+                        x: { // Escala de tiempo básica - considerar adaptador de fecha para más control
+                            type: 'category', // Trata las etiquetas como categorías
+                             ticks: { // Opcional: limitar número de marcas mostradas
+                                // autoSkip: true,
+                                // maxTicksLimit: 10 
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '$' + context.parsed.y.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+             console.log("Datos del gráfico de gasto a lo largo del tiempo faltantes o canvas no encontrado.");
+             const chartContainer = document.getElementById('spendOverTimeChart')?.parentNode;
+             if(chartContainer) chartContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No hay datos de gasto disponibles para este período.</p>';
+        }
+    });
+</script>
+{% endblock %} 

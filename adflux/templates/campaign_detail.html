@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-semibold text-gray-800">{{ campaign.name }}</h1>
+    <a href="{{ url_for('main.list_campaigns') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Volver a la Lista de Campañas</a>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Detalles de Campaña - ID: {{ campaign.id }}
+            </h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                Información almacenada localmente sobre esta campaña de AdFlux.
+            </p>
+        </div>
+        {# --- Botón de Publicar --- #}
+        <div>
+            <form id="publish-form" action="{{ url_for('main.publish_campaign', campaign_id=campaign.id) }}" method="POST" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                 <button id="publish-button" type="submit" 
+                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 
+                                {% if campaign.external_campaign_id %} opacity-50 cursor-not-allowed {% endif %}"
+                         {% if campaign.external_campaign_id %}disabled title="Ya publicado/simulado"{% endif %}>
+                    {# Icono de Marcador de Posición #}
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    {% if campaign.external_campaign_id %} Republicar en {{ campaign.platform|title }} {% else %} Publicar en {{ campaign.platform|title }} {% endif %}
+                </button>
+            </form>
+        </div>
+        {# --- Fin Botón de Publicar --- #}
+    </div>
+    <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+        <dl class="sm:divide-y sm:divide-gray-200">
+             <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {# Añadir estilo basado en el estado más tarde #}
+                    <span id="campaign-status" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800"> 
+                       {{ campaign.status | title }}
+                    </span>
+                    {# Añadir estado externo aquí más tarde #}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Plataforma</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ campaign.platform | title }}</dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Oferta de Empleo Vinculada</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if campaign.job_opening %}
+                        <a href="{{ url_for('main.job_details', job_id=campaign.job_opening.job_id) }}" class="text-indigo-600 hover:text-indigo-900">
+                            {{ campaign.job_opening.title }} ({{ campaign.job_opening.job_id }})
+                        </a>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </dd>
+            </div>
+             <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Descripción</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {{ campaign.description | default('N/A') | nl2br }}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Creado / Actualizado</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                   Creado: {{ campaign.created_at.strftime('%Y-%m-%d %H:%M') if campaign.created_at else 'N/A' }} <br>
+                   Actualizado: {{ campaign.updated_at.strftime('%Y-%m-%d %H:%M') if campaign.updated_at else 'N/A' }}
+                </dd>
+            </div>
+            {# --- IDs Externos --- #}
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">ID de Campaña Externa</dt>
+                <dd id="external-campaign-id" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 font-mono">{{ campaign.external_campaign_id | default('No Publicado') }}</dd>
+            </div>
+            {# --- Mostrar IDs Externos Genéricos (desde JSON) --- #}
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Otros IDs Externos</dt>
+                <dd id="external-ids" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 font-mono">
+                    <pre class="whitespace-pre-wrap break-words">{{ campaign.external_ids | tojson(indent=2) if campaign.external_ids else 'No Disponible' }}</pre>
+                </dd>
+            </div>
+            {# --- Segmentos Objetivo (si implementado) --- #}
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Segmentos Objetivo</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if campaign.target_segment_ids %}
+                         {% for segment_id in campaign.target_segment_ids %}
+                            <span class="inline-block bg-blue-100 rounded-full px-3 py-1 text-xs font-semibold text-blue-800 mr-2 mb-2">Segmento {{ segment_id }}</span>
+                        {% endfor %}
+                    {% else %}
+                        No especificado
+                    {% endif %}
+                </dd>
+            </div>
+
+            {# --- Campos de Creativo de Anuncio --- #}
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Título del Anuncio</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {{ campaign.headline | default('No Establecido') }}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Texto Principal del Anuncio</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 whitespace-pre-wrap">
+                    {{ campaign.primary_text | default('No Establecido') }}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Descripción del Enlace del Anuncio</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {{ campaign.link_description | default('No Establecido') }}
+                </dd>
+            </div>
+            <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Imagen del Creativo</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {% if campaign.creative_image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + campaign.creative_image_filename) }}" 
+                             alt="Imagen Creativa de la Campaña" 
+                             class="max-w-xs h-auto rounded shadow-md">
+                    {% else %}
+                        No se ha subido ninguna imagen.
+                    {% endif %}
+                </dd>
+            </div>
+            {# --- Fin Campos de Creativo de Anuncio --- #}
+
+        </dl>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block body_scripts %}
+<script>
+// Registro de prueba simple para ver si este bloque se incluye
+console.log('Bloque de Scripts de Detalle de Campaña Cargado!');
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Encontrar el elemento del mensaje flash que contiene el ID de la tarea
+    const taskElement = document.querySelector('.task-id');
+    const taskId = taskElement ? taskElement.dataset.taskId : null;
+
+    if (taskId) {
+        console.log("Sondeando tarea:", taskId);
+        const statusUrl = `/api/v1/tasks/status/${taskId}`;
+        let pollInterval = null;
+        let attempts = 0;
+        const maxAttempts = 20; // Sondear por un máximo de ~1 minuto (20 * 3s)
+
+        // Función para actualizar los elementos del DOM
+        function updateCampaignDetails(data) {
+            console.log("Tarea finalizada. Respuesta API:", data);
+            const campaignIdElement = document.getElementById('external-campaign-id');
+            const externalIdsElement = document.getElementById('external-ids');
+            const statusElement = document.getElementById('campaign-status');
+
+            // Verificar el estado de la tarea desde la respuesta de la API
+            if (data.status === 'SUCCESS' && data.result && data.result.success) { 
+                const taskResult = data.result; 
+                console.log("Resultado de Tarea (Dict):", taskResult);
+
+                if (campaignIdElement) campaignIdElement.textContent = taskResult.external_campaign_id || 'N/A';
+                if (externalIdsElement) {
+                    if (taskResult.external_ids) {
+                        externalIdsElement.innerHTML = `<pre class="whitespace-pre-wrap break-words">${JSON.stringify(taskResult.external_ids, null, 2)}</pre>`;
+                    } else {
+                        externalIdsElement.textContent = 'No Disponible';
+                    }
+                }
+                
+                if (statusElement) {
+                    statusElement.textContent = 'Publicado';
+                    statusElement.classList.remove('bg-gray-100', 'text-gray-800');
+                    statusElement.classList.add('bg-green-100', 'text-green-800');
+                }
+                
+                const publishButton = document.getElementById('publish-button');
+                if (publishButton) {
+                    publishButton.disabled = true;
+                    publishButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    publishButton.title = "Ya publicado/simulado";
+                }
+            } else {
+                if (statusElement) {
+                    statusElement.textContent = 'Publicación Fallida';
+                    statusElement.classList.remove('bg-gray-100', 'text-gray-800', 'bg-green-100', 'text-green-800');
+                    statusElement.classList.add('bg-red-100', 'text-red-800');
+                }
+                console.error("Tarea de publicación fallida o estructura de resultado API inesperada:", data);
+                // Mostrar mensaje de error de la tarea si está disponible
+                const flashArea = document.getElementById('flash-messages');
+                if (flashArea && data.result && data.result.message) {
+                    // Añadir un nuevo mensaje flash para el error
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'p-4 rounded-md bg-red-100 text-red-800';
+                    errorDiv.textContent = `Error de Tarea: ${data.result.message}`;
+                    flashArea.appendChild(errorDiv);
+                } else if (flashArea && data.status === 'FAILURE') {
+                     const errorDiv = document.createElement('div');
+                    errorDiv.className = 'p-4 rounded-md bg-red-100 text-red-800';
+                    errorDiv.textContent = `Tarea Fallida: ${data.result || 'Error desconocido'}`;
+                    flashArea.appendChild(errorDiv);
+                }
+            }
+            
+            // Ocultar el contenedor principal de mensajes flash de base.html
+            const baseFlashContainer = document.getElementById('flash-messages-container');
+            if (baseFlashContainer) {
+                // Usar un breve retraso para asegurar que el usuario vea el mensaje inicial brevemente
+                setTimeout(() => { baseFlashContainer.style.display = 'none'; }, 500);
+            }
+        }
+
+        // Iniciar sondeo
+        pollInterval = setInterval(async () => {
+            attempts++;
+            console.log(`Intento de sondeo ${attempts}...`);
+
+            try {
+                const response = await fetch(statusUrl);
+                if (!response.ok) {
+                    console.error("Sondeo fallido:", response.statusText);
+                    clearInterval(pollInterval);
+                    return;
+                }
+                const data = await response.json();
+
+                if (data.status === 'SUCCESS' || data.status === 'FAILURE') {
+                    clearInterval(pollInterval);
+                    updateCampaignDetails(data); 
+                } else if (data.status === 'PENDING' || data.status === 'STARTED') {
+                    // La tarea todavía se está ejecutando, continuar sondeando
+                    if (attempts >= maxAttempts) {
+                        console.warn("Se alcanzó el máximo de intentos de sondeo. Deteniendo sondeo.");
+                        clearInterval(pollInterval);
+                        // Opcionalmente actualizar UI para indicar tiempo de espera agotado
+                    }
+                } else {
+                    // Estado inesperado
+                    console.warn("Estado de tarea inesperado:", data.status);
+                    clearInterval(pollInterval);
+                }
+            } catch (error) {
+                console.error("Error durante el sondeo:", error);
+                clearInterval(pollInterval);
+            }
+        }, 3000); // Sondear cada 3 segundos
+    } else {
+        console.log("No se encontró ID de tarea en los mensajes flash.");
+    }
+});
+</script>
+{% endblock %} 
