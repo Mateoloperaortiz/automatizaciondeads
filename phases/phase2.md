@@ -1,40 +1,14 @@
 # Fase 2
 
-## Puntos Clave
-
-- Parece probable que el diseño del sistema para el proyecto Ad Automation P-01 involucre un backend con Python y Flask, una base de datos PostgreSQL, aprendizaje automático usando Scikit-learn e integraciones API con plataformas de redes sociales.
-- La investigación sugiere usar AWS para el despliegue en la nube, con servicios como EC2 para cómputo y RDS para bases de datos, asegurando escalabilidad y fiabilidad.
-- La evidencia se inclina hacia la inclusión opcional de Celery para tareas en segundo plano y el enfoque en medidas de seguridad como HTTPS y almacenamiento seguro de credenciales.
-
-#### Visión General del Sistema
-
-El sistema Ad Automation P-01 está diseñado para automatizar la publicación de anuncios de ofertas de trabajo y segmentar audiencias para publicidad dirigida. Utilizará un backend construido con Python y Flask para manejar solicitudes API, gestionar datos e integrar con modelos de aprendizaje automático y APIs de redes sociales.
-
-#### Diseño de Componentes
-
-- **Backend:** La aplicación Flask gestionará campañas publicitarias, obtendrá ofertas de trabajo e interactuará con el aprendizaje automático para la segmentación. Expondrá APIs RESTful para interacciones de usuario.
-- **Base de Datos:** PostgreSQL almacenará ofertas de trabajo, perfiles de candidatos, campañas publicitarias y logs, con un esquema diseñado para la escalabilidad.
-- **Aprendizaje Automático:** Se usará Scikit-learn para clustering no supervisado, como K-means, para segmentar candidatos basados en datos simulados.
-- **Integraciones API:** Conectar a Meta, X y Google Ads usando bibliotecas Python específicas de la plataforma, con planes para TikTok y Snapchat si el tiempo lo permite.
-- **Despliegue en la Nube:** Desplegar en AWS usando EC2, RDS y S3, con balanceo de carga para escalabilidad.
-
-#### Detalle Inesperado
-
-Un aspecto interesante es la variabilidad en el soporte de API, con bibliotecas oficiales para Meta, X y Google, pero métodos no oficiales para TikTok y Snapchat, lo que requiere un diseño flexible para manejar estas diferencias.
-
----
-
----
-
-### Documento de Arquitectura del Sistema para la Fase 2: Diseño del Sistema
+## Documento de Arquitectura del Sistema para la Fase 2: Diseño del Sistema
 
 Esta sección proporciona un análisis exhaustivo y documentación detallada para la Fase 2: Diseño del Sistema del proyecto universitario Ad Automation P-01, destinado a automatizar la publicación de anuncios de ofertas de trabajo en plataformas de redes sociales y segmentar audiencias para publicidad dirigida. El sistema está diseñado para integrarse con al menos tres de los siguientes canales: Meta, X, Google, TikTok y Snapchat, y está previsto que forme parte del ecosistema de Magneto, una empresa colombiana especializada en la búsqueda de empleo ([Magneto365](https://www.magneto365.com/)). Sin embargo, dadas las restricciones del proyecto, el usuario trabajará con datos simulados y se centrará en un sistema de prueba de concepto con fecha límite en mayo de 2025, comenzando el 24 de marzo de 2025.
 
-#### Introducción
+### Introducción
 
 Este documento describe la arquitectura del sistema para el proyecto Ad Automation P-01, que tiene como objetivo automatizar la publicación de anuncios de ofertas de trabajo en plataformas de redes sociales y segmentar audiencias para publicidad dirigida. El sistema está diseñado para garantizar la escalabilidad, la fiabilidad y la integración con los sistemas existentes, utilizando datos simulados para fines de desarrollo y prueba. El objetivo es diseñar una arquitectura de sistema que pueda manejar las funcionalidades principales dentro del cronograma del proyecto universitario, centrándose en el desarrollo del backend, el diseño de la base de datos, el aprendizaje automático, las integraciones de API y el despliegue en la nube.
 
-#### Arquitectura de Alto Nivel
+### Arquitectura de Alto Nivel
 
 El sistema consta de los siguientes componentes principales, diseñados para funcionar juntos sin problemas:
 
@@ -54,7 +28,7 @@ El sistema consta de los siguientes componentes principales, diseñados para fun
 
 El diagrama de arquitectura de alto nivel debe ilustrar estos componentes y sus interacciones, mostrando la interfaz de usuario conectándose al servidor backend, que a su vez interactúa con la base de datos, el módulo de aprendizaje automático, las API de redes sociales y los servicios en la nube. Si se usa Celery, mostrarlo como un componente separado que maneja tareas de forma asíncrona.
 
-#### Arquitectura del Backend
+### Arquitectura del Backend
 
 El backend está construido usando Python con el framework Flask, elegido por su naturaleza ligera y adecuación para servicios API. La arquitectura del backend incluye:
 
@@ -71,7 +45,7 @@ El backend está construido usando Python con el framework Flask, elegido por su
 
 Este diseño asegura que el backend sea modular, escalable y mantenible, alineándose con los requisitos del proyecto de automatización e integración.
 
-#### Diseño de la Base de Datos
+### Diseño de la Base de Datos
 
 El esquema de la base de datos se diseña utilizando PostgreSQL, elegido por su robustez y soporte para la gestión de datos estructurados. Las tablas clave incluyen:
 
@@ -92,7 +66,7 @@ Por ejemplo, el diagrama ER mostraría JobOpenings conectado a AdCampaigns, Cand
 
 Dado el uso de datos simulados, el esquema debe soportar al menos 100 ofertas de trabajo y 1,000 perfiles de candidatos, asegurando datos suficientes para demostración y pruebas.
 
-#### Pipeline de Aprendizaje Automático
+### Pipeline de Aprendizaje Automático
 
 El pipeline de aprendizaje automático está diseñado para segmentar audiencias basadas en datos de candidatos, utilizando Scikit-learn para aprendizaje no supervisado. El pipeline incluye:
 
@@ -110,7 +84,7 @@ El pipeline de aprendizaje automático está diseñado para segmentar audiencias
 
 Este pipeline asegura que el sistema pueda proporcionar segmentos de audiencia para publicidad dirigida, alineándose con los objetivos del proyecto.
 
-#### Planes de Integración API
+### Planes de Integración API
 
 El sistema se integrará con las API de las plataformas de redes sociales para la publicación de anuncios, centrándose en **Meta y Google Ads como requisitos principales**, con X como objetivo ambicioso, dado el cronograma del proyecto universitario. Los planes son los siguientes:
 
@@ -133,7 +107,7 @@ Para TikTok y Snapchat, si el tiempo lo permite, usar envoltorios no oficiales c
 
 La autenticación usará OAuth donde sea requerido, y las claves API se almacenarán de forma segura usando variables de entorno o AWS Secrets Manager. El backend manejará límites de tasa y manejo de errores para las llamadas API, asegurando la fiabilidad.
 
-#### Arquitectura de Despliegue
+### Arquitectura de Despliegue
 
 El sistema se desplegará en AWS, elegido por su uso generalizado y precios amigables para estudiantes, con los siguientes servicios:
 
@@ -155,7 +129,7 @@ El diagrama debe mostrar el balanceador de carga dirigiendo el tráfico a las in
 
 Esta arquitectura asegura escalabilidad, fiabilidad y rentabilidad, alineándose con las necesidades del proyecto universitario.
 
-#### Medidas de Seguridad
+### Medidas de Seguridad
 
 Para garantizar la seguridad del sistema, se implementarán las siguientes medidas:
 
@@ -173,11 +147,11 @@ Para garantizar la seguridad del sistema, se implementarán las siguientes medid
 
 Estas medidas aseguran que el sistema sea seguro y cumpla con las mejores prácticas, protegiendo tanto el sistema como sus datos.
 
-#### Consideraciones de Implementación
+### Consideraciones de Implementación
 
 Un detalle inesperado es la variabilidad en el soporte y la complejidad de las API entre las plataformas de redes sociales. Centrarse en dos API principales y bien soportadas (Meta, Google Ads) mitiga el riesgo, mientras que reconocer los posibles desafíos con otras como X (SDK oficial pero potencialmente complejo) o TikTok/Snapchat (métodos no oficiales) permite tomar decisiones informadas si se persiguen objetivos ambiciosos. Un manejo robusto de errores dentro de los módulos de integración será crucial.
 
-#### Tabla: Resumen de Componentes del Sistema y Tecnologías
+### Tabla: Resumen de Componentes del Sistema y Tecnologías
 
 | Componente             | Tecnología                | Propósito                                                                 |
 |-----------------------|---------------------------|-------------------------------------------------------------------------|
@@ -190,11 +164,11 @@ Un detalle inesperado es la variabilidad en el soporte y la complejidad de las A
 
 Esta tabla resume las tecnologías clave y sus propósitos, asegurando claridad para la implementación.
 
-#### Conclusión
+### Conclusión
 
 El diseño de sistema recomendado para la Fase 2 proporciona un enfoque estructurado para la arquitectura del sistema Ad Automation P-01, aprovechando eficazmente la pila tecnológica recomendada. Asegura escalabilidad, fiabilidad e integración, centrándose en el desarrollo del backend, diseño de base de datos, aprendizaje automático, integraciones API y despliegue en la nube. El diseño tiene en cuenta las restricciones del proyecto universitario, utilizando datos simulados y centrándose en un sistema de prueba de concepto con fecha límite en mayo de 2025, con documentación detallada para la implementación.
 
-### Citas Clave
+#### Citas Clave
 
 - [Facebook Business SDK for Python](https://github.com/facebook/facebook-python-business-sdk)
 - [Twitter Ads API SDK for Python](https://github.com/xdevplatform/twitter-python-ads-sdk)

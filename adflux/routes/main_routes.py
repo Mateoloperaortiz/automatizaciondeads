@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 # Importar modelos necesarios
-from ..models import db, JobOpening, Candidate, Campaign, MetaInsight, MetaAdSet, Segment # Añadir Segment
+from ..models import db, JobOpening, Candidate, Campaign, MetaInsight, MetaAdSet, Segment, Application # Añadir Segment y Application
 # Importar el formulario
 from ..forms import CampaignForm, SegmentForm # Importar SegmentForm
 # Importar la función de análisis
@@ -25,11 +25,6 @@ from collections import Counter
 # Definir el blueprint
 main_bp = Blueprint('main', __name__, template_folder='../templates')
 
-# Definir la ruta de la carpeta de subida (relativa a instance o static)
-# ¡Asegúrate de que esta carpeta exista!
-# UPLOAD_FOLDER = 'adflux/static/uploads' # Eliminar constante global
-
-# Añadir una ruta para redirigir a la documentación de la API
 @main_bp.route('/api-docs')
 def api_docs():
     """Redirige a la documentación de la API"""
@@ -366,7 +361,7 @@ def publish_campaign(campaign_id):
     """Maneja la publicación asíncrona de una campaña AdFlux a su plataforma."""
     campaign = Campaign.query.get_or_404(campaign_id)
     task = None
-    simulate_publishing = True # Mantener el interruptor de simulación común por ahora
+    simulate_publishing = False # Changed from True to enable real publishing
 
     try:
         if campaign.platform.lower() == 'meta':
@@ -889,9 +884,7 @@ def campaign_performance_report(campaign_id):
                 }
             else:
                  stats['spend_over_time_chart'] = None # Asegurar None si no hay datos
-            # -------------------------------------------- #
 
-            # --- Obtener datos de rendimiento a nivel de conjunto de anuncios --- #
             # Unir MetaInsight con MetaAdSet para obtener el nombre
             ad_set_data = insights_base_query.join(
                 MetaAdSet, MetaInsight.meta_ad_set_id == MetaAdSet.id
@@ -933,7 +926,6 @@ def campaign_performance_report(campaign_id):
 
     # --- Registrar estadísticas antes de renderizar --- #
     current_app.logger.debug(f"Renderizando informe de campaña {campaign_id} con estadísticas: {stats}")
-    # ---------------------------------- #
 
     return render_template('campaign_performance.html',
                            title=f"Informe: {campaign.name}",
@@ -1028,4 +1020,37 @@ def trigger_segmentation():
 
     return redirect(url_for('main.segmentation_analysis'))
 
-# Añadir rutas para CRUD de campañas, detalles de trabajo/candidato más tarde
+@main_bp.route('/applications')
+def list_applications():
+    """Renderiza la página de lista de aplicaciones."""
+    page = request.args.get('page', 1, type=int)
+    try:
+        # Query applications, ordering by date descending
+        # Use joinedload to efficiently fetch related JobOpening and Candidate
+        app_query = Application.query.options(
+            db.joinedload(Application.job),
+            db.joinedload(Application.candidate)
+        ).order_by(Application.application_date.desc())
+        
+        # Add filtering later if needed (e.g., by job, candidate, status)
+        # if request.args.get('job_id'):
+        #     app_query = app_query.filter(Application.job_id == request.args.get('job_id'))
+        # ... other filters ...
+
+        # Paginate the results
+        pagination = app_query.paginate(
+            page=page, per_page=current_app.config.get('ITEMS_PER_PAGE', 15), error_out=False
+        )
+        applications = pagination.items
+        
+    except Exception as e:
+        flash(f"Error al obtener aplicaciones: {e}", 'error')
+        applications = []
+        pagination = None
+        
+    return render_template('applications_list.html', 
+                           title="Job Applications", 
+                           applications=applications, 
+                           pagination=pagination)
+
+# Añadir rutas para CRUD de campañas, detalles de trabajo/candidato más adelante

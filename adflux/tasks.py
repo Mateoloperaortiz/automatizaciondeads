@@ -66,6 +66,43 @@ def scheduled_train_and_predict():
         )
         app.logger.info("Entrenamiento del modelo completo.")
 
+        # --- INICIO: Asegurar que existan registros de Segmento --- #
+        try:
+            n_clusters_used = model.n_clusters # Obtener el número de clústeres del modelo entrenado
+            app.logger.info(f"Asegurando que existan registros de Segmento para {n_clusters_used} clústeres (IDs 0 a {n_clusters_used - 1})...")
+            
+            existing_segment_ids = {s.id for s in db.session.query(Segment.id).filter(Segment.id.in_(range(n_clusters_used))).all()}
+            app.logger.debug(f"IDs de segmento existentes encontrados: {existing_segment_ids}")
+            
+            segments_to_add = []
+            for i in range(n_clusters_used):
+                if i not in existing_segment_ids:
+                    segment_name = f"Segmento {i}"
+                    segment_description = f"Segmento generado automáticamente para clúster K-means {i}"
+                    new_segment = Segment(id=i, name=segment_name, description=segment_description)
+                    segments_to_add.append(new_segment)
+                    app.logger.info(f"Creando registro de segmento faltante para ID {i} ('{segment_name}').")
+            
+            if segments_to_add:
+                db.session.add_all(segments_to_add)
+                db.session.commit()
+                app.logger.info(f"Se añadieron {len(segments_to_add)} nuevos registros de segmento a la base de datos.")
+            else:
+                app.logger.info("Todos los registros de segmento requeridos ya existen.")
+                
+        except AttributeError:
+            app.logger.error("No se pudo determinar n_clusters desde el objeto del modelo. Omitiendo la creación del registro de segmento.")
+            # Considerar fallar la tarea si esto es crítico
+        except SQLAlchemyError as e:
+             db.session.rollback()
+             app.logger.error(f"Error de base de datos al asegurar registros de segmento: {e}", exc_info=True)
+             raise # Volver a lanzar para marcar la tarea como fallida
+        except Exception as e:
+             db.session.rollback()
+             app.logger.error(f"Error inesperado al asegurar registros de segmento: {e}", exc_info=True)
+             raise # Volver a lanzar para marcar la tarea como fallida
+        # --- FIN: Asegurar que existan registros de Segmento --- #
+
         # 3. Predecir segmentos para los candidatos cargados
         app.logger.info("Prediciendo segmentos para todos los candidatos...")
         # Hacer una copia para evitar modificar el df usado para entrenamiento si se necesita en otro lugar
@@ -77,38 +114,55 @@ def scheduled_train_and_predict():
         app.logger.info("Actualizando segmentos de candidatos en la base de datos...")
         update_count = 0
         error_count = 0
-        
-        # Crear un diccionario para búsqueda rápida: candidate_id -> segment
-        segment_map = df_with_segments.set_index(candidate_df.index)['segment'].to_dict()
 
-        # Iterar a través de los objetos Candidate originales
-        for candidate in all_candidates:
-            try:
-                predicted_segment = segment_map.get(candidate.candidate_id)
-                # Comprobar si el segmento cambió o era previamente nulo
-                if predicted_segment is not None and candidate.segment != int(predicted_segment):
-                    candidate.segment = int(predicted_segment)
-                    # db.session.add(candidate) # Marcar para actualización (a menudo automático con query)
-                    update_count += 1
-            except Exception as e:
-                app.logger.error(f"Error procesando segmento para el candidato {candidate.candidate_id}: {e}")
-                error_count += 1
-                # Opcionalmente, hacer rollback de errores individuales si es necesario, pero el commit masivo es más rápido
-        
-        if update_count > 0:
-            try:
+        try:
+            # Crear mapa usando candidate_id como clave (el índice del DF)
+            segment_map = df_with_segments['segment'].to_dict()
+            app.logger.debug(f"Mapa de segmentos construido: {len(segment_map)} entradas.")
+
+            # Iterar a través de los objetos Candidate originales
+            for candidate in all_candidates:
+                try:
+                    predicted_segment_float = segment_map.get(candidate.candidate_id)
+                    current_segment_id = candidate.segment_id
+                    # logger.debug(...) # Mantener logs detallados por ahora si se desea
+                    
+                    if predicted_segment_float is not None:
+                        predicted_segment_int = int(predicted_segment_float)
+                        update_needed = (current_segment_id is None or current_segment_id != predicted_segment_int)
+                        # logger.debug(...) # Mantener logs detallados por ahora si se desea
+                        if update_needed:
+                            candidate.segment_id = predicted_segment_int
+                            update_count += 1
+                    else:
+                        app.logger.warning(f"[Tarea {self.request.id}] No se encontró predicción de segmento para el candidato {candidate.candidate_id} en el mapa.")
+                        
+                except Exception as e:
+                    app.logger.error(f"Error procesando segmento para el candidato {candidate.candidate_id}: {e}")
+                    error_count += 1
+            
+            # Confirmar cambios si hubo actualizaciones
+            if update_count > 0:
+                app.logger.info(f"Intentando confirmar {update_count} actualizaciones de segmento...")
                 db.session.commit()
                 app.logger.info(f"Segmentos actualizados exitosamente para {update_count} candidatos.")
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                app.logger.error(f"Error de base de datos durante la actualización masiva de segmentos: {e}")
-                app.logger.error(traceback.format_exc())
-                # Levantar o manejar según sea apropiado
-        else:
-             app.logger.info("No fue necesario actualizar ningún segmento de candidato.")
+            else:
+                app.logger.info("No fue necesario actualizar ningún segmento de candidato.") # Esto ahora significa que ningún segmento cambió O no se predijo ninguno
 
-        if error_count > 0:
-            app.logger.warning(f"Se encontraron errores al procesar segmentos para {error_count} candidatos.")
+            if error_count > 0:
+                app.logger.warning(f"Se encontraron errores al procesar segmentos para {error_count} candidatos.")
+        
+        except KeyError as e:
+            app.logger.error(f"Error al construir el mapa de segmentos - ¿Falta la columna 'segment'? Índice actual: {df_with_segments.index.name}. Error: {e}")
+            db.session.rollback()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            app.logger.error(f"Error de base de datos durante la actualización masiva de segmentos: {e}", exc_info=True)
+            raise # Volver a lanzar error de BD para marcar la tarea como fallida
+        except Exception as e: # Capturar otros errores inesperados en este bloque
+            db.session.rollback()
+            app.logger.error(f"Error inesperado durante la actualización de la base de datos de segmentos: {e}", exc_info=True)
+            raise
 
     except Exception as e:
         # Registrar cualquier otro error inesperado durante la tarea
@@ -461,6 +515,43 @@ def run_candidate_segmentation_task(self):
         )
         logger.info(f"[Tarea {self.request.id}] Entrenamiento del modelo completo.")
 
+        # --- INICIO: Asegurar que existan registros de Segmento --- #
+        try:
+            n_clusters_used = model.n_clusters # Obtener el número de clústeres del modelo entrenado
+            logger.info(f"[Tarea {self.request.id}] Asegurando que existan registros de Segmento para {n_clusters_used} clústeres (IDs 0 a {n_clusters_used - 1})...")
+            
+            existing_segment_ids = {s.id for s in db.session.query(Segment.id).filter(Segment.id.in_(range(n_clusters_used))).all()}
+            logger.debug(f"[Tarea {self.request.id}] IDs de segmento existentes encontrados: {existing_segment_ids}")
+            
+            segments_to_add = []
+            for i in range(n_clusters_used):
+                if i not in existing_segment_ids:
+                    segment_name = f"Segmento {i}"
+                    segment_description = f"Segmento generado automáticamente para clúster K-means {i}"
+                    new_segment = Segment(id=i, name=segment_name, description=segment_description)
+                    segments_to_add.append(new_segment)
+                    logger.info(f"[Tarea {self.request.id}] Creando registro de segmento faltante para ID {i} ('{segment_name}').")
+            
+            if segments_to_add:
+                db.session.add_all(segments_to_add)
+                db.session.commit()
+                logger.info(f"[Tarea {self.request.id}] Se añadieron {len(segments_to_add)} nuevos registros de segmento a la base de datos.")
+            else:
+                logger.info(f"[Tarea {self.request.id}] Todos los registros de segmento requeridos ya existen.")
+                
+        except AttributeError:
+            logger.error(f"[Tarea {self.request.id}] No se pudo determinar n_clusters desde el objeto del modelo. Omitiendo la creación del registro de segmento.")
+            # Considerar fallar la tarea si esto es crítico
+        except SQLAlchemyError as e:
+             db.session.rollback()
+             logger.error(f"[Tarea {self.request.id}] Error de base de datos al asegurar registros de segmento: {e}", exc_info=True)
+             raise # Volver a lanzar para marcar la tarea como fallida
+        except Exception as e:
+             db.session.rollback()
+             logger.error(f"[Tarea {self.request.id}] Error inesperado al asegurar registros de segmento: {e}", exc_info=True)
+             raise # Volver a lanzar para marcar la tarea como fallida
+        # --- FIN: Asegurar que existan registros de Segmento --- #
+
         # 3. Predecir segmentos
         logger.info(f"[Tarea {self.request.id}] Prediciendo segmentos para todos los candidatos...")
         predict_df = candidate_df.copy()
@@ -471,32 +562,55 @@ def run_candidate_segmentation_task(self):
         logger.info(f"[Tarea {self.request.id}] Actualizando segmentos de candidatos en la base de datos...")
         update_count = 0
         error_count = 0
-        segment_map = df_with_segments.set_index(candidate_df.index)['segment'].to_dict()
+        
+        try:
+            # Crear mapa usando candidate_id como clave (el índice del DF)
+            segment_map = df_with_segments['segment'].to_dict()
+            logger.debug(f"[Tarea {self.request.id}] Mapa de segmentos construido: {len(segment_map)} entradas.")
 
-        for candidate in all_candidates:
-            try:
-                predicted_segment = segment_map.get(candidate.candidate_id)
-                if predicted_segment is not None and candidate.segment_id != int(predicted_segment):
-                    candidate.segment_id = int(predicted_segment)
-                    update_count += 1
-            except Exception as e:
-                logger.error(f"[Tarea {self.request.id}] Error procesando segmento para el candidato {candidate.candidate_id}: {e}")
-                error_count += 1
-
-        if update_count > 0:
-            try:
+            # Iterar a través de los objetos Candidate originales
+            for candidate in all_candidates:
+                try:
+                    predicted_segment_float = segment_map.get(candidate.candidate_id)
+                    current_segment_id = candidate.segment_id
+                    # logger.debug(...) # Mantener logs detallados por ahora si se desea
+                    
+                    if predicted_segment_float is not None:
+                        predicted_segment_int = int(predicted_segment_float)
+                        update_needed = (current_segment_id is None or current_segment_id != predicted_segment_int)
+                        # logger.debug(...) # Mantener logs detallados por ahora si se desea
+                        if update_needed:
+                            candidate.segment_id = predicted_segment_int
+                            update_count += 1
+                    else:
+                        logger.warning(f"[Tarea {self.request.id}] No se encontró predicción de segmento para el candidato {candidate.candidate_id} en el mapa.")
+                        
+                except Exception as e:
+                    logger.error(f"[Tarea {self.request.id}] Error procesando segmento para el candidato {candidate.candidate_id}: {e}")
+                    error_count += 1
+            
+            # Confirmar cambios si hubo actualizaciones
+            if update_count > 0:
+                logger.info(f"[Tarea {self.request.id}] Intentando confirmar {update_count} actualizaciones de segmento...")
                 db.session.commit()
                 logger.info(f"[Tarea {self.request.id}] Segmentos actualizados exitosamente para {update_count} candidatos.")
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                logger.error(f"[Tarea {self.request.id}] Error de base de datos durante la actualización masiva de segmentos: {e}", exc_info=True)
-                raise # Volver a lanzar error de BD para marcar la tarea como fallida
-        else:
-            logger.info(f"[Tarea {self.request.id}] No fue necesario actualizar ningún segmento de candidato.")
+            else:
+                logger.info(f"[Tarea {self.request.id}] No fue necesario actualizar ningún segmento de candidato.") # Esto ahora significa que ningún segmento cambió O no se predijo ninguno
 
-        if error_count > 0:
-             logger.warning(f"[Tarea {self.request.id}] Se encontraron errores al procesar segmentos para {error_count} candidatos.")
-             # Decidir si esto constituye un fallo de la tarea. Por ahora, permitir que tenga éxito.
+            if error_count > 0:
+                logger.warning(f"[Tarea {self.request.id}] Se encontraron errores al procesar segmentos para {error_count} candidatos.")
+        
+        except KeyError as e:
+            logger.error(f"[Tarea {self.request.id}] Error al construir el mapa de segmentos - ¿Falta la columna 'segment'? Índice actual: {df_with_segments.index.name}. Error: {e}")
+            db.session.rollback()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logger.error(f"[Tarea {self.request.id}] Error de base de datos durante la actualización masiva de segmentos: {e}", exc_info=True)
+            raise # Volver a lanzar error de BD para marcar la tarea como fallida
+        except Exception as e: # Capturar otros errores inesperados en este bloque
+            db.session.rollback()
+            logger.error(f"[Tarea {self.request.id}] Error inesperado durante la actualización de la base de datos de segmentos: {e}", exc_info=True)
+            raise
 
         status_message = f"Segmentación completa. Actualizados {update_count} candidatos. Encontrados {error_count} errores."
         return {"status": "success", "message": status_message, "updated_count": update_count, "error_count": error_count}

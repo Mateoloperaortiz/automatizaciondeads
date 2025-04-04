@@ -23,7 +23,7 @@ from .routes.task_routes import tasks_ns # Importar el nuevo namespace
 # Importar el blueprint principal de rutas web
 from .routes.main_routes import main_bp
 # Importar el blueprint de Swagger
-from .swagger import swagger_bp
+# from .swagger import swagger_bp # Commented out
 
 # Retrasar otras importaciones hasta que sean necesarias
 # from . import commands, models, api_clients, sync_tasks # Movido dentro de funciones
@@ -81,13 +81,15 @@ def create_app(config_class=Config):
     except OSError:
         pass # Ya existe
 
-    # Inicializar extensiones con la app
+    # Initialize extensions with the app
     db.init_app(app)
-    migrate.init_app(app, db) # Inicializar migrate
-    api.init_app(app) # Inicializar API Flask-RESTX
-    scheduler.init_app(app) # Restaurar inicialización del scheduler
-    ma.init_app(app) # Inicializar Marshmallow
-    csrf.init_app(app) # Inicializar protección CSRF
+    migrate.init_app(app, db) # Initialize migrate
+    # Initialize API FIRST
+    api.init_app(app) # Initialize API Flask-RESTX
+    scheduler.init_app(app) # Restore scheduler init
+    ma.init_app(app) # Initialize Marshmallow
+    # Initialize CSRF AFTER API
+    csrf.init_app(app) # Initialize CSRF protection
     # Initialize Celery (using the helper function)
     make_celery(app)
 
@@ -98,13 +100,24 @@ def create_app(config_class=Config):
     api.add_namespace(jobs_ns)
     api.add_namespace(candidates_ns)
     api.add_namespace(applications_ns)
+    # --- Exempt API namespaces from CSRF --- 
+    # Add exemptions *after* the namespace has been added/registered
+    # csrf.exempt(applications_ns) # Incorrect: Can't exempt Namespace directly
+    # Exempt the blueprint by its registered name (likely the variable name)
+    # csrf.exempt('api') # Didn't work
+
+    # You might want to exempt other API namespaces too, e.g.:
+    # csrf.exempt(jobs_ns)
+    # csrf.exempt(candidates_ns)
     api.add_namespace(meta_ns)
     api.add_namespace(tasks_ns) # Registrar el nuevo namespace
     api.add_namespace(test_ns) # Registrar el namespace de prueba
 
     # --- Registrar Blueprints Web ---
     app.register_blueprint(main_bp) # Registrar las rutas web principales
-    app.register_blueprint(swagger_bp) # Registrar el blueprint de Swagger
+    # Proteger explícitamente el blueprint web después del registro
+    # csrf.protect(main_bp) # Remove this line - protection is default now
+    # app.register_blueprint(swagger_bp) # Commented out
 
     # --- Configurar Trabajos Programados ---
     # Importar modelos aquí DESPUÉS de que db esté inicializado

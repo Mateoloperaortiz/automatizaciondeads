@@ -14,6 +14,10 @@ class Config:
     ML_N_CLUSTERS = 5 # Número de segmentos por defecto para K-means
     UPLOAD_FOLDER = 'adflux/static/uploads' # Definir ruta de la carpeta de subidas
 
+    # Configuración CSRF (Habilitado por defecto)
+    WTF_CSRF_ENABLED = True 
+    # Deshabilitar la comprobación CSRF por defecto para permitir APIs limpias
+
     # Configuración de la base de datos (usar DATABASE_URL desde .env)
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, '..', 'instance', 'adflux.db')
