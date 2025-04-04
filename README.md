@@ -1,4 +1,6 @@
-# AdFlux - Sistema Automatizado de Publicación de Anuncios (Proyecto Universitario P-01)
+# AdFlux - Sistema Automatizado de Publicación de Anuncios
+
+![ChatGPT Image 3 abr 2025, 09_10_29 p m](https://github.com/user-attachments/assets/9d7e8d06-6355-48ef-bca7-007bfe333dcf)
 
 ## Descripción General del Proyecto
 
@@ -23,7 +25,7 @@ AdFlux es un proyecto universitario que automatiza la publicación de anuncios d
 - **Procesamiento en Segundo Plano**: Manejo asíncrono de tareas para operaciones de larga duración
 - **Tareas Programadas**: Operaciones periódicas automatizadas como sincronización de datos y reentrenamiento de modelos
 
-## Pila Tecnológica
+## Tech Stack
 
 ### Backend
 * **Framework:** Python 3.9+ con Flask
@@ -35,7 +37,7 @@ AdFlux es un proyecto universitario que automatiza la publicación de anuncios d
 * **Formularios:** Flask-WTF
 * **Serialización:** Marshmallow con Flask-Marshmallow
 
-### Aprendizaje Automático
+### Machine Learning
 * **Framework:** Scikit-learn
 * **Algoritmo:** Clustering K-means
 * **Procesamiento de Datos:** Pandas, NumPy
@@ -144,7 +146,7 @@ AdFlux/
 
 1. **Clonar Repositorio:**
    ```bash
-   git clone <url-de-tu-repositorio>
+   git clone https://github.com/Mateoloperaortiz/automatizaciondeads.git
    cd AdFlux
    ```
 
@@ -487,4 +489,4 @@ Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENS
 
 ## Agradecimientos
 
-* Este proyecto fue desarrollado como parte de un curso universitario
+* Este proyecto fue desarrollado por Mateo Lopera, Maria Fernanda Alvarez, Emmanuel Hernandez y Yesid Rivera como parte de Ingenieria de Software 2025-1.
