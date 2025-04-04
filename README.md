@@ -1,6 +1,6 @@
 # AdFlux - Sistema Automatizado de Publicación de Anuncios
 
-![ChatGPT Image 3 abr 2025, 09_10_29 p m](https://github.com/user-attachments/assets/9d7e8d06-6355-48ef-bca7-007bfe333dcf)
+![ChatGPT Image 3 abr 2025, 09_10_29 p m](https://github.com/user-attachments/assets/aefa1ea3-5a20-4930-8127-f858f2ce0a8b)
 
 ## Descripción General del Proyecto
 
