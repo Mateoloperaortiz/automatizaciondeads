@@ -1,44 +1,12 @@
-# Fase 3
-
-## Puntos Clave
-
-- Parece probable que la implementación del sistema Ad Automation P-01 implique la configuración de un backend Flask, la gestión de una base de datos PostgreSQL, la integración del aprendizaje automático con Scikit-learn, la conexión a las API de redes sociales y, opcionalmente, el uso de Celery para tareas en segundo plano.
-- La investigación sugiere que cada componente se puede desarrollar paso a paso, asegurando la integración para un sistema funcional para mayo de 2025, dado el cronograma del proyecto universitario.
-- La evidencia se inclina hacia el uso de AWS para el despliegue en la nube, con pasos detallados para cada componente de la pila tecnológica para garantizar la escalabilidad y la fiabilidad.
-
-### Desarrollo del Backend
-
-El backend utiliza Python con Flask para crear servicios API. Comienza configurando la aplicación Flask, instalando las extensiones necesarias como Flask-RESTful y Flask-SQLAlchemy, y configurándola con ajustes como el URI de la base de datos. Luego, implementa APIs RESTful para gestionar ofertas de trabajo, campañas publicitarias y segmentación, asegurando que manejen las solicitudes de manera eficiente. Finalmente, intégrate con las API de redes sociales para la gestión de anuncios, utilizando métodos de autenticación seguros.
-
-### Gestión de la Base de Datos
-
-Para la base de datos, diseña un esquema en PostgreSQL para almacenar ofertas de trabajo, candidatos, campañas publicitarias y logs. Configura PostgreSQL en AWS RDS, configura la seguridad y conéctalo a Flask usando SQLAlchemy para operaciones de datos, asegurando la integridad de los datos y el soporte para consultas complejas como la recuperación de audiencias segmentadas.
-
-### Integración del Aprendizaje Automático
-
-Usa Scikit-learn para la segmentación de audiencias, recopilando y preprocesando datos simulados de candidatos, seleccionando características como datos demográficos y entrenando un modelo de clustering K-means. Evalúa el modelo con métricas como el puntaje de silueta e intégralo en Flask, creando endpoints para los resultados de la segmentación.
-
-### Integraciones API
-
-Intégrate con plataformas de redes sociales como Meta y Google Ads utilizando sus bibliotecas Python, configurando la autenticación e implementando funciones para la creación de anuncios. Para X, utiliza métodos no oficiales si el tiempo lo permite, asegurando un diseño modular para la mantenibilidad.
-
-### Configuración de la Cola de Tareas
-
-Opcionalmente, configura Celery con Redis para tareas en segundo plano como la programación de publicaciones de anuncios, la definición de tareas y su integración con Flask para operaciones asíncronas, mejorando la capacidad de respuesta del sistema.
-
----
-
----
-
-### Fase 3: Documentación de Implementación
+# Fase 3: Documentación de Implementación
 
 Esta sección proporciona un análisis exhaustivo y documentación detallada para la Fase 3: Implementación del proyecto universitario Ad Automation P-01, destinado a automatizar la publicación de anuncios de ofertas de trabajo en plataformas de redes sociales y segmentar audiencias para publicidad dirigida. El sistema está diseñado para integrarse con al menos tres de los siguientes canales: Meta, X, Google, TikTok y Snapchat, y está previsto que forme parte del ecosistema de Magneto, una empresa colombiana especializada en la búsqueda de empleo ([Magneto365](https://www.magneto365.com/)). Sin embargo, dadas las restricciones del proyecto, el usuario trabajará con datos simulados y se centrará en un sistema de prueba de concepto con fecha límite en mayo de 2025, comenzando el 24 de marzo de 2025.
 
-#### Introducción
+### Introducción
 
 Este documento describe el proceso de implementación para el sistema Ad Automation P-01, utilizando la pila tecnológica recomendada para desarrollar un sistema completamente funcional listo para pruebas. La implementación se desglosa por cada componente de la pila tecnológica, asegurando que todas las partes funcionen juntas sin problemas. Dado el cronograma del proyecto universitario, el enfoque está en las funcionalidades principales, utilizando datos simulados para el desarrollo y las pruebas, y asegurando que el sistema sea desplegable para mayo de 2025.
 
-#### Desarrollo del Backend con Python y Flask
+### Desarrollo del Backend con Python y Flask
 
 El backend es el núcleo del sistema, manejando solicitudes API, lógica de negocio e integraciones. Los pasos de implementación son los siguientes:
 
@@ -100,7 +68,7 @@ El backend es el núcleo del sistema, manejando solicitudes API, lógica de nego
 
 Esta implementación asegura que el backend sea modular, escalable y capaz de manejar interacciones de usuario y comunicaciones API externas, alineándose con los requisitos del proyecto de automatización e integración.
 
-#### Desarrollo de la CLI
+### Desarrollo de la CLI
 
 - Implementa una Interfaz de Línea de Comandos (CLI) usando una biblioteca como `click` o `argparse`.
 - Define comandos para acciones clave del usuario identificadas en las historias de usuario:
@@ -111,7 +79,7 @@ Esta implementación asegura que el backend sea modular, escalable y capaz de ma
   - `adflux view-campaigns [--status STATUS]`: Lista las campañas publicitarias creadas.
 - Los comandos de la CLI interactuarán con los endpoints API del backend de Flask.
 
-#### Gestión de la Base de Datos con PostgreSQL
+### Gestión de la Base de Datos con PostgreSQL
 
 La base de datos es crucial para almacenar y gestionar datos, asegurando fiabilidad y escalabilidad. Los pasos de implementación son los siguientes:
 
@@ -154,7 +122,7 @@ La base de datos es crucial para almacenar y gestionar datos, asegurando fiabili
 
 Esta implementación asegura que la base de datos sea robusta, escalable e integrada con el backend de Flask, soportando las necesidades de gestión de datos del sistema.
 
-#### Aprendizaje Automático con Scikit-learn
+### Aprendizaje Automático con Scikit-learn
 
 El componente de aprendizaje automático es esencial para la segmentación de audiencias, utilizando aprendizaje no supervisado para agrupar candidatos para publicidad dirigida. Los pasos de implementación son los siguientes:
 
@@ -226,7 +194,7 @@ El componente de aprendizaje automático es esencial para la segmentación de au
 
 Esta implementación asegura que el componente de aprendizaje automático esté integrado en el sistema, proporcionando capacidades de segmentación para publicidad dirigida, utilizando datos simulados para el desarrollo.
 
-#### Integraciones API con Varias Bibliotecas Python
+### Integraciones API con Varias Bibliotecas Python
 
 La implementación se centra en las **dos plataformas principales (Meta, Google Ads)**, con X como objetivo ambicioso.
 
@@ -264,7 +232,7 @@ La implementación se centra en las **dos plataformas principales (Meta, Google 
   - Estructura las integraciones de forma modular (p. ej., módulos Python separados por plataforma).
   - Céntrate en usar **cuentas de prueba y entornos sandbox** proporcionados por las plataformas.
 
-#### Cola de Tareas con Celery (Opcional)
+### Cola de Tareas con Celery (Opcional)
 
 Dado el carácter opcional y el cronograma del proyecto universitario, implementa Celery para tareas en segundo plano para mejorar la capacidad de respuesta del sistema. Los pasos de implementación son los siguientes:
 
@@ -323,11 +291,11 @@ Dado el carácter opcional y el cronograma del proyecto universitario, implement
 
 Esta implementación asegura que las tareas en segundo plano se gestionen eficientemente, descargando operaciones que consumen mucho tiempo y mejorando la experiencia del usuario.
 
-#### Consideraciones de Implementación
+### Consideraciones de Implementación
 
 Un detalle inesperado es la variabilidad en el soporte API entre las plataformas de redes sociales, con Meta y Google Ads ofreciendo bibliotecas Python oficiales, mientras que X puede requerir wrappers no oficiales o solicitudes HTTP directas. Esta variabilidad necesita un diseño de backend flexible, potencialmente usando una capa de abstracción unificada para manejar las diferencias de API, lo que añade complejidad pero asegura una automatización completa para las plataformas elegidas. Dado el cronograma del proyecto universitario, céntrate en las dos plataformas principales para gestionar el alcance.
 
-#### Tabla: Resumen de Pasos de Implementación por Componente
+### Tabla: Resumen de Pasos de Implementación por Componente
 
 | Componente             | Pasos Clave                                                                 | Código/Configuración de Ejemplo                                      |
 |-----------------------|---------------------------------------------------------------------------|-----------------------------------------------------------------|
@@ -340,11 +308,11 @@ Un detalle inesperado es la variabilidad en el soporte API entre las plataformas
 
 Esta tabla resume los pasos clave de implementación y ejemplos, asegurando claridad para el desarrollo.
 
-#### Conclusión
+### Conclusión
 
 La implementación recomendada para la Fase 3 proporciona un enfoque estructurado para desarrollar el sistema Ad Automation P-01, aprovechando eficazmente la pila tecnológica recomendada. Asegura que todos los componentes estén integrados, desde el backend de Flask hasta el aprendizaje automático, las integraciones API y las tareas opcionales de Celery, resultando en un sistema completamente funcional listo para pruebas para mayo de 2025. La documentación tiene en cuenta las restricciones del proyecto universitario, utilizando datos simulados y centrándose en las funcionalidades principales, con pasos detallados para cada componente.
 
-### Citas Clave
+#### Citas Clave
 
 - [Facebook Business SDK for Python](https://github.com/facebook/facebook-python-business-sdk)
 - [Google Ads API Client Library for Python](https://github.com/googleads/google-ads-python)

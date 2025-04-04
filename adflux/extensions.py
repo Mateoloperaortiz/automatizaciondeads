@@ -6,20 +6,21 @@ from flask_marshmallow import Marshmallow
 from flask_wtf.csrf import CSRFProtect
 from celery import Celery
 
-# Inicializar extensiones globalmente
+# Initialize extensions globally
 db = SQLAlchemy()
 migrate = Migrate(compare_type=True)
 scheduler = APScheduler()
 ma = Marshmallow()
 csrf = CSRFProtect()
+
+# Initialize Celery instance
 celery = Celery()
 
-# Definir objeto API globalmente
+# Define API object globally
 api = Api(
     version='1.0',
     title='AdFlux Recruitment API',
     description='API para gestionar ofertas de trabajo y candidatos',
-    doc='/api/docs',
     validate=True
 )
 

@@ -1,5 +1,3 @@
-# Funciones para interactuar con las APIs de las plataformas de redes sociales
-
 import os
 from dotenv import load_dotenv
 from flask import current_app # Para logging
@@ -15,12 +13,7 @@ import yaml # Google Ads a menudo usa YAML para la configuración
 import time
 from google.api_core import protobuf_helpers
 import uuid # Para nombres únicos si es necesario
-import traceback # <-- Añadir importación faltante
-# --- Importación incorrecta eliminada ---
-# from google.ads.googleads.v19.common.types.bidding import MaximizeClicks
-# --- Importar Enum directamente (independiente de la versión) ---
-# from google.ads.googleads.v19.enums.types.bidding_strategy_type import BiddingStrategyTypeEnum
-# Los enums del cliente deberían manejar el versionado, confiemos en eso si la importación directa falla
+import traceback
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -50,10 +43,7 @@ def initialize_meta_api():
         # Manejar el error apropiadamente (registrar, lanzar, etc.)
         return None
 
-# Es posible que desees inicializarla una vez cuando la aplicación comience o de forma diferida cuando sea necesario
-# Por ahora, mantengamos la inicialización explícita cuando se llaman las funciones.
-
-# Función de Ejemplo: Obtener Cuentas Publicitarias
+# Obtener Cuentas Publicitarias
 def get_meta_ad_accounts():
     """Obtiene las cuentas publicitarias asociadas con el token de acceso."""
     api = initialize_meta_api()
@@ -63,9 +53,7 @@ def get_meta_ad_accounts():
     try:
         # Importar el objeto User que representa al propietario del token
         from facebook_business.adobjects.user import User
-        
-        # 'me' se refiere al usuario asociado con el token de acceso
-        # Usar la clase User importada
+
         user = User(fbid='me') 
         ad_accounts = user.get_ad_accounts(fields=['id', 'name', 'account_status'])
         
@@ -81,7 +69,6 @@ def get_meta_ad_accounts():
         return accounts_list
     except FacebookRequestError as e:
         print(f"Error al obtener las cuentas publicitarias: {e}")
-        # Manejar error (ej., token inválido, problema de permisos)
         return [] # Devolver vacío en caso de error
     except ImportError as e:
          print(f"Error al importar el objeto del SDK de Facebook: {e}")
@@ -183,11 +170,10 @@ def get_meta_ad_sets(campaign_id):
             AdSet.Field.budget_remaining,
             AdSet.Field.optimization_goal,
             AdSet.Field.billing_event,
-            AdSet.Field.bid_amount, # Puja de control de coste
+            AdSet.Field.bid_amount, # control de costo
             AdSet.Field.created_time,
             AdSet.Field.start_time,
             AdSet.Field.end_time,
-            # AdSet.Field.targeting, # Puede ser grande, obtener subcampos específicos si es necesario
         ]
 
         campaign = Campaign(campaign_id)
@@ -239,7 +225,7 @@ def get_meta_ad_sets(campaign_id):
 
 # Función para obtener Anuncios para un Conjunto de Anuncios específico
 def get_meta_ads(ad_set_id):
-    """Obtiene anuncios para un ID de conjunto de anuncios dado, incluyendo detalles básicos de la creatividad."""
+    """Obtiene anuncios para un ID de conjunto de anuncios dado, incluyendo detalles básicos de Creative Ads."""
     api = initialize_meta_api()
     if not api:
         return []
@@ -254,18 +240,17 @@ def get_meta_ads(ad_set_id):
             Ad.Field.name,
             Ad.Field.status,
             Ad.Field.effective_status,
-            Ad.Field.creative, # Obtener ID de creatividad
+            Ad.Field.creative,
             Ad.Field.created_time,
             # Ad.Field.adset_id,
             # Ad.Field.campaign_id,
         ]
 
-        # Definir campos a obtener para la creatividad
         creative_fields = [
             AdCreative.Field.id,
             AdCreative.Field.name,
             AdCreative.Field.body,
-            AdCreative.Field.title, # A menudo usado con el cuerpo
+            AdCreative.Field.title,
             AdCreative.Field.thumbnail_url, # Generalmente más rápido/pequeño que image_url
             AdCreative.Field.image_url, # URL completa de la imagen
             AdCreative.Field.object_story_spec, # Contiene datos de enlace, mensaje, etc.
@@ -1294,8 +1279,14 @@ def publish_google_campaign_api(adflux_campaign_id: int, campaign_data: dict) ->
         headline_texts = [campaign_data.get('headline', 'Aplica Ahora'), 
                          campaign_data.get('job_title', 'Oportunidad Emocionante'), # Asumiendo que job_title está disponible
                          'Salario Competitivo Ofrecido'] # Añadir al menos 3
+        max_headline_len = 30 # Google Ads headline limit
         for text in headline_texts[:15]: # Máx 15 titulares
             headline = client.get_type("AdTextAsset")
+            # Truncate headline if it exceeds the limit
+            original_len = len(text)
+            if original_len > max_headline_len:
+                logger.warning(f"Truncando texto de titular de {original_len} a {max_headline_len} caracteres.")
+                text = text[:max_headline_len]
             headline.text = text
             rsa_info.headlines.append(headline)
 

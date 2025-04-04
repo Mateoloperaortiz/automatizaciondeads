@@ -15,10 +15,10 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
 from adflux.app import create_app
-from adflux.extensions import celery # Importar la instancia de celery
+# Import celery instance from extensions
+from adflux.extensions import celery
 
-# Crear la instancia de la aplicación Flask
-# Esta llamada es crucial ya que inicializa y configura todo, incluyendo Celery
+# Create the Flask app instance globally
 app = create_app()
 
 # --- Configurar Logging --- 
@@ -32,4 +32,4 @@ logging.basicConfig(level=logging.INFO,
 if __name__ == '__main__':
     # Nota: El modo debug idealmente debería ser controlado por la configuración de Flask (DevelopmentConfig)
     # o la variable de entorno FLASK_DEBUG, no codificado directamente aquí.
-    app.run(host='0.0.0.0', port=5000) # Usar 0.0.0.0 para ser accesible externamente si es necesario
+    app.run(host='0.0.0.0', port=5001) # Usar 0.0.0.0 para ser accesible externamente si es necesario

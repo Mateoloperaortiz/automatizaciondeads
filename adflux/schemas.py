@@ -117,6 +117,10 @@ class CandidateSchema(SQLAlchemyAutoSchema):
         # exclude = ("applications",) # Ejemplo: Excluir relaciones
 
 class ApplicationSchema(SQLAlchemyAutoSchema):
+    # Explicitly define FK fields to ensure correct type (String) during loading
+    job_id = fields.String(required=True)
+    candidate_id = fields.String(required=True)
+
     class Meta:
         model = Application
         load_instance = True
