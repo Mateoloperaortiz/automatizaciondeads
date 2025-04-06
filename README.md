@@ -14,7 +14,7 @@
 
 ## 💡 ¿Qué es AdFlux?
 
-**AdFlux** es tu aliado para revolucionar la forma en que publicas ofertas de trabajo en redes sociales. ¿Cansado de publicar anuncios manualmente? ¡Olvídate de eso! Con AdFlux, automatizas todo el proceso desde la creación hasta el seguimiento de tus campañas.
+**AdFlux** es tu aliado para revolucionar la forma en que publicas ofertas de trabajo en redes sociales. ¿Cansado de publicar anuncios manualmente? ¡Olvídate de eso! Con AdFlux, automatizas todo el proceso desde la creación hasta el seguimiento de tus campañas publicitarias.
 
 Desarrollado como proyecto universitario inspirado en las necesidades de plataformas como Magneto365, AdFlux te permite:
 
