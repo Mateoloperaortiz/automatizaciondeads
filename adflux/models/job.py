@@ -69,7 +69,7 @@ class JobOpening(db.Model):
         db.Index("ix_job_openings_location", "location"),  # Índice para búsquedas por ubicación
         db.Index("ix_job_openings_status", "status"),  # Índice para filtrado por estado
         db.Index("ix_job_openings_posted_date", "posted_date"),  # Índice para ordenación por fecha
-        db.Index("ix_job_openings_company_name", "company_name"),  # Índice para búsquedas por empresa
+        db.Index("ix_job_openings_company", "company"),  # Índice para búsquedas por empresa
     )
 
     def __repr__(self):
