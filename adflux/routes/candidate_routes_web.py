@@ -4,7 +4,7 @@ Rutas web para candidatos en AdFlux.
 Este módulo contiene las rutas web relacionadas con la gestión de candidatos.
 """
 
-from flask import Blueprint, render_template, url_for, flash, request, redirect
+from flask import Blueprint, render_template, url_for, flash, request, redirect, current_app
 from ..models import Segment
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, EmailField
@@ -12,6 +12,8 @@ from wtforms.validators import DataRequired, Optional, Email
 from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
 from ..services.candidate_service import CandidateService
+from ..api.common.excepciones import AdFluxError, ErrorRecursoNoEncontrado
+from ..api.common.manejo_errores import manejar_error_web, notificar_error_web
 
 # Definir el blueprint
 candidate_bp = Blueprint("candidate", __name__, template_folder="../templates")
@@ -158,10 +160,13 @@ def create_candidate():
                 flash(message, "success")
                 return redirect(url_for('candidate.candidate_details', candidate_id=candidate.candidate_id))
             else:
-                flash(message, "error")
+                error = AdFluxError(mensaje=message, codigo=status_code)
+                return notificar_error_web(error, redirect_url=url_for('candidate.list_candidates'))
             
         except Exception as e:
-            flash(f"Error al crear candidato: {e}", "error")
+            current_app.logger.error(f"Error al crear candidato: {e}", exc_info=True)
+            error = AdFluxError(mensaje=f"Error al crear candidato: {e}", codigo=500)
+            return notificar_error_web(error, redirect_url=url_for('candidate.list_candidates'))
     
     return render_template("candidate_form.html", title="Crear Candidato", form=form, candidate=None)
 
@@ -205,9 +210,12 @@ def update_candidate(candidate_id):
                 flash(message, "success")
                 return redirect(url_for('candidate.candidate_details', candidate_id=updated_candidate.candidate_id))
             else:
-                flash(message, "error")
+                error = AdFluxError(mensaje=message, codigo=status_code)
+                return notificar_error_web(error, redirect_url=url_for('candidate.list_candidates'))
             
         except Exception as e:
-            flash(f"Error al actualizar candidato: {e}", "error")
+            current_app.logger.error(f"Error al actualizar candidato: {e}", exc_info=True)
+            error = AdFluxError(mensaje=f"Error al actualizar candidato: {e}", codigo=500)
+            return notificar_error_web(error, redirect_url=url_for('candidate.list_candidates'))
     
     return render_template("candidate_form.html", title="Editar Candidato", form=form, candidate=candidate)
