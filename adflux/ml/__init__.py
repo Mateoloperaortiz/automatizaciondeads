@@ -28,6 +28,10 @@ from .evaluation import analyze_segments_from_db
 # Importar funciones de utilidades
 from .utils import load_segmentation_model
 
+from .batch_processing import process_candidates_in_batches, batch_iterator
+
+from .common import update_candidate_segments, ensure_segment_records
+
 # Para mantener compatibilidad con el código existente
 __all__ = [
     # Constantes
@@ -46,4 +50,8 @@ __all__ = [
     "analyze_segments_from_db",
     # Utilidades
     "load_segmentation_model",
+    "process_candidates_in_batches",
+    "batch_iterator",
+    "update_candidate_segments",
+    "ensure_segment_records",
 ]
