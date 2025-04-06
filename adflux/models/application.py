@@ -34,9 +34,12 @@ class Application(db.Model):
     resume_path = db.Column(String(255), nullable=True)
     cover_letter_path = db.Column(String(255), nullable=True)
 
-    # Definir restricción única para prevenir aplicaciones duplicadas
     __table_args__ = (
         db.UniqueConstraint("job_id", "candidate_id", name="uq_job_candidate_application"),
+        db.Index("ix_applications_job_id", "job_id"),  # Índice para búsquedas por trabajo
+        db.Index("ix_applications_candidate_id", "candidate_id"),  # Índice para búsquedas por candidato
+        db.Index("ix_applications_status", "status"),  # Índice para filtrado por estado
+        db.Index("ix_applications_application_date", "application_date"),  # Índice para ordenación por fecha
     )
 
     def __repr__(self):
