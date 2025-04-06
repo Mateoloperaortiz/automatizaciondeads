@@ -1,6 +1,9 @@
 from flask_restx import Namespace, Resource, fields, reqparse
 from ..models import db, JobOpening, Candidate  # Importar modelos necesarios
 from ..schemas import job_schema, jobs_schema  # Asumiendo que los esquemas existen
+from flask import current_app
+from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado
+from ..api.common.manejo_errores import manejar_error_api
 
 # Namespace para Puestos
 jobs_ns = Namespace("jobs", description="Operaciones de Ofertas de Empleo")
@@ -122,13 +125,23 @@ class JobListResource(Resource):
         try:
             job_data = job_schema.load(jobs_ns.payload)
         except Exception as e:  # Reemplazar con error específico de validación de Marshmallow
-            return {"message": "La validación del payload de entrada falló", "errors": str(e)}, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=str(e),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
-        new_job = JobOpening(**job_data)
-        db.session.add(new_job)
-        db.session.commit()
-        # Usar esquema Marshmallow para la serialización de la respuesta
-        return job_schema.dump(new_job), 201
+        try:
+            new_job = JobOpening(**job_data)
+            db.session.add(new_job)
+            db.session.commit()
+            # Usar esquema Marshmallow para la serialización de la respuesta
+            return job_schema.dump(new_job), 201
+        except Exception as e:
+            current_app.logger.error(f"Error al crear oferta de empleo: {e}", exc_info=True)
+            error = AdFluxError(mensaje=f"Error al crear oferta de empleo: {e}", codigo=500)
+            return manejar_error_api(error)
 
 
 @jobs_ns.route("/<int:job_id>")
@@ -139,7 +152,13 @@ class JobResource(Resource):
     @jobs_ns.marshal_with(job_model)
     def get(self, job_id):
         """Obtener una oferta de empleo dado su identificador"""
-        job = JobOpening.query.get_or_404(job_id)
+        job = JobOpening.query.get(job_id)
+        if not job:
+            error = ErrorRecursoNoEncontrado(
+                recurso="Oferta de empleo",
+                identificador=job_id
+            )
+            return manejar_error_api(error)
         return job_schema.dump(job)
 
     @jobs_ns.doc("update_job")
@@ -147,28 +166,57 @@ class JobResource(Resource):
     @jobs_ns.marshal_with(job_model)
     def put(self, job_id):
         """Actualizar una oferta de empleo"""
-        job = JobOpening.query.get_or_404(job_id)
+        job = JobOpening.query.get(job_id)
+        if not job:
+            error = ErrorRecursoNoEncontrado(
+                recurso="Oferta de empleo",
+                identificador=job_id
+            )
+            return manejar_error_api(error)
+            
         try:
             job_data = job_schema.load(
                 jobs_ns.payload, partial=True
             )  # Permitir actualizaciones parciales
         except Exception as e:
-            return {"message": "La validación del payload de entrada falló", "errors": str(e)}, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=str(e),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
-        for key, value in job_data.items():
-            setattr(job, key, value)
+        try:
+            for key, value in job_data.items():
+                setattr(job, key, value)
 
-        db.session.commit()
-        return job_schema.dump(job)
+            db.session.commit()
+            return job_schema.dump(job)
+        except Exception as e:
+            current_app.logger.error(f"Error al actualizar oferta de empleo: {e}", exc_info=True)
+            error = AdFluxError(mensaje=f"Error al actualizar oferta de empleo: {e}", codigo=500)
+            return manejar_error_api(error)
 
     @jobs_ns.doc("delete_job")
     @jobs_ns.response(204, "Puesto eliminado")
     def delete(self, job_id):
         """Eliminar una oferta de empleo"""
-        job = JobOpening.query.get_or_404(job_id)
-        db.session.delete(job)
-        db.session.commit()
-        return "", 204
+        job = JobOpening.query.get(job_id)
+        if not job:
+            error = ErrorRecursoNoEncontrado(
+                recurso="Oferta de empleo",
+                identificador=job_id
+            )
+            return manejar_error_api(error)
+            
+        try:
+            db.session.delete(job)
+            db.session.commit()
+            return "", 204
+        except Exception as e:
+            current_app.logger.error(f"Error al eliminar oferta de empleo: {e}", exc_info=True)
+            error = AdFluxError(mensaje=f"Error al eliminar oferta de empleo: {e}", codigo=500)
+            return manejar_error_api(error)
 
 
 # --- Endpoint de Publicación de Anuncios de Meta ---
