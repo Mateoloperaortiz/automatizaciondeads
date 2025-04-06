@@ -4,14 +4,48 @@ Rutas web para candidatos en AdFlux.
 Este módulo contiene las rutas web relacionadas con la gestión de candidatos.
 """
 
-from flask import Blueprint, render_template, url_for, flash, request
+from flask import Blueprint, render_template, url_for, flash, request, redirect
 from sqlalchemy import or_
-from ..models import Candidate, Segment
+from ..models import Candidate, Segment, db
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField, IntegerField, SelectField, EmailField
+from wtforms.validators import DataRequired, Optional, Email
 from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
+import uuid
 
 # Definir el blueprint
 candidate_bp = Blueprint("candidate", __name__, template_folder="../templates")
+
+
+class CandidateForm(FlaskForm):
+    """Formulario para crear y editar candidatos."""
+    name = StringField('Nombre Completo', validators=[DataRequired()])
+    email = EmailField('Correo Electrónico', validators=[Optional(), Email()])
+    phone = StringField('Teléfono', validators=[Optional()])
+    location = StringField('Ubicación', validators=[Optional()])
+    years_experience = IntegerField('Años de Experiencia', validators=[Optional()])
+    education_level = SelectField('Nivel de Educación', choices=[
+        ('', 'Seleccionar...'),
+        ('high-school', 'Bachillerato'),
+        ('associate', 'Técnico/Tecnólogo'),
+        ('bachelor', 'Pregrado'),
+        ('master', 'Maestría'),
+        ('doctorate', 'Doctorado')
+    ], validators=[Optional()])
+    primary_skill = StringField('Habilidad Principal', validators=[Optional()])
+    desired_salary = IntegerField('Salario Deseado', validators=[Optional()])
+    desired_position = StringField('Cargo Deseado', validators=[Optional()])
+    summary = TextAreaField('Resumen Profesional', validators=[Optional()])
+    availability = SelectField('Disponibilidad', choices=[
+        ('', 'Seleccionar...'),
+        ('immediate', 'Inmediata'),
+        ('two_weeks', '2 Semanas'),
+        ('one_month', '1 Mes'),
+        ('negotiable', 'Negociable')
+    ], validators=[Optional()])
+    skills = TextAreaField('Habilidades', validators=[Optional()])
+    languages = TextAreaField('Idiomas', validators=[Optional()])
 
 
 @candidate_bp.route("/")
@@ -130,3 +164,84 @@ def candidate_details(candidate_id):
         default_segment_name=DEFAULT_SEGMENT_NAME,
         default_segment_color=DEFAULT_SEGMENT_COLOR,
     )
+
+
+@candidate_bp.route("/create", methods=["GET", "POST"])
+def create_candidate():
+    """Renderiza y procesa el formulario para crear un nuevo candidato."""
+    form = CandidateForm()
+    
+    if form.validate_on_submit():
+        try:
+            candidate_id = f"CAND-{uuid.uuid4().hex[:8].upper()}"
+            
+            skills = [skill.strip() for skill in form.skills.data.split(',')] if form.skills.data else []
+            languages = [language.strip() for language in form.languages.data.split(',')] if form.languages.data else []
+            
+            new_candidate = Candidate(
+                candidate_id=candidate_id,
+                name=form.name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                location=form.location.data,
+                years_experience=form.years_experience.data,
+                education_level=form.education_level.data,
+                primary_skill=form.primary_skill.data,
+                desired_salary=form.desired_salary.data,
+                desired_position=form.desired_position.data,
+                summary=form.summary.data,
+                availability=form.availability.data,
+                skills=skills,
+                languages=languages
+            )
+            
+            db.session.add(new_candidate)
+            db.session.commit()
+            
+            flash(f"Candidato '{new_candidate.name}' creado exitosamente.", "success")
+            return redirect(url_for('candidate.candidate_details', candidate_id=new_candidate.candidate_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al crear candidato: {e}", "error")
+    
+    return render_template("candidate_form.html", title="Crear Candidato", form=form, candidate=None)
+
+
+@candidate_bp.route("/<string:candidate_id>/edit", methods=["GET", "POST"])
+def update_candidate(candidate_id):
+    """Renderiza y procesa el formulario para editar un candidato existente."""
+    candidate = Candidate.query.filter_by(candidate_id=candidate_id).first_or_404()
+    form = CandidateForm(obj=candidate)
+    
+    if request.method == "GET":
+        form.skills.data = ', '.join(candidate.skills) if candidate.skills else ''
+        form.languages.data = ', '.join(candidate.languages) if candidate.languages else ''
+    
+    if form.validate_on_submit():
+        try:
+            candidate.name = form.name.data
+            candidate.email = form.email.data
+            candidate.phone = form.phone.data
+            candidate.location = form.location.data
+            candidate.years_experience = form.years_experience.data
+            candidate.education_level = form.education_level.data
+            candidate.primary_skill = form.primary_skill.data
+            candidate.desired_salary = form.desired_salary.data
+            candidate.desired_position = form.desired_position.data
+            candidate.summary = form.summary.data
+            candidate.availability = form.availability.data
+            
+            candidate.skills = [skill.strip() for skill in form.skills.data.split(',')] if form.skills.data else []
+            candidate.languages = [language.strip() for language in form.languages.data.split(',')] if form.languages.data else []
+            
+            db.session.commit()
+            
+            flash(f"Candidato '{candidate.name}' actualizado exitosamente.", "success")
+            return redirect(url_for('candidate.candidate_details', candidate_id=candidate.candidate_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al actualizar candidato: {e}", "error")
+    
+    return render_template("candidate_form.html", title="Editar Candidato", form=form, candidate=candidate)
