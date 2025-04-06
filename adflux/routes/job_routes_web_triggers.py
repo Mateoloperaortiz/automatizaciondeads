@@ -22,7 +22,7 @@ def notify_job_created(job):
         notification_type=NotificationType.INFO,
         category=NotificationCategory.JOB,
         entity_type="job",
-        entity_id=str(job.id),
+        entity_id=str(job.job_id),
         send_realtime=True
     )
 
@@ -40,7 +40,7 @@ def notify_job_updated(job):
         notification_type=NotificationType.INFO,
         category=NotificationCategory.JOB,
         entity_type="job",
-        entity_id=str(job.id),
+        entity_id=str(job.job_id),
         send_realtime=True
     )
 

@@ -22,7 +22,7 @@ def notify_candidate_created(candidate):
         notification_type=NotificationType.INFO,
         category=NotificationCategory.CANDIDATE,
         entity_type="candidate",
-        entity_id=str(candidate.id),
+        entity_id=str(candidate.candidate_id),
         send_realtime=True
     )
 
@@ -40,7 +40,7 @@ def notify_candidate_updated(candidate):
         notification_type=NotificationType.INFO,
         category=NotificationCategory.CANDIDATE,
         entity_type="candidate",
-        entity_id=str(candidate.id),
+        entity_id=str(candidate.candidate_id),
         send_realtime=True
     )
 
