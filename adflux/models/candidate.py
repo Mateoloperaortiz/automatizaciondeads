@@ -41,6 +41,13 @@ class Candidate(db.Model):
 
     # Segmentación ML
     segment_id = db.Column(Integer, db.ForeignKey("segments.id"), nullable=True, index=True)
+    
+    __table_args__ = (
+        db.Index("ix_candidates_name", "name"),  # Índice para búsquedas por nombre
+        db.Index("ix_candidates_email", "email", unique=True),  # Índice único para email
+        db.Index("ix_candidates_primary_skill", "primary_skill"),  # Índice para búsquedas por habilidad principal
+        db.Index("ix_candidates_location", "location"),  # Índice para búsquedas por ubicación
+    )
 
     # Relación con Aplicaciones
     applications = db.relationship(

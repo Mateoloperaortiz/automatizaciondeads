@@ -14,6 +14,7 @@ import uuid
 
 from ..models import JobOpening, db
 from .job_routes_web_triggers import notify_job_created, notify_job_updated
+from ..services.job_service import JobService
 
 # Definir el blueprint
 job_bp = Blueprint("job", __name__, template_folder="../templates")
@@ -68,18 +69,40 @@ class JobForm(FlaskForm):
 def list_jobs():
     """Renderiza la página de lista de empleos."""
     try:
-        # Obtener empleos de la BD, ordenar por fecha de publicación más reciente
-        jobs = JobOpening.query.order_by(JobOpening.posted_date.desc()).all()
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+        query = request.args.get("query", "")
+        status = request.args.get("status")
+        
+        jobs, pagination = JobService.get_jobs(
+            page=page,
+            per_page=per_page,
+            query=query,
+            status=status,
+            sort_by="posted_date",
+            sort_order="desc"
+        )
     except Exception as e:
         flash(f"Error al obtener empleos: {e}", "error")
-        jobs = []  # Asegurar que jobs sea siempre una lista
-    return render_template("jobs_list.html", title="Ofertas de Empleo", jobs=jobs)
+        jobs = []
+        pagination = None
+    
+    return render_template(
+        "jobs_list.html", 
+        title="Ofertas de Empleo", 
+        jobs=jobs,
+        pagination=pagination,
+        query=query
+    )
 
 
 @job_bp.route("/<string:job_id>")
 def job_details(job_id):
     """Renderiza la página de detalles para una oferta de empleo específica."""
-    job = JobOpening.query.filter_by(job_id=job_id).first_or_404()
+    job = JobService.get_job_by_id(job_id)
+    if not job:
+        flash(f"Trabajo con ID {job_id} no encontrado.", "error")
+        return redirect(url_for('job.list_jobs'))
     return render_template("job_detail.html", title=f"Empleo: {job.title}", job=job)
 
 
@@ -90,42 +113,35 @@ def create_job():
     
     if form.validate_on_submit():
         try:
-            job_id = f"JOB-{uuid.uuid4().hex[:8].upper()}"
+            job_data = {
+                'title': form.title.data,
+                'short_description': form.short_description.data,
+                'description': form.description.data,
+                'company_name': form.company_name.data,
+                'location': form.location.data,
+                'department': form.department.data,
+                'salary_min': form.salary_min.data,
+                'salary_max': form.salary_max.data,
+                'employment_type': form.employment_type.data,
+                'experience_level': form.experience_level.data,
+                'education_level': form.education_level.data,
+                'posted_date': form.posted_date.data,
+                'closing_date': form.closing_date.data,
+                'status': form.status.data,
+                'remote': form.remote.data,
+                'required_skills': form.required_skills.data,  # El servicio procesará esto
+                'benefits': form.benefits.data  # El servicio procesará esto
+            }
             
-            required_skills = [skill.strip() for skill in form.required_skills.data.split(',')] if form.required_skills.data else []
-            benefits = [benefit.strip() for benefit in form.benefits.data.split(',')] if form.benefits.data else []
+            job, message, status_code = JobService.create_job(job_data)
             
-            new_job = JobOpening(
-                job_id=job_id,
-                title=form.title.data,
-                short_description=form.short_description.data,
-                description=form.description.data,
-                company_name=form.company_name.data,
-                location=form.location.data,
-                department=form.department.data,
-                salary_min=form.salary_min.data,
-                salary_max=form.salary_max.data,
-                employment_type=form.employment_type.data,
-                experience_level=form.experience_level.data,
-                education_level=form.education_level.data,
-                posted_date=form.posted_date.data or datetime.now().date(),
-                closing_date=form.closing_date.data,
-                status=form.status.data,
-                remote=form.remote.data,
-                required_skills=required_skills,
-                benefits=benefits
-            )
-            
-            db.session.add(new_job)
-            db.session.commit()
-            
-            notify_job_created(new_job)
-            
-            flash(f"Trabajo '{new_job.title}' creado exitosamente.", "success")
-            return redirect(url_for('job.job_details', job_id=new_job.job_id))
+            if status_code == 201:
+                flash(message, "success")
+                return redirect(url_for('job.job_details', job_id=job.job_id))
+            else:
+                flash(message, "error")
             
         except Exception as e:
-            db.session.rollback()
             flash(f"Error al crear trabajo: {e}", "error")
     
     return render_template("job_form.html", title="Crear Trabajo", form=form, job=None)
@@ -134,7 +150,12 @@ def create_job():
 @job_bp.route("/<string:job_id>/edit", methods=["GET", "POST"])
 def update_job(job_id):
     """Renderiza y procesa el formulario para editar un trabajo existente."""
-    job = JobOpening.query.filter_by(job_id=job_id).first_or_404()
+    job = JobService.get_job_by_id(job_id)
+    
+    if not job:
+        flash(f"Trabajo con ID {job_id} no encontrado.", "error")
+        return redirect(url_for('job.list_jobs'))
+        
     form = JobForm(obj=job)
     
     if request.method == "GET":
@@ -143,34 +164,35 @@ def update_job(job_id):
     
     if form.validate_on_submit():
         try:
-            job.title = form.title.data
-            job.short_description = form.short_description.data
-            job.description = form.description.data
-            job.company_name = form.company_name.data
-            job.location = form.location.data
-            job.department = form.department.data
-            job.salary_min = form.salary_min.data
-            job.salary_max = form.salary_max.data
-            job.employment_type = form.employment_type.data
-            job.experience_level = form.experience_level.data
-            job.education_level = form.education_level.data
-            job.posted_date = form.posted_date.data
-            job.closing_date = form.closing_date.data
-            job.status = form.status.data
-            job.remote = form.remote.data
+            job_data = {
+                'title': form.title.data,
+                'short_description': form.short_description.data,
+                'description': form.description.data,
+                'company_name': form.company_name.data,
+                'location': form.location.data,
+                'department': form.department.data,
+                'salary_min': form.salary_min.data,
+                'salary_max': form.salary_max.data,
+                'employment_type': form.employment_type.data,
+                'experience_level': form.experience_level.data,
+                'education_level': form.education_level.data,
+                'posted_date': form.posted_date.data,
+                'closing_date': form.closing_date.data,
+                'status': form.status.data,
+                'remote': form.remote.data,
+                'required_skills': form.required_skills.data,  # El servicio procesará esto
+                'benefits': form.benefits.data  # El servicio procesará esto
+            }
             
-            job.required_skills = [skill.strip() for skill in form.required_skills.data.split(',')] if form.required_skills.data else []
-            job.benefits = [benefit.strip() for benefit in form.benefits.data.split(',')] if form.benefits.data else []
+            updated_job, message, status_code = JobService.update_job(job_id, job_data)
             
-            db.session.commit()
-            
-            notify_job_updated(job)
-            
-            flash(f"Trabajo '{job.title}' actualizado exitosamente.", "success")
-            return redirect(url_for('job.job_details', job_id=job.job_id))
+            if status_code == 200:
+                flash(message, "success")
+                return redirect(url_for('job.job_details', job_id=updated_job.job_id))
+            else:
+                flash(message, "error")
             
         except Exception as e:
-            db.session.rollback()
             flash(f"Error al actualizar trabajo: {e}", "error")
     
     return render_template("job_form.html", title="Editar Trabajo", form=form, job=job)
