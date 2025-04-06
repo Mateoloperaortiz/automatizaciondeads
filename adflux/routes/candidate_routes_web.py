@@ -5,15 +5,13 @@ Este módulo contiene las rutas web relacionadas con la gestión de candidatos.
 """
 
 from flask import Blueprint, render_template, url_for, flash, request, redirect
-from sqlalchemy import or_
-from ..models import Candidate, Segment, db
+from ..models import Segment
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, EmailField
 from wtforms.validators import DataRequired, Optional, Email
 from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
-import uuid
-from .candidate_routes_web_triggers import notify_candidate_created, notify_candidate_updated
+from ..services.candidate_service import CandidateService
 
 # Definir el blueprint
 candidate_bp = Blueprint("candidate", __name__, template_folder="../templates")
@@ -58,44 +56,14 @@ def list_candidates():
     sort_order = request.args.get("sort_order", "asc")
     segment_filter = request.args.get("segment")  # Obtener filtro de segmento
 
-    # Consulta base
-    candidate_query = Candidate.query
-
-    # Filtrado por segmento
-    if segment_filter is not None:
-        if segment_filter.lower() == "none":  # Manejar valor especial 'none' para no segmentados
-            # Usar segment_id
-            candidate_query = candidate_query.filter(Candidate.segment_id.is_(None))
-        else:
-            try:
-                segment_id = int(segment_filter)
-                # Usar segment_id
-                candidate_query = candidate_query.filter(Candidate.segment_id == segment_id)
-            except ValueError:
-                flash(f"Valor de filtro de segmento inválido: {segment_filter}", "warning")
-                # Opcionalmente ignorar filtro o redirigir
-
-    # Funcionalidad de búsqueda (ejemplo simple en nombre y habilidad principal)
-    if query:
-        search_term = f"%{query}%"
-        candidate_query = candidate_query.filter(
-            or_(Candidate.name.ilike(search_term), Candidate.primary_skill.ilike(search_term))
-        )
-
-    # Lógica de ordenación
-    # Usar segment_id para clave de ordenación
-    sort_column = getattr(
-        Candidate, sort_by if sort_by != "segment" else "segment_id", Candidate.name
+    candidates, pagination = CandidateService.get_candidates(
+        page=page,
+        per_page=10,
+        query=query,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        segment_filter=segment_filter
     )
-    if sort_order == "desc":
-        sort_column = sort_column.desc()
-
-    # Paginación
-    per_page = 10
-    pagination = candidate_query.order_by(sort_column).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    candidates = pagination.items
 
     # Generar enlaces de ordenación para encabezados de tabla
     sort_links = {}
@@ -112,18 +80,10 @@ def list_candidates():
         )
 
     # Obtener nombres de segmentos para mostrar en lugar de IDs
-    segment_names = {}
-    if candidates:
-        # Recopilar todos los segment_ids únicos
-        segment_ids = set(c.segment_id for c in candidates if c.segment_id is not None)
-        if segment_ids:
-            segments = Segment.query.filter(Segment.id.in_(segment_ids)).all()
-            segment_names = {s.id: s.name for s in segments}
+    segment_names = CandidateService.get_segment_names(candidates)
 
     # Generar token CSRF para formularios
     csrf_token_value = generate_csrf()
-
-    # Usar el mapa de segmentos de las constantes globales
 
     return render_template(
         "candidates_list.html",
@@ -144,7 +104,11 @@ def list_candidates():
 @candidate_bp.route("/<string:candidate_id>")
 def candidate_details(candidate_id):
     """Renderiza la página de detalles para un candidato específico."""
-    candidate = Candidate.query.filter_by(candidate_id=candidate_id).first_or_404()
+    candidate = CandidateService.get_candidate_by_id(candidate_id)
+    
+    if not candidate:
+        flash(f"Candidato con ID {candidate_id} no encontrado.", "error")
+        return redirect(url_for('candidate.list_candidates'))
 
     # Obtener nombre del segmento si existe
     segment_name = None
@@ -152,8 +116,6 @@ def candidate_details(candidate_id):
         segment = Segment.query.get(candidate.segment_id)
         if segment:
             segment_name = segment.name
-
-    # Usar el mapa de segmentos de las constantes globales
 
     return render_template(
         "candidate_detail.html",
@@ -174,38 +136,31 @@ def create_candidate():
     
     if form.validate_on_submit():
         try:
-            candidate_id = f"CAND-{uuid.uuid4().hex[:8].upper()}"
+            candidate_data = {
+                'name': form.name.data,
+                'email': form.email.data,
+                'phone': form.phone.data,
+                'location': form.location.data,
+                'years_experience': form.years_experience.data,
+                'education_level': form.education_level.data,
+                'primary_skill': form.primary_skill.data,
+                'desired_salary': form.desired_salary.data,
+                'desired_position': form.desired_position.data,
+                'summary': form.summary.data,
+                'availability': form.availability.data,
+                'skills': form.skills.data,  # El servicio procesará esto como string
+                'languages': form.languages.data  # El servicio procesará esto como string
+            }
             
-            skills = [skill.strip() for skill in form.skills.data.split(',')] if form.skills.data else []
-            languages = [language.strip() for language in form.languages.data.split(',')] if form.languages.data else []
+            candidate, message, status_code = CandidateService.create_candidate(candidate_data)
             
-            new_candidate = Candidate(
-                candidate_id=candidate_id,
-                name=form.name.data,
-                email=form.email.data,
-                phone=form.phone.data,
-                location=form.location.data,
-                years_experience=form.years_experience.data,
-                education_level=form.education_level.data,
-                primary_skill=form.primary_skill.data,
-                desired_salary=form.desired_salary.data,
-                desired_position=form.desired_position.data,
-                summary=form.summary.data,
-                availability=form.availability.data,
-                skills=skills,
-                languages=languages
-            )
-            
-            db.session.add(new_candidate)
-            db.session.commit()
-            
-            notify_candidate_created(new_candidate)
-            
-            flash(f"Candidato '{new_candidate.name}' creado exitosamente.", "success")
-            return redirect(url_for('candidate.candidate_details', candidate_id=new_candidate.candidate_id))
+            if status_code == 201:
+                flash(message, "success")
+                return redirect(url_for('candidate.candidate_details', candidate_id=candidate.candidate_id))
+            else:
+                flash(message, "error")
             
         except Exception as e:
-            db.session.rollback()
             flash(f"Error al crear candidato: {e}", "error")
     
     return render_template("candidate_form.html", title="Crear Candidato", form=form, candidate=None)
@@ -214,7 +169,12 @@ def create_candidate():
 @candidate_bp.route("/<string:candidate_id>/edit", methods=["GET", "POST"])
 def update_candidate(candidate_id):
     """Renderiza y procesa el formulario para editar un candidato existente."""
-    candidate = Candidate.query.filter_by(candidate_id=candidate_id).first_or_404()
+    candidate = CandidateService.get_candidate_by_id(candidate_id)
+    
+    if not candidate:
+        flash(f"Candidato con ID {candidate_id} no encontrado.", "error")
+        return redirect(url_for('candidate.list_candidates'))
+        
     form = CandidateForm(obj=candidate)
     
     if request.method == "GET":
@@ -223,30 +183,31 @@ def update_candidate(candidate_id):
     
     if form.validate_on_submit():
         try:
-            candidate.name = form.name.data
-            candidate.email = form.email.data
-            candidate.phone = form.phone.data
-            candidate.location = form.location.data
-            candidate.years_experience = form.years_experience.data
-            candidate.education_level = form.education_level.data
-            candidate.primary_skill = form.primary_skill.data
-            candidate.desired_salary = form.desired_salary.data
-            candidate.desired_position = form.desired_position.data
-            candidate.summary = form.summary.data
-            candidate.availability = form.availability.data
+            candidate_data = {
+                'name': form.name.data,
+                'email': form.email.data,
+                'phone': form.phone.data,
+                'location': form.location.data,
+                'years_experience': form.years_experience.data,
+                'education_level': form.education_level.data,
+                'primary_skill': form.primary_skill.data,
+                'desired_salary': form.desired_salary.data,
+                'desired_position': form.desired_position.data,
+                'summary': form.summary.data,
+                'availability': form.availability.data,
+                'skills': form.skills.data,  # El servicio procesará esto como string
+                'languages': form.languages.data  # El servicio procesará esto como string
+            }
             
-            candidate.skills = [skill.strip() for skill in form.skills.data.split(',')] if form.skills.data else []
-            candidate.languages = [language.strip() for language in form.languages.data.split(',')] if form.languages.data else []
+            updated_candidate, message, status_code = CandidateService.update_candidate(candidate_id, candidate_data)
             
-            db.session.commit()
-            
-            notify_candidate_updated(candidate)
-            
-            flash(f"Candidato '{candidate.name}' actualizado exitosamente.", "success")
-            return redirect(url_for('candidate.candidate_details', candidate_id=candidate.candidate_id))
+            if status_code == 200:
+                flash(message, "success")
+                return redirect(url_for('candidate.candidate_details', candidate_id=updated_candidate.candidate_id))
+            else:
+                flash(message, "error")
             
         except Exception as e:
-            db.session.rollback()
             flash(f"Error al actualizar candidato: {e}", "error")
     
     return render_template("candidate_form.html", title="Editar Candidato", form=form, candidate=candidate)
