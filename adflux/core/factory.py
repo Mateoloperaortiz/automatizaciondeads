@@ -73,8 +73,8 @@ def create_app(config_class=Config):
         report_bp,
         application_bp,
     )
-    from ..routes.job_routes_web_update import job_bp
-    from ..routes.candidate_routes_web_update import candidate_bp
+    from ..routes.job_routes_web import job_bp
+    from ..routes.candidate_routes_web import candidate_bp
     from ..routes.main_routes import main_bp
     from ..routes.swagger_routes import swagger_bp
 
