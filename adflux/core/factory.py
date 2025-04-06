@@ -71,10 +71,10 @@ def create_app(config_class=Config):
         segmentation_bp,
         settings_bp,
         report_bp,
-        job_bp,
-        candidate_bp,
         application_bp,
     )
+    from ..routes.job_routes_web_update import job_bp
+    from ..routes.candidate_routes_web_update import candidate_bp
     from ..routes.main_routes import main_bp
     from ..routes.swagger_routes import swagger_bp
 
