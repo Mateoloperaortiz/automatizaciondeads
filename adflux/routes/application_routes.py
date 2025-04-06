@@ -1,8 +1,10 @@
 from flask_restx import Namespace, Resource, fields, reqparse
-from ..models import db, Application  # Importar modelos necesarios
 from ..schemas import application_schema, applications_schema  # Asumiendo que los esquemas existen
 from ..extensions import csrf  # Import csrf extension
 from ..services.application_service import ApplicationService  # Importar servicio de aplicaciones
+from flask import current_app
+from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado
+from ..api.common.error_handling import manejar_error_api
 
 # Namespace para Aplicaciones
 applications_ns = Namespace("applications", description="Operaciones de Aplicación")
@@ -75,15 +77,18 @@ class ApplicationListResource(Resource):
         try:
             application_data = application_schema.load(applications_ns.payload)
         except Exception as e:
-            return {
-                "message": "La validación del payload de entrada falló",
-                "errors": getattr(e, "messages", str(e)),
-            }, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=getattr(e, "messages", str(e)),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
         application, message, status_code = ApplicationService.create_application(application_data)
         
         if status_code != 201:
-            return {"message": message}, status_code
+            error = AdFluxError(mensaje=message, codigo=status_code)
+            return manejar_error_api(error)
             
         return application_schema.dump(application), 201
 
@@ -98,7 +103,11 @@ class ApplicationResource(Resource):
         """Obtener una aplicación dado su identificador"""
         application = ApplicationService.get_application_by_id(application_id)
         if not application:
-            applications_ns.abort(404, f"Aplicación con ID {application_id} no encontrada")
+            error = ErrorRecursoNoEncontrado(
+                recurso="Aplicación",
+                identificador=application_id
+            )
+            return manejar_error_api(error)
         return application_schema.dump(application)
 
     @applications_ns.doc("update_application")
@@ -112,14 +121,20 @@ class ApplicationResource(Resource):
                 applications_ns.payload, partial=True, only=("status", "notes")
             )
         except Exception as e:
-            return {"message": "La validación del payload de entrada falló", "errors": str(e)}, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=str(e),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
         application, message, status_code = ApplicationService.update_application(
             application_id, update_data
         )
         
         if status_code != 200:
-            applications_ns.abort(status_code, message)
+            error = AdFluxError(mensaje=message, codigo=status_code)
+            return manejar_error_api(error)
             
         return application_schema.dump(application)
 
@@ -130,6 +145,7 @@ class ApplicationResource(Resource):
         success, message, status_code = ApplicationService.delete_application(application_id)
         
         if not success:
-            applications_ns.abort(status_code, message)
+            error = AdFluxError(mensaje=message, codigo=status_code)
+            return manejar_error_api(error)
             
         return "", 204

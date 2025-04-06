@@ -1,6 +1,9 @@
 from flask_restx import Namespace, Resource, fields, reqparse
 from ..schemas import candidate_schema, candidates_schema  # Asumiendo que los esquemas existen
 from ..services.candidate_service import CandidateService  # Importar el servicio de candidatos
+from flask import current_app
+from ..api.common.excepciones import ErrorValidacion
+from ..api.common.error_handling import manejar_error_api
 
 # Namespace para Candidatos
 candidates_ns = Namespace("candidates", description="Operaciones de Candidatos")
@@ -71,7 +74,12 @@ class CandidateListResource(Resource):
         try:
             candidate_data = candidate_schema.load(candidates_ns.payload)
         except Exception as e:
-            return {"message": "La validación del payload de entrada falló", "errors": str(e)}, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=str(e),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
         candidate, message, status_code = CandidateService.create_candidate(candidate_data)
         
@@ -92,7 +100,12 @@ class CandidateResource(Resource):
         candidate = CandidateService.get_candidate_by_id(candidate_id)
         
         if not candidate:
-            candidates_ns.abort(404, f"Candidato con ID {candidate_id} no encontrado")
+            from ..api.common.excepciones import ErrorRecursoNoEncontrado
+            error = ErrorRecursoNoEncontrado(
+                recurso="Candidato",
+                identificador=candidate_id
+            )
+            return manejar_error_api(error)
             
         return candidate_schema.dump(candidate)
 
@@ -104,7 +117,12 @@ class CandidateResource(Resource):
         try:
             candidate_data = candidate_schema.load(candidates_ns.payload, partial=True)
         except Exception as e:
-            return {"message": "La validación del payload de entrada falló", "errors": str(e)}, 400
+            error = ErrorValidacion(
+                mensaje="La validación del payload de entrada falló",
+                errores=str(e),
+                codigo=400
+            )
+            return manejar_error_api(error)
 
         candidate, message, status_code = CandidateService.update_candidate(candidate_id, candidate_data)
         
@@ -120,6 +138,11 @@ class CandidateResource(Resource):
         success, message, status_code = CandidateService.delete_candidate(candidate_id)
         
         if not success:
-            return {"message": message}, status_code
+            from ..api.common.excepciones import AdFluxError
+            error = AdFluxError(
+                mensaje=message,
+                codigo=status_code
+            )
+            return manejar_error_api(error)
             
         return "", 204
