@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ 'Editar Candidato' if candidate else 'Crear Nuevo Candidato' }}</h1>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <form method="POST" action="{{ url_for('candidate.create_candidate') if not candidate else url_for('candidate.update_candidate', candidate_id=candidate.candidate_id) }}">
+            {{ form.csrf_token }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Información personal -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Información Personal</h2>
+                    
+                    <div class="form-group">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Nombre Completo *</label>
+                        <input type="text" name="name" id="name" value="{{ candidate.name if candidate else '' }}" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" name="email" id="email" value="{{ candidate.email if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                        <input type="tel" name="phone" id="phone" value="{{ candidate.phone if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location" class="block text-sm font-medium text-gray-700">Ubicación</label>
+                        <input type="text" name="location" id="location" value="{{ candidate.location if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+                
+                <!-- Experiencia y educación -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Experiencia y Educación</h2>
+                    
+                    <div class="form-group">
+                        <label for="years_experience" class="block text-sm font-medium text-gray-700">Años de Experiencia</label>
+                        <input type="number" name="years_experience" id="years_experience" value="{{ candidate.years_experience if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="education_level" class="block text-sm font-medium text-gray-700">Nivel de Educación</label>
+                        <select name="education_level" id="education_level"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccionar...</option>
+                            <option value="high-school" {% if candidate and candidate.education_level == 'high-school' %}selected{% endif %}>Bachillerato</option>
+                            <option value="associate" {% if candidate and candidate.education_level == 'associate' %}selected{% endif %}>Técnico/Tecnólogo</option>
+                            <option value="bachelor" {% if candidate and candidate.education_level == 'bachelor' %}selected{% endif %}>Pregrado</option>
+                            <option value="master" {% if candidate and candidate.education_level == 'master' %}selected{% endif %}>Maestría</option>
+                            <option value="doctorate" {% if candidate and candidate.education_level == 'doctorate' %}selected{% endif %}>Doctorado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="desired_position" class="block text-sm font-medium text-gray-700">Cargo Deseado</label>
+                        <input type="text" name="desired_position" id="desired_position" value="{{ candidate.desired_position if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="desired_salary" class="block text-sm font-medium text-gray-700">Salario Deseado</label>
+                        <input type="number" name="desired_salary" id="desired_salary" value="{{ candidate.desired_salary if candidate else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Habilidades y resumen -->
+            <div class="mt-6 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Habilidades y Resumen</h2>
+                
+                <div class="form-group">
+                    <label for="primary_skill" class="block text-sm font-medium text-gray-700">Habilidad Principal</label>
+                    <input type="text" name="primary_skill" id="primary_skill" value="{{ candidate.primary_skill if candidate else '' }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="skills" class="block text-sm font-medium text-gray-700">Habilidades</label>
+                    <textarea name="skills" id="skills" rows="3" placeholder="Ingresa las habilidades separadas por comas"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ candidate.skills|join(', ') if candidate and candidate.skills else '' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Ejemplo: Python, SQL, Machine Learning</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="summary" class="block text-sm font-medium text-gray-700">Resumen Profesional</label>
+                    <textarea name="summary" id="summary" rows="4"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ candidate.summary if candidate else '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Disponibilidad e idiomas -->
+            <div class="mt-6 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Disponibilidad e Idiomas</h2>
+                
+                <div class="form-group">
+                    <label for="availability" class="block text-sm font-medium text-gray-700">Disponibilidad</label>
+                    <select name="availability" id="availability"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Seleccionar...</option>
+                        <option value="immediate" {% if candidate and candidate.availability == 'immediate' %}selected{% endif %}>Inmediata</option>
+                        <option value="two_weeks" {% if candidate and candidate.availability == 'two_weeks' %}selected{% endif %}>2 Semanas</option>
+                        <option value="one_month" {% if candidate and candidate.availability == 'one_month' %}selected{% endif %}>1 Mes</option>
+                        <option value="negotiable" {% if candidate and candidate.availability == 'negotiable' %}selected{% endif %}>Negociable</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="languages" class="block text-sm font-medium text-gray-700">Idiomas</label>
+                    <textarea name="languages" id="languages" rows="2" placeholder="Ingresa los idiomas separados por comas"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ candidate.languages|join(', ') if candidate and candidate.languages else '' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Ejemplo: Español (Nativo), Inglés (Avanzado)</p>
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{{ url_for('candidate.list_candidates') }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ 'Actualizar' if candidate else 'Crear' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

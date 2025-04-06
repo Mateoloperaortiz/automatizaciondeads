@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ 'Editar Trabajo' if job else 'Crear Nuevo Trabajo' }}</h1>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <form method="POST" action="{{ url_for('job.create_job') if not job else url_for('job.update_job', job_id=job.job_id) }}">
+            {{ form.csrf_token }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Información básica -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Información Básica</h2>
+                    
+                    <div class="form-group">
+                        <label for="title" class="block text-sm font-medium text-gray-700">Título *</label>
+                        <input type="text" name="title" id="title" value="{{ job.title if job else '' }}" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="short_description" class="block text-sm font-medium text-gray-700">Descripción Corta</label>
+                        <input type="text" name="short_description" id="short_description" value="{{ job.short_description if job else '' }}" maxlength="150"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Máximo 150 caracteres. Usado para anuncios.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Descripción Completa</label>
+                        <textarea name="description" id="description" rows="5"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ job.description if job else '' }}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="company_name" class="block text-sm font-medium text-gray-700">Empresa</label>
+                        <input type="text" name="company_name" id="company_name" value="{{ job.company_name if job else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+                
+                <!-- Detalles del trabajo -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Detalles del Trabajo</h2>
+                    
+                    <div class="form-group">
+                        <label for="location" class="block text-sm font-medium text-gray-700">Ubicación</label>
+                        <input type="text" name="location" id="location" value="{{ job.location if job else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="department" class="block text-sm font-medium text-gray-700">Departamento</label>
+                        <input type="text" name="department" id="department" value="{{ job.department if job else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="salary_min" class="block text-sm font-medium text-gray-700">Salario Mínimo</label>
+                            <input type="number" name="salary_min" id="salary_min" value="{{ job.salary_min if job else '' }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="salary_max" class="block text-sm font-medium text-gray-700">Salario Máximo</label>
+                            <input type="number" name="salary_max" id="salary_max" value="{{ job.salary_max if job else '' }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employment_type" class="block text-sm font-medium text-gray-700">Tipo de Empleo</label>
+                        <select name="employment_type" id="employment_type"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccionar...</option>
+                            <option value="full-time" {% if job and job.employment_type == 'full-time' %}selected{% endif %}>Tiempo Completo</option>
+                            <option value="part-time" {% if job and job.employment_type == 'part-time' %}selected{% endif %}>Medio Tiempo</option>
+                            <option value="contract" {% if job and job.employment_type == 'contract' %}selected{% endif %}>Contrato</option>
+                            <option value="temporary" {% if job and job.employment_type == 'temporary' %}selected{% endif %}>Temporal</option>
+                            <option value="internship" {% if job and job.employment_type == 'internship' %}selected{% endif %}>Pasantía</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="experience_level" class="block text-sm font-medium text-gray-700">Nivel de Experiencia</label>
+                        <select name="experience_level" id="experience_level"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccionar...</option>
+                            <option value="entry-level" {% if job and job.experience_level == 'entry-level' %}selected{% endif %}>Nivel de Entrada</option>
+                            <option value="mid-level" {% if job and job.experience_level == 'mid-level' %}selected{% endif %}>Nivel Medio</option>
+                            <option value="senior" {% if job and job.experience_level == 'senior' %}selected{% endif %}>Senior</option>
+                            <option value="executive" {% if job and job.experience_level == 'executive' %}selected{% endif %}>Ejecutivo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="education_level" class="block text-sm font-medium text-gray-700">Nivel de Educación</label>
+                        <select name="education_level" id="education_level"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccionar...</option>
+                            <option value="high-school" {% if job and job.education_level == 'high-school' %}selected{% endif %}>Bachillerato</option>
+                            <option value="associate" {% if job and job.education_level == 'associate' %}selected{% endif %}>Técnico/Tecnólogo</option>
+                            <option value="bachelor" {% if job and job.education_level == 'bachelor' %}selected{% endif %}>Pregrado</option>
+                            <option value="master" {% if job and job.education_level == 'master' %}selected{% endif %}>Maestría</option>
+                            <option value="doctorate" {% if job and job.education_level == 'doctorate' %}selected{% endif %}>Doctorado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fechas y Estado -->
+            <div class="mt-6 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Fechas y Estado</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-group">
+                        <label for="posted_date" class="block text-sm font-medium text-gray-700">Fecha de Publicación</label>
+                        <input type="date" name="posted_date" id="posted_date" value="{{ job.posted_date.strftime('%Y-%m-%d') if job and job.posted_date else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="closing_date" class="block text-sm font-medium text-gray-700">Fecha de Cierre</label>
+                        <input type="date" name="closing_date" id="closing_date" value="{{ job.closing_date.strftime('%Y-%m-%d') if job and job.closing_date else '' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Estado</label>
+                        <select name="status" id="status"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="open" {% if not job or job.status == 'open' %}selected{% endif %}>Abierto</option>
+                            <option value="closed" {% if job and job.status == 'closed' %}selected{% endif %}>Cerrado</option>
+                            <option value="draft" {% if job and job.status == 'draft' %}selected{% endif %}>Borrador</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="remote" id="remote" {% if job and job.remote %}checked{% endif %}
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <label for="remote" class="ml-2 block text-sm text-gray-700">Trabajo Remoto</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Habilidades y Beneficios -->
+            <div class="mt-6 space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Habilidades y Beneficios</h2>
+                
+                <div class="form-group">
+                    <label for="required_skills" class="block text-sm font-medium text-gray-700">Habilidades Requeridas</label>
+                    <textarea name="required_skills" id="required_skills" rows="3" placeholder="Ingresa las habilidades separadas por comas"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ job.required_skills|join(', ') if job and job.required_skills else '' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Ejemplo: Python, SQL, Machine Learning</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="benefits" class="block text-sm font-medium text-gray-700">Beneficios</label>
+                    <textarea name="benefits" id="benefits" rows="3" placeholder="Ingresa los beneficios separados por comas"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ job.benefits|join(', ') if job and job.benefits else '' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Ejemplo: Seguro médico, Horario flexible, Trabajo remoto</p>
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="{{ url_for('job.list_jobs') }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ 'Actualizar' if job else 'Crear' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
