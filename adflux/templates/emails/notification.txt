@@ -1,0 +1,16 @@
+AdFlux - {{ notification.title }}
+
+{{ notification.message }}
+
+{% if notification.entity_type %}
+Relacionado con: {{ notification.entity_type }}{% if notification.entity_id %} #{{ notification.entity_id }}{% endif %}
+{% endif %}
+
+Fecha: {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}
+
+Para ver todas las notificaciones, visite:
+{{ url_for('notification.list_notifications', _external=True) }}
+
+---
+Este es un mensaje automático de AdFlux. Por favor no responda a este email.
+© {{ notification.created_at.year }} AdFlux. Todos los derechos reservados.

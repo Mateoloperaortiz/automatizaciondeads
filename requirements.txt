@@ -36,6 +36,8 @@ google-generativeai>=0.5.0 # Añadir librería Gemini
 requests==2.32.3
 Flask-WTF>=1.0 # Añadir Flask-WTF para formularios
 WTForms-SQLAlchemy>=0.3 # Añadir para QuerySelectField
+Flask-Mail>=0.9.0 # Añadir para notificaciones por email
+email_validator>=2.0.0 # Añadir para validación de emails
 celery
 redis
 gevent

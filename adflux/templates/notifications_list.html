@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Notificaciones | AdFlux{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div>
+            <h2 class="text-lg leading-6 font-medium text-gray-900">
+                {{ title }}
+            </h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                {% if unread_count > 0 %}
+                    Tienes {{ unread_count }} notificación{% if unread_count != 1 %}es{% endif %} sin leer.
+                {% else %}
+                    No tienes notificaciones sin leer.
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex space-x-2">
+            {% if not show_only_unread %}
+                <a href="{{ url_for('notification.unread_notifications') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Ver no leídas
+                </a>
+            {% else %}
+                <a href="{{ url_for('notification.list_notifications') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Ver todas
+                </a>
+            {% endif %}
+            <form action="{{ url_for('notification.mark_all_as_read') }}" method="POST" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Marcar todas como leídas
+                </button>
+            </form>
+            <form action="{{ url_for('notification.create_test_notification') }}" method="POST" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Crear notificación de prueba
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    {% if notifications %}
+        <ul class="divide-y divide-gray-200" id="notifications-container">
+            {% for notification in notifications %}
+                <li class="notification-item {% if not notification.is_read %}bg-blue-50{% endif %}" data-id="{{ notification.id }}">
+                    <div class="px-4 py-4 sm:px-6 flex items-start">
+                        <div class="flex-shrink-0 mr-3">
+                            {% if notification.type.value == 'info' %}
+                                <span class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            {% elif notification.type.value == 'success' %}
+                                <span class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            {% elif notification.type.value == 'warning' %}
+                                <span class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            {% elif notification.type.value == 'error' %}
+                                <span class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            {% elif notification.type.value == 'task' %}
+                                <span class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                        <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                                    </svg>
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium {% if not notification.is_read %}font-semibold text-gray-900{% else %}text-gray-700{% endif %}">
+                                    {{ notification.title }}
+                                </h3>
+                                <div class="flex items-center space-x-2">
+                                    <p class="text-xs text-gray-500">
+                                        {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                    </p>
+                                    {% if not notification.is_read %}
+                                        <form action="{{ url_for('notification.mark_as_read', notification_id=notification.id) }}" method="POST" class="inline mark-read-form">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                                Marcar como leída
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-600">
+                                {{ notification.message }}
+                            </p>
+                            {% if notification.entity_type and notification.entity_id %}
+                                <div class="mt-2">
+                                    {% if notification.entity_type == 'job' %}
+                                        <a href="{{ url_for('job.job_details', job_id=notification.entity_id) }}" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                            Ver trabajo
+                                        </a>
+                                    {% elif notification.entity_type == 'candidate' %}
+                                        <a href="{{ url_for('candidate.candidate_details', candidate_id=notification.entity_id) }}" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                            Ver candidato
+                                        </a>
+                                    {% elif notification.entity_type == 'application' %}
+                                        <a href="{{ url_for('application.application_details', application_id=notification.entity_id) }}" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                            Ver aplicación
+                                        </a>
+                                    {% elif notification.entity_type == 'campaign' %}
+                                        <a href="{{ url_for('campaign.campaign_details', campaign_id=notification.entity_id) }}" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                            Ver campaña
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="py-10 text-center text-gray-500">
+            <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p class="mt-2 text-sm">No hay notificaciones disponibles</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block body_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar formularios de marcar como leído con AJAX
+        const markReadForms = document.querySelectorAll('.mark-read-form');
+        markReadForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const notificationItem = form.closest('.notification-item');
+                const notificationId = notificationItem.dataset.id;
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        notificationItem.classList.remove('bg-blue-50');
+                        form.remove();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+        
+        // Configurar SSE para notificaciones en tiempo real
+        setupSSE();
+    });
+    
+    function setupSSE() {
+        const evtSource = new EventSource("{{ url_for('sse.stream') }}");
+        
+        evtSource.addEventListener("notification", function(event) {
+            const data = JSON.parse(event.data);
+            updateNotificationCount(1);
+            
+            // Si estamos en la página de notificaciones, agregar la nueva notificación
+            const container = document.getElementById('notifications-container');
+            if (container) {
+                // Crear elemento para la nueva notificación
+                const newNotification = createNotificationElement(data);
+                
+                // Insertar al principio de la lista
+                if (container.firstChild) {
+                    container.insertBefore(newNotification, container.firstChild);
+                } else {
+                    container.appendChild(newNotification);
+                    
+                    // Si no había notificaciones, eliminar el mensaje de "no hay notificaciones"
+                    const emptyMessage = document.querySelector('.py-10.text-center.text-gray-500');
+                    if (emptyMessage) {
+                        emptyMessage.remove();
+                    }
+                }
+            }
+        });
+        
+        evtSource.addEventListener("error", function(event) {
+            console.error("SSE Error:", event);
+            // Reconectar después de un tiempo si hay error
+            setTimeout(setupSSE, 5000);
+        });
+        
+        evtSource.addEventListener("connected", function(event) {
+            console.log("SSE Connected");
+        });
+    }
+    
+    function createNotificationElement(data) {
+        // Crear elemento li para la notificación
+        const li = document.createElement('li');
+        li.className = 'notification-item bg-blue-50';
+        li.dataset.id = data.id;
+        
+        // Determinar el icono según el tipo
+        let iconHtml = '';
+        switch(data.type) {
+            case 'info':
+                iconHtml = `<span class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </span>`;
+                break;
+            case 'success':
+                iconHtml = `<span class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </span>`;
+                break;
+            case 'warning':
+                iconHtml = `<span class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </span>`;
+                break;
+            case 'error':
+                iconHtml = `<span class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </span>`;
+                break;
+            case 'task':
+                iconHtml = `<span class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                    </svg>
+                </span>`;
+                break;
+        }
+        
+        // Formatear fecha
+        const date = new Date(data.created_at);
+        const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        
+        // Construir HTML para la notificación
+        li.innerHTML = `
+            <div class="px-4 py-4 sm:px-6 flex items-start">
+                <div class="flex-shrink-0 mr-3">
+                    ${iconHtml}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex justify-between">
+                        <h3 class="text-sm font-medium font-semibold text-gray-900">
+                            ${data.title}
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <p class="text-xs text-gray-500">
+                                ${formattedDate}
+                            </p>
+                            <form action="/notifications/mark-read/${data.id}" method="POST" class="inline mark-read-form">
+                                <input type="hidden" name="csrf_token" value="${document.querySelector('input[name="csrf_token"]').value}">
+                                <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                    Marcar como leída
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-600">
+                        ${data.message}
+                    </p>
+                    ${data.entity_type && data.entity_id ? `
+                        <div class="mt-2">
+                            <a href="/${data.entity_type}s/${data.entity_id}" class="text-xs text-indigo-600 hover:text-indigo-900">
+                                Ver ${data.entity_type}
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        // Agregar event listener para el formulario de marcar como leído
+        setTimeout(() => {
+            const form = li.querySelector('.mark-read-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            li.classList.remove('bg-blue-50');
+                            form.remove();
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            }
+        }, 0);
+        
+        return li;
+    }
+    
+    function updateNotificationCount(increment = 0) {
+        // Actualizar contador en la campana de notificaciones
+        const unreadCountElement = document.querySelector('[x-data*="notificationsOpen"]');
+        if (unreadCountElement && unreadCountElement.__x) {
+            const currentCount = unreadCountElement.__x.getUnobservedData().unreadCount || 0;
+            unreadCountElement.__x.updateUnobservedData('unreadCount', currentCount + increment);
+        }
+    }
+</script>
+{% endblock %}

@@ -77,6 +77,8 @@ def create_app(config_class=Config):
     from ..routes.candidate_routes_web import candidate_bp
     from ..routes.main_routes import main_bp
     from ..routes.swagger_routes import swagger_bp
+    from ..routes.notification_routes_web import notification_bp
+    from ..sse import sse_bp
 
     # Registrar blueprints
     app.register_blueprint(main_bp)  # Registrar primero el blueprint principal para la raíz
@@ -88,6 +90,8 @@ def create_app(config_class=Config):
     app.register_blueprint(job_bp, url_prefix="/jobs")
     app.register_blueprint(candidate_bp, url_prefix="/candidates")
     app.register_blueprint(application_bp, url_prefix="/applications")
+    app.register_blueprint(notification_bp, url_prefix="/notifications")
+    app.register_blueprint(sse_bp, url_prefix="/sse")
     app.register_blueprint(swagger_bp)
 
     # Registrar blueprint de API

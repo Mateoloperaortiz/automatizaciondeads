@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notification.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9fafb;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4f46e5;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .info {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+        .success {
+            background-color: #dcfce7;
+            border-left: 4px solid #22c55e;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+        .error {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        .task {
+            background-color: #f3e8ff;
+            border-left: 4px solid #a855f7;
+        }
+        .notification-box {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AdFlux</h1>
+    </div>
+    <div class="content">
+        <h2>{{ notification.title }}</h2>
+        
+        <div class="notification-box {{ notification.type.value }}">
+            <p>{{ notification.message }}</p>
+            
+            {% if notification.entity_type %}
+                <p><strong>Relacionado con:</strong> {{ notification.entity_type }}
+                {% if notification.entity_id %}
+                    #{{ notification.entity_id }}
+                {% endif %}
+                </p>
+            {% endif %}
+            
+            <p><strong>Fecha:</strong> {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+        
+        <a href="{{ url_for('notification.list_notifications', _external=True) }}" class="button">Ver todas las notificaciones</a>
+    </div>
+    <div class="footer">
+        <p>Este es un mensaje automático de AdFlux. Por favor no responda a este email.</p>
+        <p>&copy; {{ notification.created_at.year }} AdFlux. Todos los derechos reservados.</p>
+    </div>
+</body>
+</html>

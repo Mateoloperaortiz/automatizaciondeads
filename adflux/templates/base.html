@@ -116,7 +116,53 @@
                                  <img src="{{ url_for('static', filename='adflux logo.png') }}" alt="AdFlux Logo" class="h-8 mr-2">
                              </a>
                         </div>
-                        <div class="w-10"></div> {# Espaciador #}
+                        <!-- Campana de notificaciones -->
+                        <div class="flex items-center" x-data="{ notificationsOpen: false, unreadCount: 0 }">
+                            <button @click="notificationsOpen = !notificationsOpen" class="relative p-1 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <span class="sr-only">Ver notificaciones</span>
+                                <!-- Heroicon name: outline/bell -->
+                                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <!-- Indicador de notificaciones no leídas -->
+                                <span 
+                                    x-show="unreadCount > 0" 
+                                    x-text="unreadCount > 9 ? '9+' : unreadCount"
+                                    class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                </span>
+                            </button>
+                            
+                            <!-- Panel de notificaciones -->
+                            <div 
+                                x-show="notificationsOpen" 
+                                @click.away="notificationsOpen = false"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                                class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-50"
+                                style="top: 3rem;">
+                                <div class="py-2">
+                                    <div class="px-4 py-2 border-b border-gray-200">
+                                        <div class="flex justify-between items-center">
+                                            <h3 class="text-sm font-medium text-gray-900">Notificaciones</h3>
+                                            <a href="{{ url_for('notification.list_notifications') }}" class="text-xs text-indigo-600 hover:text-indigo-900">Ver todas</a>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-72 overflow-y-auto" id="notification-list">
+                                        <div class="py-10 text-center text-gray-500" id="empty-notifications">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                            </svg>
+                                            <p class="mt-2 text-sm">No hay notificaciones</p>
+                                        </div>
+                                        <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -165,7 +211,9 @@
     {% block body_scripts %}{% endblock %} {# Marcador para scripts al final del body #}
 
     <script>
-        // Script para manejar los mensajes flash
+</body>
+</html>
+        // Script para manejar los mensajes flash y notificaciones
         document.addEventListener('DOMContentLoaded', function() {
             const flashContainer = document.getElementById('flash-messages-container');
             if (flashContainer && flashContainer.children.length > 0) {
@@ -184,7 +232,136 @@
                     }, 1000);
                 }, 5000);
             }
+            
+            // Configurar SSE para notificaciones en tiempo real
+            setupNotifications();
         });
+        
+        // Función para configurar las notificaciones en tiempo real
+        function setupNotifications() {
+            // Obtener el elemento de notificaciones
+            const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
+            if (!notificationElement) return;
+            
+            // Inicializar contador de notificaciones no leídas
+            fetchUnreadCount();
+            
+            // Configurar SSE para notificaciones en tiempo real
+            setupSSE();
+        }
+        
+        // Función para obtener el contador de notificaciones no leídas
+        function fetchUnreadCount() {
+            fetch('/notifications/count')
+                .then(response => response.json())
+                .then(data => {
+                    updateNotificationCount(data.count, false);
+                })
+                .catch(error => console.error('Error al obtener contador de notificaciones:', error));
+        }
+        
+        // Función para actualizar el contador de notificaciones
+        function updateNotificationCount(count, increment = true) {
+            const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
+            if (notificationElement && notificationElement.__x) {
+                if (increment) {
+                    const currentCount = notificationElement.__x.getUnobservedData().unreadCount || 0;
+                    notificationElement.__x.updateUnobservedData('unreadCount', currentCount + count);
+                } else {
+                    notificationElement.__x.updateUnobservedData('unreadCount', count);
+                }
+            }
+        }
+        
+        // Función para configurar SSE
+        function setupSSE() {
+            try {
+                const evtSource = new EventSource("/sse/stream");
+                
+                evtSource.addEventListener("notification", function(event) {
+                    const data = JSON.parse(event.data);
+                    updateNotificationCount(1);
+                    showNotificationToast(data);
+                    updateNotificationPanel(data);
+                });
+                
+                evtSource.addEventListener("error", function(event) {
+                    console.error("SSE Error:", event);
+                    // Reconectar después de un tiempo si hay error
+                    setTimeout(setupSSE, 5000);
+                });
+                
+                evtSource.addEventListener("connected", function(event) {
+                    console.log("SSE Connected");
+                });
+            } catch (error) {
+                console.error("Error al configurar SSE:", error);
+            }
+        }
+        
+        // Función para mostrar una notificación toast
+        function showNotificationToast(data) {
+            // Implementar si se desea mostrar notificaciones toast
+        }
+        
+        // Función para actualizar el panel de notificaciones
+        function updateNotificationPanel(data) {
+            const notificationList = document.getElementById('notification-list');
+            if (!notificationList) return;
+            
+            // Eliminar mensaje de "no hay notificaciones"
+            const emptyNotifications = document.getElementById('empty-notifications');
+            if (emptyNotifications) {
+                emptyNotifications.style.display = 'none';
+            }
+            
+            // Crear elemento de notificación
+            const notificationItem = document.createElement('div');
+            notificationItem.className = 'p-4 border-b border-gray-200 hover:bg-gray-50';
+            
+            // Determinar icono según el tipo
+            let iconHtml = '';
+            switch(data.type) {
+                case 'info':
+                    iconHtml = '<svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+                    break;
+                case 'success':
+                    iconHtml = '<svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>';
+                    break;
+                case 'warning':
+                    iconHtml = '<svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
+                    break;
+                case 'error':
+                    iconHtml = '<svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
+                    break;
+                case 'task':
+                    iconHtml = '<svg class="h-5 w-5 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" /><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" /></svg>';
+                    break;
+            }
+            
+            // Formatear fecha
+            const date = new Date(data.created_at);
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            
+            // Construir HTML
+            notificationItem.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-3">
+                        ${iconHtml}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">${data.title}</p>
+                        <p class="text-sm text-gray-500 truncate">${data.message}</p>
+                        <p class="text-xs text-gray-400 mt-1">${formattedDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Insertar al principio de la lista
+            if (notificationList.firstChild) {
+                notificationList.insertBefore(notificationItem, notificationList.firstChild);
+            } else {
+                notificationList.appendChild(notificationItem);
+            }
+        }
     </script>
-</body>
-</html>
