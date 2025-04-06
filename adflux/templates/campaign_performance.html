@@ -15,13 +15,13 @@
     <div class="mb-6 border-b border-gray-200 pb-4">
         <nav aria-label="Breadcrumb" class="mb-2">
             <ol class="flex items-center space-x-2 text-sm text-gray-500">
-                <li><a href="{{ url_for('main.list_campaigns') }}" class="hover:text-gray-700">Campaigns</a></li>
+                <li><a href="{{ url_for('campaign.list_campaigns') }}" class="hover:text-gray-700">Campaigns</a></li>
                 <li>
                     <svg class="h-5 w-5 flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                         <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
                     </svg>
                 </li>
-                 <li><a href="{{ url_for('main.campaign_details', campaign_id=campaign.id) }}" class="hover:text-gray-700">{{ campaign.name }}</a></li>
+                 <li><a href="{{ url_for('campaign.view_campaign_details', campaign_id=campaign.id) }}" class="hover:text-gray-700">{{ campaign.name }}</a></li>
                  <li>
                     <svg class="h-5 w-5 flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                         <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
@@ -39,7 +39,7 @@
                 {% endif %}
             </div>
              {# --- Filtro de Rango de Fechas --- #}
-            <form method="GET" action="{{ url_for('main.campaign_performance_report', campaign_id=campaign.id) }}" class="flex items-center space-x-2">
+            <form method="GET" action="{{ url_for('campaign.campaign_performance_report', campaign_id=campaign.id) }}" class="flex items-center space-x-2">
                 <div class="flex items-center space-x-1"><label for="start_date" class="text-sm font-medium text-gray-600">From:</label><input type="date" id="start_date" name="start_date" value="{{ default_start_date }}" class="input-sm"></div>
                 <div class="flex items-center space-x-1"><label for="end_date" class="text-sm font-medium text-gray-600">To:</label><input type="date" id="end_date" name="end_date" value="{{ default_end_date }}" class="input-sm"></div>
                 <button type="submit" class="btn-primary-sm">Apply</button>
@@ -126,8 +126,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const spendChartData = {{ stats.spend_over_time_chart | tojson }};
-        
-        // --- Gráfico de Gasto a lo Largo del Tiempo --- 
+
+        // --- Gráfico de Gasto a lo Largo del Tiempo ---
         const spendCtx = document.getElementById('spendOverTimeChart')?.getContext('2d');
         if (spendCtx && spendChartData && spendChartData.labels && spendChartData.labels.length > 0) {
             new Chart(spendCtx, {
@@ -150,7 +150,7 @@
                             type: 'category', // Trata las etiquetas como categorías
                              ticks: { // Opcional: limitar número de marcas mostradas
                                 // autoSkip: true,
-                                // maxTicksLimit: 10 
+                                // maxTicksLimit: 10
                             }
                         }
                     },
@@ -179,4 +179,4 @@
         }
     });
 </script>
-{% endblock %} 
+{% endblock %}

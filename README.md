@@ -1,63 +1,130 @@
-# AdFlux - Sistema Automatizado de Publicación de Anuncios
+# 🚀 AdFlux - ¡Automatiza tus Anuncios de Empleo como un Pro
 
-![ChatGPT Image 3 abr 2025, 09_10_29 p m](https://github.com/user-attachments/assets/aefa1ea3-5a20-4930-8127-f858f2ce0a8b)
+<div align="center">
 
-## Descripción General del Proyecto
+![AdFlux Logo](https://github.com/user-attachments/assets/aefa1ea3-5a20-4930-8127-f858f2ce0a8b)
 
-AdFlux es un proyecto universitario que automatiza la publicación de anuncios de ofertas de trabajo en plataformas de redes sociales. Está diseñado como una prueba de concepto inspirada en las necesidades de plataformas como Magneto365, centrándose en obtener ofertas de trabajo, segmentar audiencias potenciales de candidatos utilizando aprendizaje automático y crear campañas publicitarias dirigidas en plataformas seleccionadas a través de sus API (utilizando entornos sandbox/de prueba).
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.0+-lightgrey.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Meta API](https://img.shields.io/badge/Meta%20API-Integrado-blue.svg?logo=facebook&logoColor=white)](https://developers.facebook.com/docs/marketing-apis/)
+[![Google Ads](https://img.shields.io/badge/Google%20Ads-Integrado-red.svg?logo=google&logoColor=white)](https://developers.google.com/google-ads/api/docs/start)
+[![ML](https://img.shields.io/badge/Machine%20Learning-K--means-green.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 
-**Objetivo del Proyecto:** Construir un sistema funcional que demuestre la publicación automatizada de anuncios en plataformas de redes sociales (Meta, Google Ads) basada en datos de trabajos y candidatos, con una interfaz web y una Interfaz de Línea de Comandos (CLI).
+</div>
 
-**Restricción:** Debido a las limitaciones del proyecto universitario, este sistema utiliza **datos simulados** e interactúa con las API de redes sociales **solo en modos de prueba/sandbox**. No se conecta a sistemas Magneto365 en vivo ni utiliza presupuestos publicitarios reales.
+## 💡 ¿Qué es AdFlux?
 
-**Cronograma del Proyecto:** Febrero 2025 - Mayo 2025
+**AdFlux** es tu aliado para revolucionar la forma en que publicas ofertas de trabajo en redes sociales. ¿Cansado de publicar anuncios manualmente? ¡Olvídate de eso! Con AdFlux, automatizas todo el proceso desde la creación hasta el seguimiento de tus campañas.
 
-## Características Clave
+Desarrollado como proyecto universitario inspirado en las necesidades de plataformas como Magneto365, AdFlux te permite:
 
-- **Gestión de Ofertas de Trabajo**: Crear, ver y gestionar listados de trabajos
-- **Gestión de Candidatos**: Realizar seguimiento de perfiles de candidatos y aplicaciones
-- **Segmentación con Aprendizaje Automático**: Segmentar automáticamente candidatos utilizando clustering K-means
-- **Creación de Campañas**: Crear campañas publicitarias dirigidas para ofertas de trabajo específicas
-- **Integración Multiplataforma**: Publicar campañas en Meta (Facebook/Instagram) y Google Ads
-- **Seguimiento del Rendimiento**: Monitorear métricas de rendimiento de campañas
-- **Interfaz Web**: Panel de control fácil de usar para gestionar todos los aspectos del sistema
-- **Herramientas CLI**: Utilidades de línea de comandos para automatización y operaciones por lotes
-- **Procesamiento en Segundo Plano**: Manejo asíncrono de tareas para operaciones de larga duración
-- **Tareas Programadas**: Operaciones periódicas automatizadas como sincronización de datos y reentrenamiento de modelos
+- 📊 **Gestionar ofertas de trabajo** de forma centralizada
+- 🧠 **Segmentar candidatos automáticamente** con inteligencia artificial
+- 📱 **Publicar anuncios** en Meta (Facebook/Instagram) y Google Ads con un solo clic
+- 📈 **Analizar el rendimiento** de tus campañas en tiempo real
 
-## Tech Stack
+> **Nota:** Este proyecto utiliza **datos simulados** y APIs en modo sandbox/prueba. No conecta con sistemas reales de Magneto365 ni utiliza presupuestos publicitarios reales.
 
-### Backend
-* **Framework:** Python 3.9+ con Flask
-* **API:** Flask-RESTX (con documentación Swagger)
-* **Base de Datos:** PostgreSQL (SQLite para desarrollo)
-* **ORM:** SQLAlchemy con Flask-SQLAlchemy y Flask-Migrate
-* **Cola de Tareas:** Celery con Redis
-* **Programador:** Flask-APScheduler
-* **Formularios:** Flask-WTF
-* **Serialización:** Marshmallow con Flask-Marshmallow
+**Proyecto desarrollado:** Febrero 2025 - Mayo 2025
 
-### Machine Learning
-* **Framework:** Scikit-learn
-* **Algoritmo:** Clustering K-means
-* **Procesamiento de Datos:** Pandas, NumPy
-* **Persistencia de Modelos:** Joblib
+## ✨ Características Alucinantes
 
-### Integraciones API
-* **Meta Ads:** `facebook-python-business-sdk`
-* **Google Ads:** `google-ads-python`
-* **Generación de Datos:** API de Google Gemini
+<div class="features-grid">
 
-### Frontend
-* **Plantillas:** Jinja2
-* **Framework CSS:** Tailwind CSS
+### 🏢 Gestión de Empleos
 
-### Desarrollo y Despliegue
-* **CLI:** Click
-* **Entorno:** python-dotenv
-* **Pruebas:** Pytest
-* **Control de Versiones:** Git y GitHub
-* **Objetivo de Despliegue:** Google Cloud Platform
+- Crea y gestiona ofertas de trabajo con descripciones detalladas
+- Organiza tus vacantes por categoría, ubicación y nivel de experiencia
+- Visualiza el estado de cada oferta en tiempo real
+
+### 👥 Gestión de Talentos
+
+- Mantiene una base de datos organizada de candidatos
+- Realiza seguimiento de aplicaciones y entrevistas
+- Filtra candidatos por habilidades, experiencia y ubicación
+
+### 🧠 IA para Segmentación
+
+- Agrupa automáticamente candidatos usando clustering K-means
+- Identifica patrones ocultos en los perfiles de candidatos
+- Optimiza tus campañas según características de cada segmento
+
+### 📱 Publicación Multi-Plataforma
+
+- Publica anuncios en Meta (Facebook/Instagram) con un clic
+- Crea campañas en Google Ads sin salir de la aplicación
+- Gestiona todas tus campañas desde un solo lugar
+
+### 📊 Análisis en Tiempo Real
+
+- Monitorea el rendimiento de tus campañas al instante
+- Visualiza métricas clave con gráficos interactivos
+- Genera informes personalizados para tomar mejores decisiones
+
+### ⚡ Automatización Total
+
+- Tareas en segundo plano con Celery y Redis
+- Sincronización automática de datos con las plataformas
+- Programación de tareas recurrentes sin intervención manual
+
+</div>
+
+## 💻 Tech Stack
+
+<div class="tech-stack">
+
+<div class="tech-category">
+
+### 🔥 Backend
+
+- **Framework:** ![Python](https://img.shields.io/badge/Python%203.9+-3776AB?style=flat-square&logo=python&logoColor=white) + ![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)
+- **API:** ![Flask-RESTX](https://img.shields.io/badge/Flask--RESTX-009688?style=flat-square&logo=flask&logoColor=white) con documentación Swagger
+- **Base de Datos:** ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white) (SQLite para desarrollo)
+- **ORM:** ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
+- **Cola de Tareas:** ![Celery](https://img.shields.io/badge/Celery-37814A?style=flat-square&logo=celery&logoColor=white) con ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
+
+</div>
+
+<div class="tech-category">
+
+### 🧠 Machine Learning
+
+- **Framework:** ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
+- **Algoritmo:** Clustering K-means
+- **Procesamiento:** ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white) + ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white)
+
+</div>
+
+<div class="tech-category">
+
+### 🔗 Integraciones API
+
+- **Meta Ads:** `facebook-python-business-sdk`
+- **Google Ads:** `google-ads-python`
+- **IA Generativa:** ![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)
+
+</div>
+
+<div class="tech-category">
+
+### 📺 Frontend
+
+- **Plantillas:** ![Jinja2](https://img.shields.io/badge/Jinja2-B41717?style=flat-square&logo=jinja&logoColor=white)
+- **CSS:** ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+
+</div>
+
+<div class="tech-category">
+
+### 🛠️ Herramientas de Desarrollo
+
+- **CLI:** ![Click](https://img.shields.io/badge/Click-4B48EF?style=flat-square&logo=python&logoColor=white)
+- **Pruebas:** ![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white)
+- **Despliegue:** ![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4?style=flat-square&logo=google-cloud&logoColor=white)
+
+</div>
+
+</div>
 
 ## Estructura del Proyecto
 
@@ -66,7 +133,9 @@ AdFlux/
 │
 ├── adflux/                   # Paquete principal de la aplicación
 │   ├── __init__.py           # Inicialización del paquete
-│   ├── app.py                # Fábrica de la aplicación
+│   ├── core/                 # Componentes principales de la aplicación
+│   │   ├── __init__.py       # Inicialización del paquete core
+│   │   ├── factory.py        # Fábrica de la aplicación
 │   ├── models.py             # Modelos de datos SQLAlchemy
 │   ├── schemas.py            # Esquemas de serialización Marshmallow
 │   ├── forms.py              # Definiciones de WTForms
@@ -137,20 +206,22 @@ AdFlux/
 
 ### Prerrequisitos
 
-* Python 3.9+ y `pip`
-* Git
-* PostgreSQL (opcional, SQLite funciona para desarrollo)
-* Redis (para la cola de tareas Celery)
+- Python 3.9+ y `pip`
+- Git
+- PostgreSQL (opcional, SQLite funciona para desarrollo)
+- Redis (para la cola de tareas Celery)
 
 ### Instalación
 
 1. **Clonar Repositorio:**
+
    ```bash
    git clone https://github.com/Mateoloperaortiz/automatizaciondeads.git
    cd AdFlux
    ```
 
 2. **Crear Entorno Virtual:**
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # Linux/macOS
@@ -159,13 +230,15 @@ AdFlux/
    ```
 
 3. **Instalar Dependencias:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Configurar Variables de Entorno:**
-   * Copia `.env.example` a `.env`
-   * Edita `.env` y completa la configuración requerida:
+   - Copia `.env.example` a `.env`
+   - Edita `.env` y completa la configuración requerida:
+
      ```ini
      # Configuración de Base de Datos
      DATABASE_URL=sqlite:///instance/adflux.db  # Para SQLite (desarrollo)
@@ -202,51 +275,64 @@ AdFlux/
      ```
 
 5. **Configurar Base de Datos:**
-   * Para SQLite (desarrollo):
+   - Para SQLite (desarrollo):
+
      ```bash
      flask data_ops create  # Crea las tablas de la base de datos
      ```
-   * Para PostgreSQL:
-     * Asegúrate de que tu servidor PostgreSQL esté ejecutándose
-     * Crea la base de datos especificada en tu archivo `.env`
-     * Ejecuta las migraciones de la base de datos:
+
+   - Para PostgreSQL:
+     - Asegúrate de que tu servidor PostgreSQL esté ejecutándose
+     - Crea la base de datos especificada en tu archivo `.env`
+     - Ejecuta las migraciones de la base de datos:
+
        ```bash
        flask db upgrade
        ```
 
 6. **Generar Datos Simulados:**
+
    ```bash
    flask data_ops seed --jobs 20 --candidates 50
    ```
+
    Este comando poblará la base de datos con 20 ofertas de trabajo simuladas y 50 perfiles de candidatos.
 
 7. **Iniciar Servidor Redis (para Celery):**
-   * En Linux/macOS:
+   - En Linux/macOS:
+
      ```bash
      redis-server
      ```
-   * En Windows, usa [Redis para Windows](https://github.com/tporadowski/redis/releases) o Docker
+
+   - En Windows, usa [Redis para Windows](https://github.com/tporadowski/redis/releases) o Docker
 
 ## Ejecución de la Aplicación
 
 ### Iniciando la Aplicación
 
 1. **Iniciar el Servidor de Desarrollo Flask:**
+
    ```bash
    flask run
    ```
+
    La interfaz web será accesible en `http://127.0.0.1:5000`
 
 2. **Iniciar Trabajador Celery (en una terminal separada):**
+
    ```bash
    celery -A adflux.extensions.celery worker --loglevel=info
    ```
+
    Esto procesará tareas en segundo plano como la publicación de campañas y la sincronización de datos.
 
 3. **Iniciar Celery Beat para Tareas Programadas (opcional, en una terminal separada):**
+
    ```bash
    celery -A adflux.extensions.celery beat --loglevel=info
    ```
+
    Esto manejará tareas programadas como el reentrenamiento periódico de modelos y la sincronización de datos.
 
 ### Usando la Interfaz Web
@@ -311,28 +397,29 @@ pytest --cov=adflux
 
 La suite de pruebas está organizada en las siguientes categorías:
 
-* **Pruebas Unitarias**: Probar componentes individuales de forma aislada
-* **Pruebas de Integración**: Probar interacciones entre componentes
-* **Pruebas API**: Probar endpoints API
-* **Pruebas ML**: Probar funcionalidad del modelo de aprendizaje automático
-* **Pruebas End-to-End**: Probar flujos de trabajo completos
+- **Pruebas Unitarias**: Probar componentes individuales de forma aislada
+- **Pruebas de Integración**: Probar interacciones entre componentes
+- **Pruebas API**: Probar endpoints API
+- **Pruebas ML**: Probar funcionalidad del modelo de aprendizaje automático
+- **Pruebas End-to-End**: Probar flujos de trabajo completos
 
 ## Despliegue
 
 ### Google Cloud Platform (GCP)
 
 1. **Prerrequisitos:**
-   * Google Cloud SDK instalado y configurado
-   * Proyecto GCP creado con facturación habilitada
-   * API requeridas habilitadas (App Engine, Cloud SQL, etc.)
+   - Google Cloud SDK instalado y configurado
+   - Proyecto GCP creado con facturación habilitada
+   - API requeridas habilitadas (App Engine, Cloud SQL, etc.)
 
 2. **Configuración de Base de Datos:**
-   * Crear una instancia de Cloud SQL PostgreSQL
-   * Crear una base de datos y un usuario con los permisos adecuados
-   * Anotar los detalles de conexión para los próximos pasos
+   - Crear una instancia de Cloud SQL PostgreSQL
+   - Crear una base de datos y un usuario con los permisos adecuados
+   - Anotar los detalles de conexión para los próximos pasos
 
 3. **Configuración:**
-   * Crear un archivo `app.yaml` con el siguiente contenido:
+   - Crear un archivo `app.yaml` con el siguiente contenido:
+
      ```yaml
      runtime: python39
      entrypoint: gunicorn -b :$PORT run:app
@@ -362,6 +449,7 @@ La suite de pruebas está organizada en las siguientes categorías:
      ```
 
 4. **Desplegar la Aplicación:**
+
    ```bash
    # Autenticar (si es necesario)
    gcloud auth login
@@ -374,6 +462,7 @@ La suite de pruebas está organizada en las siguientes categorías:
    ```
 
 5. **Migraciones de Base de Datos:**
+
    ```bash
    # Establecer variables de entorno para la migración
    export DATABASE_URL=postgresql+pg8000://USUARIO:CONTRASEÑA@/BASEDATOS?unix_sock=/cloudsql/NOMBRE_CONEXION_INSTANCIA/.s.PGSQL.5432
@@ -383,14 +472,14 @@ La suite de pruebas está organizada en las siguientes categorías:
    ```
 
 6. **Configurar Trabajadores Celery:**
-   * Desplegar trabajadores Celery usando Cloud Run o Compute Engine
-   * Configurar Redis usando Memorystore o un proveedor Redis de terceros
+   - Desplegar trabajadores Celery usando Cloud Run o Compute Engine
+   - Configurar Redis usando Memorystore o un proveedor Redis de terceros
 
 ### Otras Opciones de Despliegue
 
-* **Docker**: Contenerizar la aplicación usando Docker y desplegar en cualquier plataforma de orquestación de contenedores
-* **Heroku**: Desplegar usando la CLI de Heroku con add-ons de PostgreSQL y Redis
-* **AWS**: Desplegar usando Elastic Beanstalk con RDS para PostgreSQL y ElastiCache para Redis
+- **Docker**: Contenerizar la aplicación usando Docker y desplegar en cualquier plataforma de orquestación de contenedores
+- **Heroku**: Desplegar usando la CLI de Heroku con add-ons de PostgreSQL y Redis
+- **AWS**: Desplegar usando Elastic Beanstalk con RDS para PostgreSQL y ElastiCache para Redis
 
 ## Componente de Aprendizaje Automático
 
@@ -399,24 +488,24 @@ AdFlux utiliza aprendizaje automático para segmentar candidatos en grupos para 
 ### Proceso de Segmentación
 
 1. **Preparación de Datos**:
-   * Los perfiles de los candidatos se cargan desde la base de datos
-   * Se extraen características como ubicación, años de experiencia, nivel educativo, habilidades y salario deseado
-   * Las características categóricas se codifican mediante one-hot
-   * Las características numéricas se estandarizan
+   - Los perfiles de los candidatos se cargan desde la base de datos
+   - Se extraen características como ubicación, años de experiencia, nivel educativo, habilidades y salario deseado
+   - Las características categóricas se codifican mediante one-hot
+   - Las características numéricas se estandarizan
 
 2. **Entrenamiento del Modelo**:
-   * Se aplica el algoritmo de clustering K-means a los datos procesados
-   * El número de clústeres (segmentos) es configurable (predeterminado: 5)
-   * El modelo se entrena para minimizar la distancia intra-clúster
+   - Se aplica el algoritmo de clustering K-means a los datos procesados
+   - El número de clústeres (segmentos) es configurable (predeterminado: 5)
+   - El modelo se entrena para minimizar la distancia intra-clúster
 
 3. **Asignación de Segmentos**:
-   * Cada candidato es asignado a un segmento según los resultados del clustering
-   * La información del segmento se almacena en la base de datos
-   * A los segmentos se les dan nombres descriptivos basados en sus características
+   - Cada candidato es asignado a un segmento según los resultados del clustering
+   - La información del segmento se almacena en la base de datos
+   - A los segmentos se les dan nombres descriptivos basados en sus características
 
 4. **Segmentación Dirigida**:
-   * Al crear campañas publicitarias, se pueden dirigir segmentos específicos
-   * Esto permite una publicidad más relevante y efectiva
+   - Al crear campañas publicitarias, se pueden dirigir segmentos específicos
+   - Esto permite una publicidad más relevante y efectiva
 
 ### Usando el Componente ML
 
@@ -437,43 +526,43 @@ AdFlux se integra con múltiples plataformas de publicidad en redes sociales a t
 
 ### API de Anuncios Meta (Facebook/Instagram)
 
-* Utiliza la biblioteca `facebook-python-business-sdk`
-* Admite la creación de campañas, conjuntos de anuncios, anuncios y audiencias personalizadas
-* Maneja autenticación, manejo de errores y sincronización de datos
-* Proporciona insights y métricas de rendimiento
+- Utiliza la biblioteca `facebook-python-business-sdk`
+- Admite la creación de campañas, conjuntos de anuncios, anuncios y audiencias personalizadas
+- Maneja autenticación, manejo de errores y sincronización de datos
+- Proporciona insights y métricas de rendimiento
 
 ### API de Google Ads
 
-* Utiliza la biblioteca `google-ads-python`
-* Admite la creación de campañas, grupos de anuncios y anuncios
-* Maneja autenticación y manejo de errores
-* Proporciona informes de rendimiento
+- Utiliza la biblioteca `google-ads-python`
+- Admite la creación de campañas, grupos de anuncios y anuncios
+- Maneja autenticación y manejo de errores
+- Proporciona informes de rendimiento
 
 ### Simulación de Datos con API Gemini
 
-* Utiliza la API Gemini de Google para generar datos realistas de trabajos y candidatos
-* Crea títulos de trabajo, descripciones y requisitos variados
-* Genera perfiles de candidatos diversos con diferentes habilidades y niveles de experiencia
+- Utiliza la API Gemini de Google para generar datos realistas de trabajos y candidatos
+- Crea títulos de trabajo, descripciones y requisitos variados
+- Genera perfiles de candidatos diversos con diferentes habilidades y niveles de experiencia
 
 ## Documentación del Proyecto
 
 ### Documentación del Código
 
-* Los docstrings siguen la Guía de Estilo Python de Google
-* Los endpoints API están documentados usando Swagger a través de Flask-RESTX
-* Las funciones complejas incluyen explicaciones detalladas y ejemplos
+- Los docstrings siguen la Guía de Estilo Python de Google
+- Los endpoints API están documentados usando Swagger a través de Flask-RESTX
+- Las funciones complejas incluyen explicaciones detalladas y ejemplos
 
 ### Planificación del Proyecto
 
 Los documentos de planificación detallados para cada fase se encuentran en el directorio `/phases`:
 
-* `project_plan.md`: Plan general del proyecto y enfoque
-* `phase1.md`: Análisis de Requisitos y Planificación
-* `phase2.md`: Diseño del Sistema
-* `phase3.md`: Implementación
-* `phase4.md`: Pruebas
-* `phase5.md`: Despliegue
-* `phase6.md`: Mantenimiento y Monitoreo
+- `project_plan.md`: Plan general del proyecto y enfoque
+- `phase1.md`: Análisis de Requisitos y Planificación
+- `phase2.md`: Diseño del Sistema
+- `phase3.md`: Implementación
+- `phase4.md`: Pruebas
+- `phase5.md`: Despliegue
+- `phase6.md`: Mantenimiento y Monitoreo
 
 ## Contribuyendo
 
@@ -487,6 +576,17 @@ Los documentos de planificación detallados para cada fase se encuentran en el d
 
 Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENSE para más detalles.
 
-## Agradecimientos
+## 👏 Agradecimientos
 
-* Este proyecto fue desarrollado por Mateo Lopera, Maria Fernanda Alvarez, Emmanuel Hernandez y Yesid Rivera como parte de Ingenieria de Software 2025-1.
+<div align="center">
+
+### ✨ Desarrollado con 💜 por
+
+| ![Mateo](https://img.shields.io/badge/Mateo%20Lopera-Developer-blue) | ![Maria](https://img.shields.io/badge/Maria%20Fernanda%20Alvarez-Developer-pink) | ![Emmanuel](https://img.shields.io/badge/Emmanuel%20Hernandez-Developer-green) | ![Yesid](https://img.shields.io/badge/Yesid%20Rivera-Developer-orange) |
+|:---:|:---:|:---:|:---:|
+
+**Proyecto Universitario de Ingeniería de Software 2025-1**
+
+[![Universidad](https://img.shields.io/badge/Universidad-EAFIT-red?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEQSURBVHgBjZLNTcNAEIXfrJMGkCgAUQG4AqACTAdJB0kHpAPSQUIFQAXYqQBKgA7sVEDm24myJpF50tPOz36z4/XKRCfqdf0sZ9c9pZS+Igs5B7mFLKVSI8ySPJGpCgGdYGYpheQOnIRUJTLJcMptCKjAA/lJjGNoSzLJ8MhNDOjAA/lZjGNoRzLJ8MpNE9CBB/KrGMfQnmSS4Y2bNqADD+Q3MY6hA8kkwwc3XUAHHsjvYhxDR5JJhk9uTgEdeCB/iHEM/ZJMMnxx0wd04IH8KcYx9EcyyfDNzRDQgQfylxjH0JlkkuGHmzGgAw/kbzGOoQvJJMMvNz6gAw/kixjH0D/JJEPxMPQBdOCB/CPGMfQgmWQo/gGRzU6YQJy6SQAAAABJRU5ErkJggg==)](https://www.eafit.edu.co/)
+
+</div>

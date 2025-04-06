@@ -5,7 +5,7 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-semibold text-gray-800">{{ candidate.name }}</h1>
-    <a href="{{ url_for('main.list_candidates') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Candidates List</a>
+    <a href="{{ url_for('candidate.list_candidates') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Candidates List</a>
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -63,15 +63,13 @@
             <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Assigned Segment</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {% if candidate.segment is not none %}
-                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {{ 'bg-green-100 text-green-800' if candidate.segment == 1 else 
-                                       'bg-yellow-100 text-yellow-800' if candidate.segment == 2 else 
-                                       'bg-blue-100 text-blue-800' if candidate.segment == 0 else 
-                                       'bg-gray-100 text-gray-800' }}">
-                            {{ segment_map.get(candidate.segment, 'Unknown') }}
+                    {% if candidate.segment_id is not none %}
+                         {% set segment_name = segment_map.get(candidate.segment_id, default_segment_name) %}
+                         {% set color_class = segment_colors.get(candidate.segment_id, default_segment_color) %}
+                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ color_class }}">
+                            {{ segment_name }}
                          </span>
-                         (ID: {{ candidate.segment }})
+                         (ID: {{ candidate.segment_id }})
                     {% else %}
                         Unsegmented
                     {% endif %}
@@ -82,4 +80,4 @@
     </div>
 </div>
 
-{% endblock %} 
+{% endblock %}

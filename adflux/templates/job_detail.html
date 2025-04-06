@@ -5,7 +5,7 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-semibold text-gray-800">{{ job.title }}</h1>
-    <a href="{{ url_for('main.list_jobs') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Jobs List</a>
+    <a href="{{ url_for('job.list_jobs') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Jobs List</a>
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -19,7 +19,7 @@
             </p>
         </div>
         <div>
-            <a href="{{ url_for('main.create_campaign', job_id=job.job_id) }}" 
+            <a href="{{ url_for('campaign.create_campaign', job_id=job.job_id) }}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -41,9 +41,9 @@
              <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Status</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if job.status == 'open' %} bg-green-100 text-green-800 
-                                {% elif job.status == 'closed' %} bg-red-100 text-red-800 
+                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if job.status == 'open' %} bg-green-100 text-green-800
+                                {% elif job.status == 'closed' %} bg-red-100 text-red-800
                                 {% else %} bg-yellow-100 text-yellow-800 {% endif %}">
                         {{ job.status | default('N/A') }}
                     </span>
@@ -104,7 +104,7 @@
                     {% if job.adflux_campaigns %}
                         <ul class="list-disc pl-5">
                         {% for campaign in job.adflux_campaigns %}
-                            <li><a href="{{ url_for('main.edit_campaign', campaign_id=campaign.id) }}" class="text-indigo-600 hover:text-indigo-900">{{ campaign.name }} ({{ campaign.platform }})</a></li>
+                            <li><a href="{{ url_for('campaign.edit_campaign', campaign_id=campaign.id) }}" class="text-indigo-600 hover:text-indigo-900">{{ campaign.name }} ({{ campaign.platform }})</a></li>
                         {% endfor %}
                         </ul>
                     {% else %}
@@ -116,4 +116,4 @@
     </div>
 </div>
 
-{% endblock %} 
+{% endblock %}

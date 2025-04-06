@@ -14,14 +14,14 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
-from adflux.app import create_app
+from adflux.core import create_app, run_meta_sync_for_all_accounts
 # Import celery instance from extensions
 from adflux.extensions import celery
 
 # Create the Flask app instance globally
 app = create_app()
 
-# --- Configurar Logging --- 
+# --- Configurar Logging ---
 # Configuración básica de logging (personalizar según sea necesario)
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
@@ -30,6 +30,6 @@ logging.basicConfig(level=logging.INFO,
 # Este bloque permite ejecutar el servidor de desarrollo directamente vía `python run.py`
 # Sin embargo, generalmente se prefiere usar `flask run` vía CLI para desarrollo.
 if __name__ == '__main__':
-    # Nota: El modo debug idealmente debería ser controlado por la configuración de Flask (DevelopmentConfig)
-    # o la variable de entorno FLASK_DEBUG, no codificado directamente aquí.
-    app.run(host='0.0.0.0', port=5001) # Usar 0.0.0.0 para ser accesible externamente si es necesario
+    # Para desarrollo, debug=True habilita la recarga automática y errores detallados
+    # El puerto 5003 es diferente para evitar conflictos
+    app.run(debug=True, host='0.0.0.0', port=5003)

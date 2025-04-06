@@ -1,52 +1,68 @@
-# Documentación de AdFlux
+# 📱 AdFlux - Documentación
 
-Bienvenido a la documentación completa de AdFlux, un sistema automatizado de publicación de anuncios de ofertas de trabajo en plataformas de redes sociales.
+¡Bienvenido a la documentación de AdFlux! 🚀
 
-## Contenido
+## ¿Qué es AdFlux?
 
-1. [Introducción](./1-introduccion/1.1-descripcion-general.md)
-   - [Descripción General](./1-introduccion/1.1-descripcion-general.md)
-   - [Objetivos del Proyecto](./1-introduccion/1.2-objetivos.md)
-   - [Características Principales](./1-introduccion/1.3-caracteristicas.md)
+AdFlux es una aplicación web desarrollada para Magneto365, una empresa colombiana de búsqueda de empleo, que automatiza la publicación de anuncios de trabajo en diferentes plataformas de redes sociales como Meta (Facebook/Instagram), X, Google, TikTok y Snapchat.
 
-2. [Arquitectura del Sistema](./2-arquitectura/2.1-vision-general.md)
-   - [Visión General de la Arquitectura](./2-arquitectura/2.1-vision-general.md)
-   - [Estructura del Proyecto](./2-arquitectura/2.2-estructura-proyecto.md)
-   - [Componentes Principales](./2-arquitectura/2.3-componentes.md)
+La aplicación utiliza tecnologías modernas como Flask, SQLAlchemy, Celery con Redis, y APIs de publicidad como Meta Ads API y Google Ads API para crear y gestionar campañas publicitarias para ofertas de trabajo.
 
-3. [Modelos de Datos](./3-modelos-datos/3.1-diagrama-er.md)
-   - [Diagrama de Entidad-Relación](./3-modelos-datos/3.1-diagrama-er.md)
-   - [Descripción de Modelos](./3-modelos-datos/3.2-descripcion-modelos.md)
+## Índice de Documentación
 
-4. [Componente de Aprendizaje Automático](./4-ml/4.1-vision-general.md)
-   - [Visión General](./4-ml/4.1-vision-general.md)
-   - [Implementación](./4-ml/4.2-implementacion.md)
-   - [Integración con la Aplicación](./4-ml/4.3-integracion.md)
+### 1. [Guía de Inicio Rápido](./guia_inicio_rapido.md)
+   - Instalación y configuración
+   - Primeros pasos
+   - Estructura del proyecto
 
-5. [Integraciones de API](./5-apis/5.1-meta-ads.md)
-   - [API de Meta Ads](./5-apis/5.1-meta-ads.md)
-   - [API de Google Gemini](./5-apis/5.2-gemini.md)
+### 2. [Arquitectura del Sistema](./arquitectura.md)
+   - Visión general
+   - Componentes principales
+   - Flujo de datos
 
-6. [Interfaz de Usuario](./6-interfaz/6.1-dashboard.md)
-   - [Dashboard](./6-interfaz/6.1-dashboard.md)
-   - [Gestión de Campañas](./6-interfaz/6.2-campanas.md)
-   - [Análisis de Segmentación](./6-interfaz/6.3-segmentacion.md)
+### 3. [Modelos de Datos](./modelos_datos.md)
+   - Estructura de la base de datos
+   - Relaciones entre modelos
+   - Diagrama de entidad-relación
 
-7. [Configuración y Despliegue](./7-configuracion/7.1-requisitos.md)
-   - [Requisitos del Sistema](./7-configuracion/7.1-requisitos.md)
-   - [Instalación](./7-configuracion/7.2-instalacion.md)
-   - [Despliegue en Producción](./7-configuracion/7.3-despliegue.md)
+### 4. [APIs y Integraciones](./apis_integraciones.md)
+   - Meta (Facebook/Instagram) API
+   - Google Ads API
+   - Gemini AI API
+   - Otras integraciones
 
-8. [Guía de Desarrollo](./8-desarrollo/8.1-entorno.md)
-   - [Configuración del Entorno](./8-desarrollo/8.1-entorno.md)
-   - [Contribución al Proyecto](./8-desarrollo/8.2-contribucion.md)
+### 5. [Machine Learning](./machine_learning.md)
+   - Segmentación de candidatos
+   - Algoritmos utilizados
+   - Evaluación de modelos
 
-9. [Referencia de Comandos CLI](./9-cli/9.1-comandos.md)
-   - [Comandos Disponibles](./9-cli/9.1-comandos.md)
+### 6. [Simulación de Datos](./simulacion_datos.md)
+   - Generación de datos de prueba
+   - Uso de Gemini AI para simulación
+   - Configuración de entorno de prueba
 
-10. [Solución de Problemas](./10-solucion-problemas/10.1-errores-comunes.md)
-    - [Errores Comunes](./10-solucion-problemas/10.1-errores-comunes.md)
+### 7. [Interfaz de Usuario](./interfaz_usuario.md)
+   - Navegación
+   - Funcionalidades principales
+   - Mejores prácticas
 
-## Acerca de AdFlux
+### 8. [Tareas en Segundo Plano](./tareas_segundo_plano.md)
+   - Celery y Redis
+   - Tareas programadas
+   - Sincronización de datos
 
-AdFlux es un proyecto universitario que automatiza la publicación de anuncios de ofertas de trabajo en plataformas de redes sociales. Está diseñado como una prueba de concepto inspirada en las necesidades de plataformas de reclutamiento, centrándose en obtener ofertas de trabajo, segmentar audiencias potenciales de candidatos utilizando aprendizaje automático y crear campañas publicitarias dirigidas en plataformas seleccionadas a través de sus API.
+### 9. [Guía de Desarrollo](./guia_desarrollo.md)
+   - Configuración del entorno de desarrollo
+   - Convenciones de código
+   - Pruebas
+
+### 10. [Solución de Problemas](./solucion_problemas.md)
+    - Problemas comunes
+    - Depuración
+    - Recursos adicionales
+
+## ¿Necesitas ayuda?
+
+Si tienes alguna pregunta o necesitas ayuda adicional, no dudes en contactar al equipo de desarrollo o crear un issue en el repositorio del proyecto.
+
+¡Gracias por usar AdFlux! 🎉

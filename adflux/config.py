@@ -1,75 +1,107 @@
-import os
-from dotenv import load_dotenv
+"""
+Configuración para la aplicación AdFlux.
 
-# Cargar variables de entorno desde el archivo .env
-basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, '..', '.env')) # Cargar .env desde la raíz del proyecto
+Este módulo contiene la configuración para la aplicación AdFlux.
+"""
+
+import os
+
 
 class Config:
-    """Configuración base."""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    """Configuración base para AdFlux."""
+    
+    # Configuración de la aplicación
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_insecure')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///adflux.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # Añadir otras configuraciones por defecto
-    ITEMS_PER_PAGE = 10 # Elementos de paginación por defecto
-    ML_N_CLUSTERS = 5 # Número de segmentos por defecto para K-means
-    UPLOAD_FOLDER = 'adflux/static/uploads' # Definir ruta de la carpeta de subidas
-
-    # Configuración CSRF (Habilitado por defecto)
-    WTF_CSRF_ENABLED = True 
-    # Deshabilitar la comprobación CSRF por defecto para permitir APIs limpias
-
-    # Configuración de la base de datos (usar DATABASE_URL desde .env)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, '..', 'instance', 'adflux.db')
-
-    # Configuración de Celery (Ejemplo - ajustar según sea necesario)
-    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
-
-    # Credenciales API Meta (Cargadas vía load_dotenv)
-    META_APP_ID = os.environ.get('META_APP_ID')
-    META_APP_SECRET = os.environ.get('META_APP_SECRET')
-    META_ACCESS_TOKEN = os.environ.get('META_ACCESS_TOKEN')
-    META_ACCOUNT_ID = os.environ.get('META_ACCOUNT_ID')
-    META_PAGE_ID = os.environ.get('META_PAGE_ID')
-    META_AD_ACCOUNT_ID = os.environ.get('META_AD_ACCOUNT_ID')
-
-    # Credenciales API Gemini
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-    GEMINI_MODEL = os.environ.get('GEMINI_MODEL')
-
-    # Credenciales API Google Ads
-    GOOGLE_ADS_DEVELOPER_TOKEN = os.environ.get('GOOGLE_ADS_DEVELOPER_TOKEN')
-    GOOGLE_ADS_CLIENT_ID = os.environ.get('GOOGLE_ADS_CLIENT_ID')
-    GOOGLE_ADS_CLIENT_SECRET = os.environ.get('GOOGLE_ADS_CLIENT_SECRET')
-    GOOGLE_ADS_REFRESH_TOKEN = os.environ.get('GOOGLE_ADS_REFRESH_TOKEN')
-    GOOGLE_ADS_LOGIN_CUSTOMER_ID = os.environ.get('GOOGLE_ADS_LOGIN_CUSTOMER_ID')
-    # Convertir string 'True'/'False' de var env a booleano
-    GOOGLE_ADS_USE_PROTO_PLUS = os.environ.get('GOOGLE_ADS_USE_PROTO_PLUS', 'True').lower() in ('true', '1', 't')
-    # Añadir el ID de cliente objetivo
-    GOOGLE_ADS_TARGET_CUSTOMER_ID = os.environ.get('GOOGLE_ADS_TARGET_CUSTOMER_ID')
+    
+    # Configuración de archivos
+    UPLOADS_FOLDER = 'uploads'
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    
+    # Configuración de anuncios
+    DEFAULT_AD_IMAGE_PATH = 'static/images/default_ad.jpg'
+    
+    # Configuración de Meta Ads
+    META_APP_ID = os.environ.get('META_APP_ID', '')
+    META_APP_SECRET = os.environ.get('META_APP_SECRET', '')
+    META_ACCESS_TOKEN = os.environ.get('META_ACCESS_TOKEN', '')
+    META_ACCOUNT_ID = os.environ.get('META_ACCOUNT_ID', '')
+    META_PAGE_ID = os.environ.get('META_PAGE_ID', '')
+    
+    # Configuración de Google Ads
+    GOOGLE_ADS_CLIENT_ID = os.environ.get('GOOGLE_ADS_CLIENT_ID', '')
+    GOOGLE_ADS_CLIENT_SECRET = os.environ.get('GOOGLE_ADS_CLIENT_SECRET', '')
+    GOOGLE_ADS_DEVELOPER_TOKEN = os.environ.get('GOOGLE_ADS_DEVELOPER_TOKEN', '')
+    GOOGLE_ADS_REFRESH_TOKEN = os.environ.get('GOOGLE_ADS_REFRESH_TOKEN', '')
+    GOOGLE_ADS_CUSTOMER_ID = os.environ.get('GOOGLE_ADS_CUSTOMER_ID', '')
+    
+    # Configuración de Gemini AI
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-pro')
+    
+    # Configuración de Celery
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_TIMEZONE = 'UTC'
+    CELERY_ENABLE_UTC = True
+    
+    # Configuración de APScheduler
+    SCHEDULER_API_ENABLED = True
+    SCHEDULER_TIMEZONE = 'UTC'
+    
+    # Configuración de logging
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    LOG_FILE = os.environ.get('LOG_FILE', 'adflux.log')
+    LOG_TO_CONSOLE = True
+    LOG_TO_FILE = False
 
 
 class DevelopmentConfig(Config):
-    """Configuración de desarrollo."""
+    """Configuración para desarrollo."""
+    
     DEBUG = True
-    SQLALCHEMY_ECHO = False # Establecer a True para registrar consultas SQL
+    TESTING = False
+    
+    # Configuración de logging
+    LOG_LEVEL = 'DEBUG'
+    LOG_TO_CONSOLE = True
+    LOG_TO_FILE = False
+
 
 class TestingConfig(Config):
-    """Configuración de pruebas."""
+    """Configuración para pruebas."""
+    
+    DEBUG = False
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:' # Usar DB en memoria para pruebas
-    WTF_CSRF_ENABLED = False # Deshabilitar validación de formularios CSRF en pruebas
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    
+    # Configuración de logging
+    LOG_LEVEL = 'DEBUG'
+    LOG_TO_CONSOLE = True
+    LOG_TO_FILE = False
+
 
 class ProductionConfig(Config):
-    """Configuración de producción."""
+    """Configuración para producción."""
+    
     DEBUG = False
     TESTING = False
-    # Añadir configuraciones específicas de producción como logging, cabeceras de seguridad, etc.
+    
+    # Configuración de logging
+    LOG_LEVEL = 'INFO'
+    LOG_TO_CONSOLE = True
+    LOG_TO_FILE = True
 
-# Diccionario para acceder a las clases de configuración por nombre
-config_by_name = dict(
-    dev=DevelopmentConfig,
-    test=TestingConfig,
-    prod=ProductionConfig
-)
+
+# Configuración por defecto
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}

@@ -27,22 +27,22 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ job.job_id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                             <a href="{{ url_for('main.job_details', job_id=job.job_id) }}" class="text-indigo-600 hover:text-indigo-900">{{ job.title }}</a>
+                             <a href="{{ url_for('job.job_details', job_id=job.job_id) }}" class="text-indigo-600 hover:text-indigo-900">{{ job.title }}</a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ job.location if job.location else 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {{ 'bg-green-100 text-green-800' if job.status == 'open' else 
-                                           'bg-red-100 text-red-800' if job.status == 'closed' else 
+                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        {{ 'bg-green-100 text-green-800' if job.status == 'open' else
+                                           'bg-red-100 text-red-800' if job.status == 'closed' else
                                            'bg-gray-100 text-gray-800' }}">
                                 {{ job.status | title if job.status else 'Unknown' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ job.posted_date.strftime('%Y-%m-%d') if job.posted_date else 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                            <a href="{{ url_for('main.job_details', job_id=job.job_id) }}" class="text-blue-600 hover:text-blue-900">Details</a>
+                            <a href="{{ url_for('job.job_details', job_id=job.job_id) }}" class="text-blue-600 hover:text-blue-900">Details</a>
                              {# Añadir enlace para crear campaña para este trabajo #}
-                            <a href="{{ url_for('main.create_campaign', job_id=job.job_id) }}" class="text-indigo-600 hover:text-indigo-900">Create Campaign</a>
+                            <a href="{{ url_for('campaign.create_campaign', job_id=job.job_id) }}" class="text-indigo-600 hover:text-indigo-900">Create Campaign</a>
                             {# Añadir Editar/Eliminar más tarde si es necesario #}
                        </td>
                     </tr>
@@ -59,4 +59,4 @@
     {# TODO: Añadir paginación si es necesario #}
 
 </div>
-{% endblock %} 
+{% endblock %}

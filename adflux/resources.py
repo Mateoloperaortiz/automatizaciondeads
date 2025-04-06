@@ -1,6 +1,7 @@
 from flask import request, current_app
 from flask_restx import Resource, reqparse, fields, marshal_with, marshal, abort, Api, Namespace
-from .models import db, JobOpening, Candidate, Application
+from .extensions import db
+from .models import JobOpening, Candidate, Application
 from datetime import date
 import datetime
 from werkzeug.exceptions import NotFound, BadRequest

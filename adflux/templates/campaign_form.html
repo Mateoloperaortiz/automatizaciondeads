@@ -40,7 +40,7 @@
         {{ render_field(form.daily_budget, field_type='number') }}
         {{ render_field(form.job_opening, field_type='select') }}
         {{ render_field(form.status, field_type='select') }}
-        
+
         {# Renderizar Casillas de Verificación de Segmentos Objetivo #}
         <div class="mb-4">
              {{ form.target_segment_ids.label(class='block text-sm font-medium text-gray-700 mb-2') }}
@@ -49,8 +49,8 @@
                     {% for value, label in form.target_segment_ids.choices %}
                         <label class="flex items-center">
                             {# Usar iteración de WTForms directamente para las casillas de verificación #}
-                            <input type="checkbox" name="{{ form.target_segment_ids.name }}" value="{{ value }}" 
-                                   {% if value|int in (form.target_segment_ids.data or []) %}checked{% endif %} 
+                            <input type="checkbox" name="{{ form.target_segment_ids.name }}" value="{{ value }}"
+                                   {% if value|int in (form.target_segment_ids.data or []) %}checked{% endif %}
                                    class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                             <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
                         </label>
@@ -79,11 +79,11 @@
                     Generate Ad Creative
                 </button>
                 <p id="generateHint" class="text-sm text-gray-500 mb-4 {% if form.job_opening.data %}hidden{% endif %}">Select a job opening to enable ad creative generation</p>
-                
+
                 {# Entrada de Audiencia Objetivo #}
                 <div class="mb-4">
                     <label for="targetAudienceInput" class="block text-sm font-medium text-gray-700 mb-1">Target Audience (Optional)</label>
-                    <input type="text" id="targetAudienceInput" name="target_audience_input" 
+                    <input type="text" id="targetAudienceInput" name="target_audience_input"
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                            placeholder="e.g., experienced developers, recent graduates">
                     <p class="mt-1 text-xs text-gray-500">Specify the target audience for the generated ad.</p>
@@ -105,7 +105,7 @@
         </div>
 
         <div class="flex justify-end mt-6">
-            <a href="{{ url_for('main.list_campaigns') }}" class="mr-4 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <a href="{{ url_for('campaign.list_campaigns') }}" class="mr-4 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Cancel
             </a>
             {{ form.submit(class='py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer') }}
@@ -153,8 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Añadir cabecera de token CSRF si es necesario (asumiendo que Flask-WTF se usa globalmente)
-                    // 'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    // Añadir cabecera de token CSRF
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
                 },
                 body: JSON.stringify({
                     job_title: selectedJob.text,
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 primaryText.value = data.content.primary_text || '';
                 headline.value = data.content.headline || '';
@@ -191,4 +191,4 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGenerateButton();
 });
 </script>
-{% endblock %} 
+{% endblock %}

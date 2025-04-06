@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-6">Ayuda de AdFlux</h1>
+    
+    <div class="space-y-8">
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Primeros pasos</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">1. Configuración de APIs</h3>
+                    <p class="text-gray-700 mt-1">
+                        Antes de comenzar a usar AdFlux, debes configurar las credenciales de las APIs de Meta y Google Gemini.
+                        Ve a la página de <a href="{{ url_for('settings.index') }}" class="text-blue-600 hover:underline">Configuración</a> 
+                        para ingresar tus credenciales y probar la conexión.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">2. Crear ofertas de empleo</h3>
+                    <p class="text-gray-700 mt-1">
+                        Agrega ofertas de empleo en la sección <a href="{{ url_for('job.list') }}" class="text-blue-600 hover:underline">Ofertas de Empleo</a>.
+                        Cada oferta debe incluir título, descripción, requisitos y otros detalles relevantes.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">3. Gestionar candidatos</h3>
+                    <p class="text-gray-700 mt-1">
+                        Visualiza y gestiona los candidatos en la sección <a href="{{ url_for('candidate.list') }}" class="text-blue-600 hover:underline">Candidatos</a>.
+                        Puedes ver detalles de cada candidato y su relación con las ofertas de empleo.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">4. Crear campañas publicitarias</h3>
+                    <p class="text-gray-700 mt-1">
+                        Crea campañas publicitarias para tus ofertas de empleo en la sección <a href="{{ url_for('campaign.list') }}" class="text-blue-600 hover:underline">Campañas</a>.
+                        Selecciona la plataforma, la oferta de empleo y configura los parámetros de la campaña.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Preguntas frecuentes</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">¿Cómo funciona la segmentación de candidatos?</h3>
+                    <p class="text-gray-700 mt-1">
+                        AdFlux utiliza el algoritmo K-means para segmentar a los candidatos en grupos basados en sus habilidades, 
+                        experiencia y educación. Esto permite crear campañas publicitarias más específicas y efectivas.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">¿Cómo se generan los contenidos creativos para los anuncios?</h3>
+                    <p class="text-gray-700 mt-1">
+                        AdFlux utiliza la API de Google Gemini para generar automáticamente textos creativos para los anuncios
+                        basados en la descripción de la oferta de empleo y el segmento de candidatos al que va dirigido.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">¿Puedo modificar una campaña después de crearla?</h3>
+                    <p class="text-gray-700 mt-1">
+                        Sí, puedes editar algunos parámetros de las campañas después de crearlas. Sin embargo, algunos cambios
+                        pueden requerir crear una nueva campaña, dependiendo de las restricciones de las APIs de publicidad.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800">¿Cómo puedo ver el rendimiento de mis campañas?</h3>
+                    <p class="text-gray-700 mt-1">
+                        Puedes ver métricas detalladas de rendimiento en la página de detalles de cada campaña, incluyendo
+                        impresiones, clics, CTR y costo. También puedes generar informes en la sección de Informes.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Soporte técnico</h2>
+            <p class="text-gray-700">
+                Si necesitas ayuda adicional o tienes problemas técnicos, por favor contacta al equipo de soporte
+                a través de la página de <a href="{{ url_for('main.contact') }}" class="text-blue-600 hover:underline">Contacto</a>.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}

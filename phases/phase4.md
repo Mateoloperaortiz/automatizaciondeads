@@ -132,7 +132,7 @@ Aquí hay ejemplos de casos de prueba implementados y planificados para cada niv
 ```python
 # Ejemplo de configuración de prueba (tests/conftest.py)
 import pytest
-from adflux.app import create_app
+from adflux.core import create_app
 from adflux.extensions import db as _db
 from adflux.config import TestConfig
 

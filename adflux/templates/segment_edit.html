@@ -8,7 +8,7 @@
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
     <div class="px-4 py-5 sm:p-6">
-        <form action="{{ url_for('main.edit_segment', segment_id=segment.id) }}" method="POST">
+        <form action="{{ url_for('segmentation.edit_segment', segment_id=segment.id) }}" method="POST">
             {{ form.hidden_tag() }} {# Incluye token CSRF #}
 
             <div class="space-y-4">
@@ -17,7 +17,7 @@
                     <label class="block text-sm font-medium text-gray-700">Segment ID</label>
                     <p class="mt-1 text-sm text-gray-900">{{ segment.id }}</p>
                 </div>
-                
+
                 {# Campo de Nombre #}
                 {{ render_field(form.name) }}
 
@@ -29,7 +29,7 @@
             {# Acciones del Formulario #}
             <div class="pt-5 mt-5 border-t border-gray-200">
                 <div class="flex justify-end space-x-3">
-                    <a href="{{ url_for('main.segmentation_analysis') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <a href="{{ url_for('segmentation.segmentation_analysis') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </a>
                     {{ form.submit() }}
@@ -38,4 +38,4 @@
         </form>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

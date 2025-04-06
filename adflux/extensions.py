@@ -23,9 +23,3 @@ api = Api(
     description='API para gestionar ofertas de trabajo y candidatos',
     validate=True
 )
-
-# --- REMOVER Definiciones de Namespace ---
-# Ahora se definen en sus respectivos archivos dentro de adflux/routes/
-# jobs_ns = Namespace('jobs', description='Operaciones de Ofertas de Trabajo', path='/api/v1/jobs')
-# candidates_ns = Namespace('candidates', description='Operaciones de Candidatos', path='/api/v1/candidates')
-# applications_ns = Namespace('applications', description='Operaciones de Aplicaciones', path='/api/v1/applications')

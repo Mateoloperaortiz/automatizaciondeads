@@ -11,10 +11,10 @@
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-semibold text-gray-800">{{ title }}</h1>
     {# Añadir Botón de Disparo #}
-    <form action="{{ url_for('main.trigger_segmentation') }}" method="POST">
+    <form action="{{ url_for('segmentation.trigger_segmentation') }}" method="POST">
         {# Renderizar campo oculto de token CSRF #}
         <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
-        <button type="submit" 
+        <button type="submit"
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -52,7 +52,11 @@
                 </div>
                 <div class="py-2 flex justify-between">
                     <dt class="text-sm font-medium text-gray-500">Active Segments</dt>
-                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('num_segments', 'N/A') }}</dd>
+                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('active_segments', 'N/A') }}</dd>
+                </div>
+                <div class="py-2 flex justify-between">
+                    <dt class="text-sm font-medium text-gray-500">Total Segments</dt>
+                    <dd class="text-sm font-semibold text-gray-900">{{ summary_stats.get('total_segments', 'N/A') }}</dd>
                 </div>
             </dl>
         {% else %}
@@ -82,12 +86,12 @@
                 <tr class="hover:bg-gray-50">
                     {# Botón de Expansión - Alterna openSegmentId #}
                     <td class="px-4 py-4">
-                        <button @click="openSegmentId = openSegmentId === {{ segment.id|default(-1) }} ? null : {{ segment.id|default(-1) }}" 
+                        <button @click="openSegmentId = openSegmentId === {{ segment.id|default(-1) }} ? null : {{ segment.id|default(-1) }}"
                                 class="text-gray-400 hover:text-gray-600">
-                            <svg :class="{ 'rotate-90': openSegmentId === {{ segment.id|default(-1) }} }" 
-                                 class="h-5 w-5 transform transition-transform duration-200" 
-                                 xmlns="http://www.w3.org/2000/svg" 
-                                 viewBox="0 0 20 20" 
+                            <svg :class="{ 'rotate-90': openSegmentId === {{ segment.id|default(-1) }} }"
+                                 class="h-5 w-5 transform transition-transform duration-200"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 20 20"
                                  fill="currentColor">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                             </svg>
@@ -95,7 +99,21 @@
                     </td>
                     {# Nombre e ID del Segmento #}
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <div>{{ segment.name }}</div>
+                        <div>
+                            {% if segment.id is not none %}
+                                {% set segment_name = segment.name %}
+                                {% set segment_id = segment.id %}
+                                {% set color_class = segment_colors.get(segment_id, default_segment_color) %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ color_class }}">
+                                    {{ segment_name }}
+                                    {% if segment.is_active %}
+                                        <span class="ml-1 text-xs text-green-700">(en uso)</span>
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                {{ segment.name }}
+                            {% endif %}
+                        </div>
                         <div class="text-xs text-gray-500">(ID: {{ segment.id if segment.id is not none else 'N/A' }})</div>
                     </td>
                     {# Recuento #}
@@ -108,9 +126,9 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                         <a href="{{ segment.view_url }}" class="text-indigo-600 hover:text-indigo-900">View</a>
                         {% if segment.id is not none %}
-                        <a href="{{ url_for('main.edit_segment', segment_id=segment.id) }}" class="text-yellow-600 hover:text-yellow-900">Edit</a>
-                        <a href="{{ url_for('main.create_campaign', target_segment_id=segment.id) }}" 
-                           class="text-green-600 hover:text-green-900" 
+                        <a href="{{ url_for('segmentation.edit_segment', segment_id=segment.id) }}" class="text-yellow-600 hover:text-yellow-900">Edit</a>
+                        <a href="{{ url_for('campaign.create_campaign', target_segment_id=segment.id) }}"
+                           class="text-green-600 hover:text-green-900"
                            title="Create new campaign targeting {{ segment.name }}">
                            + Campaign
                         </a>
@@ -118,7 +136,7 @@
                     </td>
                 </tr>
                 {# --- Fila de Detalles (Oculta por defecto) --- #}
-                <tr x-show="openSegmentId === {{ segment.id|default(-1) }}" 
+                <tr x-show="openSegmentId === {{ segment.id|default(-1) }}"
                     x-cloak
                     class="bg-gray-50">
                     <td colspan="5" class="px-6 py-4">
@@ -159,7 +177,7 @@
                                 <h4 class="font-semibold text-gray-600 mb-1">Education</h4>
                                  {% if segment.education_distribution %}
                                     <ul class="list-disc list-inside text-gray-800">
-                                    {% for level, count in segment.education_distribution.items() %}
+                                    {% for level, count in segment.education_distribution %}
                                         <li>{{ level }}: {{ count }}</li>
                                     {% endfor %}
                                     </ul>
@@ -173,7 +191,7 @@
                                  {% if segment.associated_campaigns %}
                                     <ul class="list-disc list-inside text-gray-800 space-y-1">
                                     {% for campaign in segment.associated_campaigns %}
-                                        <li><a href="{{ url_for('main.campaign_details', campaign_id=campaign.id) }}" class="text-blue-600 hover:underline">{{ campaign.name }}</a></li>
+                                        <li><a href="{{ url_for('campaign.view_campaign_details', campaign_id=campaign.id) }}" class="text-blue-600 hover:underline">{{ campaign.name }}</a></li>
                                     {% endfor %}
                                      {% if segment.total_campaign_count > segment.associated_campaigns|length %}
                                         <li class="text-gray-500 italic">... and {{ segment.total_campaign_count - segment.associated_campaigns|length }} more ({{ segment.total_campaign_count }} total)</li>

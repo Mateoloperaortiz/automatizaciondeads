@@ -6,6 +6,17 @@ from .candidate_routes import candidates_ns
 from .application_routes import applications_ns
 from .meta_routes import meta_ns
 
+# Import blueprints
+from .dashboard_routes import dashboard_bp
+from .campaign_routes import campaign_bp
+from .segmentation_routes import segmentation_bp
+from .settings_routes import settings_bp
+from .report_routes import report_bp
+from .job_routes_web import job_bp
+from .candidate_routes_web import candidate_bp
+from .application_routes_web import application_bp
+from .api_routes import api_bp
+
 # Create a test namespace for API verification
 from flask_restx import Namespace, Resource, fields, Api
 
@@ -47,5 +58,24 @@ class TestResource(Resource):
         """Test API endpoint"""
         return {'message': 'API is working!'}
 
-# Optionally define an __all__ for wildcard imports
-__all__ = ['jobs_ns', 'candidates_ns', 'applications_ns', 'meta_ns', 'test_ns', 'root_ns']
+# Define __all__ for wildcard imports
+__all__ = [
+    # Namespaces
+    'jobs_ns',
+    'candidates_ns',
+    'applications_ns',
+    'meta_ns',
+    'root_ns',
+    'test_ns',
+
+    # Blueprints
+    'dashboard_bp',
+    'campaign_bp',
+    'segmentation_bp',
+    'settings_bp',
+    'report_bp',
+    'job_bp',
+    'candidate_bp',
+    'application_bp',
+    'api_bp'
+]

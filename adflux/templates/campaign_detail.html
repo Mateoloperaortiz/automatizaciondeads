@@ -5,7 +5,7 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-semibold text-gray-800">{{ campaign.name }}</h1>
-    <a href="{{ url_for('main.list_campaigns') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Volver a la Lista de Campañas</a>
+    <a href="{{ url_for('campaign.list_campaigns') }}" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Volver a la Lista de Campañas</a>
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -20,10 +20,10 @@
         </div>
         {# --- Botón de Publicar --- #}
         <div>
-            <form id="publish-form" action="{{ url_for('main.publish_campaign', campaign_id=campaign.id) }}" method="POST" class="inline">
+            <form id="publish-form" action="{{ url_for('campaign.publish_campaign', campaign_id=campaign.id) }}" method="POST" class="inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                 <button id="publish-button" type="submit" 
-                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 
+                 <button id="publish-button" type="submit"
+                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
                                 {% if campaign.external_campaign_id %} opacity-50 cursor-not-allowed {% endif %}"
                          {% if campaign.external_campaign_id %}disabled title="Ya publicado/simulado"{% endif %}>
                     {# Icono de Marcador de Posición #}
@@ -42,7 +42,7 @@
                 <dt class="text-sm font-medium text-gray-500">Estado</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                     {# Añadir estilo basado en el estado más tarde #}
-                    <span id="campaign-status" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800"> 
+                    <span id="campaign-status" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                        {{ campaign.status | title }}
                     </span>
                     {# Añadir estado externo aquí más tarde #}
@@ -56,7 +56,7 @@
                 <dt class="text-sm font-medium text-gray-500">Oferta de Empleo Vinculada</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                     {% if campaign.job_opening %}
-                        <a href="{{ url_for('main.job_details', job_id=campaign.job_opening.job_id) }}" class="text-indigo-600 hover:text-indigo-900">
+                        <a href="{{ url_for('job.job_details', job_id=campaign.job_opening.job_id) }}" class="text-indigo-600 hover:text-indigo-900">
                             {{ campaign.job_opening.title }} ({{ campaign.job_opening.job_id }})
                         </a>
                     {% else %}
@@ -126,8 +126,8 @@
                 <dt class="text-sm font-medium text-gray-500">Imagen del Creativo</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                     {% if campaign.creative_image_filename %}
-                        <img src="{{ url_for('static', filename='uploads/' + campaign.creative_image_filename) }}" 
-                             alt="Imagen Creativa de la Campaña" 
+                        <img src="{{ url_for('static', filename='uploads/' + campaign.creative_image_filename) }}"
+                             alt="Imagen Creativa de la Campaña"
                              class="max-w-xs h-auto rounded shadow-md">
                     {% else %}
                         No se ha subido ninguna imagen.
@@ -167,8 +167,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusElement = document.getElementById('campaign-status');
 
             // Verificar el estado de la tarea desde la respuesta de la API
-            if (data.status === 'SUCCESS' && data.result && data.result.success) { 
-                const taskResult = data.result; 
+            if (data.status === 'SUCCESS' && data.result && data.result.success) {
+                const taskResult = data.result;
                 console.log("Resultado de Tarea (Dict):", taskResult);
 
                 if (campaignIdElement) campaignIdElement.textContent = taskResult.external_campaign_id || 'N/A';
@@ -179,13 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         externalIdsElement.textContent = 'No Disponible';
                     }
                 }
-                
+
                 if (statusElement) {
                     statusElement.textContent = 'Publicado';
                     statusElement.classList.remove('bg-gray-100', 'text-gray-800');
                     statusElement.classList.add('bg-green-100', 'text-green-800');
                 }
-                
+
                 const publishButton = document.getElementById('publish-button');
                 if (publishButton) {
                     publishButton.disabled = true;
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     flashArea.appendChild(errorDiv);
                 }
             }
-            
+
             // Ocultar el contenedor principal de mensajes flash de base.html
             const baseFlashContainer = document.getElementById('flash-messages-container');
             if (baseFlashContainer) {
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (data.status === 'SUCCESS' || data.status === 'FAILURE') {
                     clearInterval(pollInterval);
-                    updateCampaignDetails(data); 
+                    updateCampaignDetails(data);
                 } else if (data.status === 'PENDING' || data.status === 'STARTED') {
                     // La tarea todavía se está ejecutando, continuar sondeando
                     if (attempts >= maxAttempts) {
@@ -262,4 +262,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-{% endblock %} 
+{% endblock %}

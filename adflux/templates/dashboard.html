@@ -12,19 +12,19 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-        
+
         {# --- Formulario de Rango de Fechas --- #}
-        <form method="GET" action="{{ url_for('main.dashboard') }}" class="flex items-center space-x-2">
+        <form method="GET" action="{{ url_for('dashboard.index') }}" class="flex items-center space-x-2">
             <div class="flex items-center space-x-1">
                 <label for="start_date" class="text-sm font-medium text-gray-600">From:</label>
-                <input type="date" id="start_date" name="start_date" 
-                       value="{{ default_start_date }}" 
+                <input type="date" id="start_date" name="start_date"
+                       value="{{ default_start_date }}"
                        class="px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
              <div class="flex items-center space-x-1">
                 <label for="end_date" class="text-sm font-medium text-gray-600">To:</label>
-                <input type="date" id="end_date" name="end_date" 
-                       value="{{ default_end_date }}" 
+                <input type="date" id="end_date" name="end_date"
+                       value="{{ default_end_date }}"
                        class="px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
             </div>
             <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Apply</button>
@@ -39,7 +39,7 @@
             <h2 class="text-lg font-semibold text-gray-700 mb-2">Total Campaigns</h2>
             <p class="text-4xl font-bold text-blue-600">{{ stats.get('total_campaigns', 'N/A') }}</p>
         </div>
-        
+
         <!-- Tarjeta de Total de Trabajos -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-2">Total Jobs</h2>
@@ -59,15 +59,15 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-2">Total Spend</h2>
             {# Formatear como moneda - formato float básico por ahora #}
-            <p class="text-4xl font-bold text-yellow-600">${{ "%.2f"|format(stats.get('total_spend', 0.0)) }}</p> 
+            <p class="text-4xl font-bold text-yellow-600">${{ "%.2f"|format(stats.get('total_spend', 0.0)) }}</p>
             <p class="text-sm text-gray-500">(From Synced Insights)</p>
         </div>
-        
+
         <!-- Tarjeta de Total de Impresiones -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-2">Total Impressions</h2>
             {# Usar índice explícito para el especificador de formato #}
-            <p class="text-4xl font-bold text-teal-600">{{ "{0:,}".format(stats.get('total_impressions', 0)) }}</p> 
+            <p class="text-4xl font-bold text-teal-600">{{ "{0:,}".format(stats.get('total_impressions', 0)) }}</p>
              <p class="text-sm text-gray-500">(From Synced Insights)</p>
        </div>
 
@@ -100,8 +100,10 @@
             {% if stats.status_counts %}
                 <div class="flex flex-wrap gap-2 mt-2"> {# Usar flexbox para las insignias #}
                     {% for status, count in stats.status_counts.items() %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"> 
-                            {{ status | title }}: {{ count }}
+                        {% set display_status = status %}
+                        {% set color_class = campaign_status_colors.get(display_status, 'bg-gray-100 text-gray-800') %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ color_class }}">
+                            {{ display_status }}: {{ count }}
                         </span>
                     {% endfor %}
                 </div>
@@ -114,7 +116,7 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-4">Campaign Status Distribution</h2>
             {% if stats.status_chart_data %}
-                <div class="relative h-64 md:h-80"> 
+                <div class="relative h-64 md:h-80">
                     <canvas id="campaignStatusChart"></canvas>
                 </div>
             {% else %}
@@ -129,14 +131,14 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-4">Job Status Distribution</h2>
              {% if stats.job_status_chart_data %}
-                <div class="relative h-64 md:h-80"> 
+                <div class="relative h-64 md:h-80">
                     <canvas id="jobStatusChart"></canvas>
                 </div>
             {% else %}
                  <p class="text-gray-500">No job status data available for chart.</p>
             {% endif %}
         </div>
-        
+
         <!-- Gráfico de Segmento de Candidatos -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-4">Candidate Segment Distribution</h2>
@@ -181,7 +183,7 @@
         // Colores Comunes del Gráfico
         const chartColors = [
             'rgba(54, 162, 235, 0.7)', 'rgba(75, 192, 192, 0.7)', 'rgba(255, 206, 86, 0.7)',
-            'rgba(255, 99, 132, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)', 
+            'rgba(255, 99, 132, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
             'rgba(201, 203, 207, 0.7)'
         ];
         const chartBorderColor = 'rgba(255, 255, 255, 0.8)';
@@ -189,7 +191,7 @@
         const legendTop = { plugins: { legend: { position: 'top' } } };
         const legendFalse = { plugins: { legend: { display: false } } };
 
-        // --- Gráfico de Estado de Campaña (Dona) --- 
+        // --- Gráfico de Estado de Campaña (Dona) ---
         {% if stats.status_chart_data %}
             const campaignStatusData = {{ stats.status_chart_data | tojson }};
             const ctxCampaign = document.getElementById('campaignStatusChart')?.getContext('2d');
@@ -201,7 +203,7 @@
             }
         {% endif %}
 
-        // --- Gráfico de Estado de Trabajo (Circular) --- 
+        // --- Gráfico de Estado de Trabajo (Circular) ---
         {% if stats.job_status_chart_data %}
             const jobStatusData = {{ stats.job_status_chart_data | tojson }};
             const ctxJob = document.getElementById('jobStatusChart')?.getContext('2d');
@@ -213,7 +215,7 @@
             }
         {% endif %}
 
-        // --- Gráfico de Segmento de Candidatos (Barras) --- 
+        // --- Gráfico de Segmento de Candidatos (Barras) ---
         {% if stats.segment_chart_data %}
             const segmentData = {{ stats.segment_chart_data | tojson }};
             const ctxSegment = document.getElementById('candidateSegmentChart')?.getContext('2d');
@@ -225,7 +227,7 @@
             }
         {% endif %}
 
-        // --- Gráfico de Gasto a lo Largo del Tiempo (Líneas) --- 
+        // --- Gráfico de Gasto a lo Largo del Tiempo (Líneas) ---
         {% if stats.spend_over_time_chart %}
             const spendData = {{ stats.spend_over_time_chart | tojson }};
             const ctxSpend = document.getElementById('spendOverTimeChart')?.getContext('2d');
@@ -248,4 +250,4 @@
 
     });
 </script>
-{% endblock %} 
+{% endblock %}

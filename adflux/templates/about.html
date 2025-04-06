@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-6">Acerca de AdFlux</h1>
+    
+    <div class="space-y-6">
+        <section>
+            <h2 class="text-xl font-semibold mb-3">¿Qué es AdFlux?</h2>
+            <p class="text-gray-700">
+                AdFlux es una plataforma de automatización de publicidad para ofertas de empleo, diseñada para Magneto365, 
+                una empresa colombiana de búsqueda de empleo. La plataforma permite la publicación automatizada de anuncios 
+                de empleo en múltiples plataformas de redes sociales, incluyendo Meta (Facebook/Instagram), X, Google, 
+                TikTok y Snapchat.
+            </p>
+        </section>
+        
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Características principales</h2>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+                <li>Integración con Meta Ads API y Google Ads API para crear y gestionar campañas publicitarias</li>
+                <li>Segmentación de candidatos mediante algoritmos de aprendizaje automático (K-means)</li>
+                <li>Generación de contenido creativo para anuncios utilizando la API de Google Gemini</li>
+                <li>Interfaz web intuitiva y comandos CLI para gestionar ofertas de empleo, candidatos y campañas publicitarias</li>
+                <li>Procesamiento en segundo plano con Celery y Redis para tareas como la creación de campañas y sincronización de datos</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Tecnologías utilizadas</h2>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2">
+                <li>Backend: Flask (Python)</li>
+                <li>Base de datos: SQLAlchemy ORM</li>
+                <li>Frontend: Plantillas Flask con Jinja2 y Tailwind CSS</li>
+                <li>Procesamiento en segundo plano: Celery con Redis</li>
+                <li>APIs externas: Meta Ads API, Google Ads API, Google Gemini API</li>
+                <li>Aprendizaje automático: Algoritmo K-means para segmentación</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2 class="text-xl font-semibold mb-3">Equipo de desarrollo</h2>
+            <p class="text-gray-700">
+                AdFlux es un proyecto universitario desarrollado por un equipo de estudiantes de ingeniería de software.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}
