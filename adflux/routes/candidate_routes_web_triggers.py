@@ -18,7 +18,7 @@ def notify_candidate_created(candidate):
     """
     NotificationService.create_notification(
         title="Nuevo candidato registrado",
-        message=f"Se ha registrado un nuevo candidato: {candidate.first_name} {candidate.last_name}.",
+        message=f"Se ha registrado un nuevo candidato: {candidate.name}.",
         notification_type=NotificationType.INFO,
         category=NotificationCategory.CANDIDATE,
         entity_type="candidate",
@@ -36,7 +36,7 @@ def notify_candidate_updated(candidate):
     """
     NotificationService.create_notification(
         title="Candidato actualizado",
-        message=f"Se ha actualizado la información del candidato: {candidate.first_name} {candidate.last_name}.",
+        message=f"Se ha actualizado la información del candidato: {candidate.name}.",
         notification_type=NotificationType.INFO,
         category=NotificationCategory.CANDIDATE,
         entity_type="candidate",
@@ -56,7 +56,7 @@ def notify_candidate_application_created(candidate, job, application):
     """
     NotificationService.create_notification(
         title="Nueva aplicación de candidato",
-        message=f"{candidate.first_name} {candidate.last_name} ha aplicado al trabajo: {job.title}.",
+        message=f"{candidate.name} ha aplicado al trabajo: {job.title}.",
         notification_type=NotificationType.SUCCESS,
         category=NotificationCategory.APPLICATION,
         entity_type="application",
