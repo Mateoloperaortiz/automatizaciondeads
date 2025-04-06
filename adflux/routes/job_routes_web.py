@@ -11,10 +11,13 @@ from wtforms.validators import DataRequired, Optional
 import json
 from datetime import datetime
 import uuid
+from sqlalchemy.exc import SQLAlchemyError
 
 from ..models import JobOpening, db
 from .job_routes_web_triggers import notify_job_created, notify_job_updated
 from ..services.job_service import JobService
+from ..api.common.excepciones import AdFluxError, ErrorRecursoNoEncontrado, ErrorValidacion, ErrorBaseDatos
+from ..api.common.error_handling import manejar_error_web, notificar_error_web
 
 # Definir el blueprint
 job_bp = Blueprint("job", __name__, template_folder="../templates")
@@ -66,26 +69,48 @@ class JobForm(FlaskForm):
 
 
 @job_bp.route("/")
+@manejar_error_web
 def list_jobs():
     """Renderiza la página de lista de empleos."""
     try:
         page = request.args.get("page", 1, type=int)
+        if page < 1:
+            raise ErrorValidacion(mensaje="El número de página debe ser mayor o igual a 1")
+            
         per_page = request.args.get("per_page", 10, type=int)
+        if per_page < 1 or per_page > 100:
+            raise ErrorValidacion(mensaje="El número de elementos por página debe estar entre 1 y 100")
+            
         query = request.args.get("query", "")
         status = request.args.get("status")
         
-        jobs, pagination = JobService.get_jobs(
-            page=page,
-            per_page=per_page,
-            query=query,
-            status=status,
-            sort_by="posted_date",
-            sort_order="desc"
-        )
+        if status and status not in ["open", "closed", "draft"]:
+            notificar_error_web(
+                f"Estado '{status}' no válido. Mostrando todos los estados.", 
+                "warning"
+            )
+            status = None
+        
+        try:
+            jobs, pagination = JobService.get_jobs(
+                page=page,
+                per_page=per_page,
+                query=query,
+                status=status,
+                sort_by="posted_date",
+                sort_order="desc"
+            )
+        except SQLAlchemyError as e:
+            raise ErrorBaseDatos(
+                mensaje=f"Error de base de datos al obtener trabajos: {str(e)}"
+            )
     except Exception as e:
-        flash(f"Error al obtener empleos: {e}", "error")
-        jobs = []
-        pagination = None
+        if not isinstance(e, AdFluxError):
+            raise AdFluxError(
+                mensaje=f"Error inesperado al listar trabajos: {str(e)}",
+                codigo=500
+            )
+        raise
     
     return render_template(
         "jobs_list.html", 
@@ -107,54 +132,73 @@ def job_details(job_id):
 
 
 @job_bp.route("/create", methods=["GET", "POST"])
+@manejar_error_web
 def create_job():
     """Renderiza y procesa el formulario para crear un nuevo trabajo."""
     form = JobForm()
     
     if form.validate_on_submit():
+        if form.salary_min.data is not None and form.salary_max.data is not None:
+            if form.salary_min.data > form.salary_max.data:
+                raise ErrorValidacion(mensaje="El salario mínimo no puede ser mayor que el salario máximo")
+                
+        if form.posted_date.data and form.closing_date.data:
+            if form.posted_date.data > form.closing_date.data:
+                raise ErrorValidacion(mensaje="La fecha de publicación no puede ser posterior a la fecha de cierre")
+        
+        job_data = {
+            'title': form.title.data,
+            'short_description': form.short_description.data,
+            'description': form.description.data,
+            'company_name': form.company_name.data,
+            'location': form.location.data,
+            'department': form.department.data,
+            'salary_min': form.salary_min.data,
+            'salary_max': form.salary_max.data,
+            'employment_type': form.employment_type.data,
+            'experience_level': form.experience_level.data,
+            'education_level': form.education_level.data,
+            'posted_date': form.posted_date.data,
+            'closing_date': form.closing_date.data,
+            'status': form.status.data,
+            'remote': form.remote.data,
+            'required_skills': form.required_skills.data,  # El servicio procesará esto
+            'benefits': form.benefits.data  # El servicio procesará esto
+        }
+        
         try:
-            job_data = {
-                'title': form.title.data,
-                'short_description': form.short_description.data,
-                'description': form.description.data,
-                'company_name': form.company_name.data,
-                'location': form.location.data,
-                'department': form.department.data,
-                'salary_min': form.salary_min.data,
-                'salary_max': form.salary_max.data,
-                'employment_type': form.employment_type.data,
-                'experience_level': form.experience_level.data,
-                'education_level': form.education_level.data,
-                'posted_date': form.posted_date.data,
-                'closing_date': form.closing_date.data,
-                'status': form.status.data,
-                'remote': form.remote.data,
-                'required_skills': form.required_skills.data,  # El servicio procesará esto
-                'benefits': form.benefits.data  # El servicio procesará esto
-            }
-            
             job, message, status_code = JobService.create_job(job_data)
             
             if status_code == 201:
                 flash(message, "success")
-                return redirect(url_for('job.job_details', job_id=job.job_id))
+                if job and hasattr(job, 'job_id'):
+                    return redirect(url_for('job.job_details', job_id=job.job_id))
+                else:
+                    flash("Trabajo creado pero no se pudo obtener su ID", "warning")
+                    return redirect(url_for('job.list_jobs'))
             else:
-                flash(message, "error")
-            
-        except Exception as e:
-            flash(f"Error al crear trabajo: {e}", "error")
+                raise AdFluxError(mensaje=message, codigo=status_code)
+                
+        except SQLAlchemyError as e:
+            raise ErrorBaseDatos(
+                mensaje=f"Error de base de datos al crear trabajo: {str(e)}"
+            )
     
     return render_template("job_form.html", title="Crear Trabajo", form=form, job=None)
 
 
 @job_bp.route("/<string:job_id>/edit", methods=["GET", "POST"])
+@manejar_error_web
 def update_job(job_id):
     """Renderiza y procesa el formulario para editar un trabajo existente."""
     job = JobService.get_job_by_id(job_id)
     
     if not job:
-        flash(f"Trabajo con ID {job_id} no encontrado.", "error")
-        return redirect(url_for('job.list_jobs'))
+        raise ErrorRecursoNoEncontrado(
+            mensaje=f"Trabajo con ID {job_id} no encontrado.",
+            recurso="Trabajo",
+            identificador=job_id
+        )
         
     form = JobForm(obj=job)
     
@@ -163,36 +207,50 @@ def update_job(job_id):
         form.benefits.data = ', '.join(job.benefits) if job.benefits else ''
     
     if form.validate_on_submit():
+        if form.salary_min.data is not None and form.salary_max.data is not None:
+            if form.salary_min.data > form.salary_max.data:
+                raise ErrorValidacion(mensaje="El salario mínimo no puede ser mayor que el salario máximo")
+                
+        if form.posted_date.data and form.closing_date.data:
+            if form.posted_date.data > form.closing_date.data:
+                raise ErrorValidacion(mensaje="La fecha de publicación no puede ser posterior a la fecha de cierre")
+        
+        job_data = {
+            'title': form.title.data,
+            'short_description': form.short_description.data,
+            'description': form.description.data,
+            'company_name': form.company_name.data,
+            'location': form.location.data,
+            'department': form.department.data,
+            'salary_min': form.salary_min.data,
+            'salary_max': form.salary_max.data,
+            'employment_type': form.employment_type.data,
+            'experience_level': form.experience_level.data,
+            'education_level': form.education_level.data,
+            'posted_date': form.posted_date.data,
+            'closing_date': form.closing_date.data,
+            'status': form.status.data,
+            'remote': form.remote.data,
+            'required_skills': form.required_skills.data,  # El servicio procesará esto
+            'benefits': form.benefits.data  # El servicio procesará esto
+        }
+        
         try:
-            job_data = {
-                'title': form.title.data,
-                'short_description': form.short_description.data,
-                'description': form.description.data,
-                'company_name': form.company_name.data,
-                'location': form.location.data,
-                'department': form.department.data,
-                'salary_min': form.salary_min.data,
-                'salary_max': form.salary_max.data,
-                'employment_type': form.employment_type.data,
-                'experience_level': form.experience_level.data,
-                'education_level': form.education_level.data,
-                'posted_date': form.posted_date.data,
-                'closing_date': form.closing_date.data,
-                'status': form.status.data,
-                'remote': form.remote.data,
-                'required_skills': form.required_skills.data,  # El servicio procesará esto
-                'benefits': form.benefits.data  # El servicio procesará esto
-            }
-            
             updated_job, message, status_code = JobService.update_job(job_id, job_data)
             
             if status_code == 200:
                 flash(message, "success")
-                return redirect(url_for('job.job_details', job_id=updated_job.job_id))
+                if updated_job and hasattr(updated_job, 'job_id'):
+                    return redirect(url_for('job.job_details', job_id=updated_job.job_id))
+                else:
+                    flash("Trabajo actualizado pero no se pudo obtener su ID", "warning")
+                    return redirect(url_for('job.list_jobs'))
             else:
-                flash(message, "error")
-            
-        except Exception as e:
-            flash(f"Error al actualizar trabajo: {e}", "error")
+                raise AdFluxError(mensaje=message, codigo=status_code)
+                
+        except SQLAlchemyError as e:
+            raise ErrorBaseDatos(
+                mensaje=f"Error de base de datos al actualizar trabajo: {str(e)}"
+            )
     
     return render_template("job_form.html", title="Editar Trabajo", form=form, job=job)
