@@ -13,7 +13,7 @@ from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
 from ..services.candidate_service import CandidateService
 from ..api.common.excepciones import AdFluxError, ErrorRecursoNoEncontrado
-from ..api.common.manejo_errores import manejar_error_web, notificar_error_web
+from ..api.common.error_handling import manejar_error_web, notificar_error_web
 
 # Definir el blueprint
 candidate_bp = Blueprint("candidate", __name__, template_folder="../templates")

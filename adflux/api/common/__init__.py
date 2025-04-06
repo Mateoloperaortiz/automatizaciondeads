@@ -17,7 +17,7 @@ from .excepciones import (
 )
 
 # Importar funciones de manejo de errores
-from .manejo_errores import (
+from .error_handling import (
     registrar_error,
     respuesta_error_api,
     notificar_error_web,

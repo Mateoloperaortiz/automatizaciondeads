@@ -4,7 +4,7 @@ from ..extensions import csrf  # Import csrf extension
 from ..services.application_service import ApplicationService  # Importar servicio de aplicaciones
 from flask import current_app
 from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado
-from ..api.common.manejo_errores import manejar_error_api
+from ..api.common.error_handling import manejar_error_api
 
 # Namespace para Aplicaciones
 applications_ns = Namespace("applications", description="Operaciones de Aplicación")

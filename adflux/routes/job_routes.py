@@ -3,7 +3,7 @@ from ..models import db, JobOpening, Candidate  # Importar modelos necesarios
 from ..schemas import job_schema, jobs_schema  # Asumiendo que los esquemas existen
 from flask import current_app
 from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado
-from ..api.common.manejo_errores import manejar_error_api
+from ..api.common.error_handling import manejar_error_api
 
 # Namespace para Puestos
 jobs_ns = Namespace("jobs", description="Operaciones de Ofertas de Empleo")

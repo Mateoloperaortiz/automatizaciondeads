@@ -3,7 +3,7 @@ from ..schemas import candidate_schema, candidates_schema  # Asumiendo que los e
 from ..services.candidate_service import CandidateService  # Importar el servicio de candidatos
 from flask import current_app
 from ..api.common.excepciones import ErrorValidacion
-from ..api.common.manejo_errores import manejar_error_api
+from ..api.common.error_handling import manejar_error_api
 
 # Namespace para Candidatos
 candidates_ns = Namespace("candidates", description="Operaciones de Candidatos")
