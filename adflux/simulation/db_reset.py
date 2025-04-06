@@ -7,17 +7,24 @@ con datos simulados generados usando la API de Gemini.
 
 import os
 import logging
-import time
 import random
-from typing import Dict, Any, List, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime, timedelta
 
 from flask import Flask
 from sqlalchemy.exc import SQLAlchemyError
 
 from adflux.models import (
-    db, JobOpening, Candidate, Application, Campaign,
-    MetaCampaign, MetaAdSet, MetaAd, MetaInsight, Segment
+    db,
+    JobOpening,
+    Candidate,
+    Application,
+    Campaign,
+    MetaCampaign,
+    MetaAdSet,
+    MetaAd,
+    MetaInsight,
+    Segment,
 )
 from adflux.simulation.job_data import generate_job_opening
 from adflux.simulation.candidate_data import generate_candidate_profile
@@ -25,8 +32,7 @@ from adflux.api.gemini.client import get_client
 
 # Configurar logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 log = logging.getLogger("db_reset")
 
@@ -117,30 +123,42 @@ def populate_jobs(app: Flask, count: int = 20) -> List[JobOpening]:
 
                 # Evitar IDs duplicados
                 while job_id in generated_job_ids:
-                    job_id_num = int(job_id.split('-')[1]) + 1
+                    job_id_num = int(job_id.split("-")[1]) + 1
                     job_id = f"JOB-{job_id_num:04d}"
 
                 # Generar datos de trabajo
                 job_data = generate_job_opening(job_id)
 
                 if job_data:
-                    title = job_data.get('title', '').lower()
-                    company = job_data.get('company_name', '').lower()
+                    title = job_data.get("title", "").lower()
+                    company = job_data.get("company_name", "").lower()
 
                     # Verificar unicidad del título y compañía combinados
                     title_company_key = f"{title}|{company}" if title and company else None
 
-                    if title_company_key and title_company_key not in generated_titles and title not in existing_titles:
+                    if (
+                        title_company_key
+                        and title_company_key not in generated_titles
+                        and title not in existing_titles
+                    ):
                         generated_titles.add(title_company_key)
                         generated_job_ids.add(job_id)
                         job_data_list.append(job_data)
-                        log.debug(f"Trabajo único añadido: {title} en {company} ({len(job_data_list)}/{count})")
+                        log.debug(
+                            f"Trabajo único añadido: {title} en {company} ({len(job_data_list)}/{count})"
+                        )
                     elif title in existing_titles:
-                        log.warning(f"Título de trabajo '{title}' ya existe en la base de datos. Saltando.")
+                        log.warning(
+                            f"Título de trabajo '{title}' ya existe en la base de datos. Saltando."
+                        )
                     elif title_company_key in generated_titles:
-                        log.warning(f"Combinación de título y compañía duplicada generada y descartada: '{title}' en '{company}'")
+                        log.warning(
+                            f"Combinación de título y compañía duplicada generada y descartada: '{title}' en '{company}'"
+                        )
                     else:
-                        log.warning(f"Datos de trabajo generados sin título o compañía, descartados.")
+                        log.warning(
+                            "Datos de trabajo generados sin título o compañía, descartados."
+                        )
 
             # Crear objetos JobOpening y guardarlos en la base de datos
             job_objects = []
@@ -148,23 +166,25 @@ def populate_jobs(app: Flask, count: int = 20) -> List[JobOpening]:
             for job_data in job_data_list:
                 # Procesar datos para adaptarlos al modelo JobOpening
                 # Extraer valores de salario del rango
-                salary_range = job_data.get('salary_range', '')
-                salary_min = job_data.get('salary_min')
-                salary_max = job_data.get('salary_max')
+                salary_range = job_data.get("salary_range", "")
+                salary_min = job_data.get("salary_min")
+                salary_max = job_data.get("salary_max")
 
                 # Si no hay salary_min/max pero hay salary_range, intentar extraer valores
                 if not salary_min or not salary_max:
                     if salary_range:
                         # Eliminar caracteres no numéricos excepto el separador
-                        clean_range = ''.join(c for c in salary_range if c.isdigit() or c in ',-')
-                        parts = clean_range.replace('.', '').replace(',', '').split('-')
+                        clean_range = "".join(c for c in salary_range if c.isdigit() or c in ",-")
+                        parts = clean_range.replace(".", "").replace(",", "").split("-")
 
                         if len(parts) >= 2:
                             try:
                                 salary_min = int(parts[0].strip())
                                 salary_max = int(parts[1].strip())
                             except (ValueError, IndexError):
-                                log.warning(f"No se pudo extraer rango salarial de '{salary_range}'")
+                                log.warning(
+                                    f"No se pudo extraer rango salarial de '{salary_range}'"
+                                )
                                 salary_min = 30000000  # Valores predeterminados en COP
                                 salary_max = 80000000
                         elif len(parts) == 1:
@@ -173,21 +193,31 @@ def populate_jobs(app: Flask, count: int = 20) -> List[JobOpening]:
                                 salary_min = salary_value
                                 salary_max = salary_value
                             except ValueError:
-                                log.warning(f"No se pudo extraer valor salarial de '{salary_range}'")
+                                log.warning(
+                                    f"No se pudo extraer valor salarial de '{salary_range}'"
+                                )
                                 salary_min = 30000000  # Valores predeterminados en COP
                                 salary_max = 80000000
 
                 # Procesar fechas
                 try:
-                    posting_date_str = job_data.get('posting_date', job_data.get('posted_date', datetime.now().isoformat()))
+                    posting_date_str = job_data.get(
+                        "posting_date", job_data.get("posted_date", datetime.now().isoformat())
+                    )
                     if isinstance(posting_date_str, str):
-                        posted_date = datetime.fromisoformat(posting_date_str.replace('Z', '+00:00')).date()
+                        posted_date = datetime.fromisoformat(
+                            posting_date_str.replace("Z", "+00:00")
+                        ).date()
                     else:
                         posted_date = datetime.now().date()
 
-                    closing_date_str = job_data.get('closing_date', (datetime.now() + timedelta(days=30)).isoformat())
+                    closing_date_str = job_data.get(
+                        "closing_date", (datetime.now() + timedelta(days=30)).isoformat()
+                    )
                     if isinstance(closing_date_str, str):
-                        closing_date = datetime.fromisoformat(closing_date_str.replace('Z', '+00:00')).date()
+                        closing_date = datetime.fromisoformat(
+                            closing_date_str.replace("Z", "+00:00")
+                        ).date()
                     else:
                         closing_date = (datetime.now() + timedelta(days=30)).date()
                 except (ValueError, TypeError) as e:
@@ -209,31 +239,35 @@ def populate_jobs(app: Flask, count: int = 20) -> List[JobOpening]:
                         salary_max = 80000000  # Valor predeterminado
 
                 # Procesar remote (asegurar que sea booleano)
-                remote_value = job_data.get('remote', False)
+                remote_value = job_data.get("remote", False)
                 if not isinstance(remote_value, bool):
-                    remote_value = str(remote_value).lower() in ['true', 'yes', 'si', '1', 't', 'y']
+                    remote_value = str(remote_value).lower() in ["true", "yes", "si", "1", "t", "y"]
 
                 # Mapear campos al modelo JobOpening
                 job = JobOpening(
-                    job_id=job_data.get('job_id', f"JOB-{len(job_objects) + 1:04d}"),
-                    title=job_data.get('title', 'Título no disponible'),
-                    company_name=job_data.get('company_name', job_data.get('company', 'Empresa no disponible')),
-                    location=job_data.get('location', 'Colombia'),
-                    description=job_data.get('description', ''),
-                    required_skills=job_data.get('requirements', job_data.get('required_skills', [])),
+                    job_id=job_data.get("job_id", f"JOB-{len(job_objects) + 1:04d}"),
+                    title=job_data.get("title", "Título no disponible"),
+                    company_name=job_data.get(
+                        "company_name", job_data.get("company", "Empresa no disponible")
+                    ),
+                    location=job_data.get("location", "Colombia"),
+                    description=job_data.get("description", ""),
+                    required_skills=job_data.get(
+                        "requirements", job_data.get("required_skills", [])
+                    ),
                     salary_min=salary_min,
                     salary_max=salary_max,
-                    employment_type=job_data.get('employment_type', 'Full-time'),
-                    experience_level=job_data.get('experience_level', 'Mid-level'),
-                    education_level=job_data.get('education_level', "Bachelor's"),
-                    application_url=job_data.get('application_url', ''),
+                    employment_type=job_data.get("employment_type", "Full-time"),
+                    experience_level=job_data.get("experience_level", "Mid-level"),
+                    education_level=job_data.get("education_level", "Bachelor's"),
+                    application_url=job_data.get("application_url", ""),
                     posted_date=posted_date,
                     closing_date=closing_date,
-                    status=job_data.get('status', 'open'),
-                    department=job_data.get('department', ''),
+                    status=job_data.get("status", "open"),
+                    department=job_data.get("department", ""),
                     remote=remote_value,
-                    benefits=job_data.get('benefits', []),
-                    short_description=job_data.get('short_description', '')
+                    benefits=job_data.get("benefits", []),
+                    short_description=job_data.get("short_description", ""),
                 )
 
                 db.session.add(job)
@@ -273,7 +307,9 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
             generated_candidate_ids = set()
 
             # Obtener emails existentes para evitar duplicados
-            existing_emails = {candidate.email.lower() for candidate in Candidate.query.all() if candidate.email}
+            existing_emails = {
+                candidate.email.lower() for candidate in Candidate.query.all() if candidate.email
+            }
 
             while len(candidate_data_list) < count and attempts < max_attempts:
                 attempts += 1
@@ -281,34 +317,40 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
 
                 # Evitar IDs duplicados
                 while candidate_id in generated_candidate_ids:
-                    candidate_id_num = int(candidate_id.split('-')[1]) + 1
+                    candidate_id_num = int(candidate_id.split("-")[1]) + 1
                     candidate_id = f"CAND-{candidate_id_num:05d}"
 
                 # Generar datos de candidato
                 candidate_data = generate_candidate_profile(candidate_id)
 
                 if candidate_data:
-                    email = candidate_data.get('email', '').lower()
-                    name = candidate_data.get('name', '')
+                    email = candidate_data.get("email", "").lower()
+                    name = candidate_data.get("name", "")
 
                     if email and email not in generated_emails and email not in existing_emails:
                         generated_emails.add(email)
                         generated_candidate_ids.add(candidate_id)
                         candidate_data_list.append(candidate_data)
-                        log.debug(f"Candidato único añadido: {name} ({email}) ({len(candidate_data_list)}/{count})")
+                        log.debug(
+                            f"Candidato único añadido: {name} ({email}) ({len(candidate_data_list)}/{count})"
+                        )
                     elif email in existing_emails:
-                        log.warning(f"Email de candidato '{email}' ya existe en la base de datos. Saltando.")
+                        log.warning(
+                            f"Email de candidato '{email}' ya existe en la base de datos. Saltando."
+                        )
                     elif email in generated_emails:
-                        log.warning(f"Email de candidato duplicado generado y descartado: '{email}' para {name}")
+                        log.warning(
+                            f"Email de candidato duplicado generado y descartado: '{email}' para {name}"
+                        )
                     else:
-                        log.warning(f"Datos de candidato generados sin email, descartados.")
+                        log.warning("Datos de candidato generados sin email, descartados.")
 
             # Crear objetos Candidate y guardarlos en la base de datos
             candidate_objects = []
 
             for candidate_data in candidate_data_list:
                 # Procesar years_experience (asegurar que sea entero)
-                years_exp = candidate_data.get('years_experience', 0)
+                years_exp = candidate_data.get("years_experience", 0)
                 if not isinstance(years_exp, int):
                     try:
                         years_exp = int(years_exp)
@@ -316,7 +358,7 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
                         years_exp = 0  # Valor predeterminado
 
                 # Procesar desired_salary (asegurar que sea entero)
-                desired_salary = candidate_data.get('desired_salary', 0)
+                desired_salary = candidate_data.get("desired_salary", 0)
                 if not isinstance(desired_salary, int):
                     try:
                         desired_salary = int(desired_salary)
@@ -324,12 +366,13 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
                         desired_salary = 3000000  # Valor predeterminado
 
                 # Procesar skills (asegurar que sea lista)
-                skills = candidate_data.get('skills', [])
+                skills = candidate_data.get("skills", [])
                 if not isinstance(skills, list):
                     if isinstance(skills, str):
                         # Intentar convertir string a lista si está en formato JSON
                         try:
                             import json
+
                             skills = json.loads(skills)
                         except json.JSONDecodeError:
                             skills = [skills]  # Convertir a lista de un elemento
@@ -337,34 +380,37 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
                         skills = []  # Valor predeterminado
 
                 # Procesar languages (asegurar que sea lista)
-                languages = candidate_data.get('languages', ['Spanish (Native)'])
+                languages = candidate_data.get("languages", ["Spanish (Native)"])
                 if not isinstance(languages, list):
                     if isinstance(languages, str):
                         try:
                             import json
+
                             languages = json.loads(languages)
                         except json.JSONDecodeError:
                             languages = [languages]  # Convertir a lista de un elemento
                     else:
-                        languages = ['Spanish (Native)']  # Valor predeterminado
+                        languages = ["Spanish (Native)"]  # Valor predeterminado
 
                 # Mapear campos al modelo Candidate
                 candidate = Candidate(
-                    candidate_id=candidate_data.get('candidate_id', f"CAND-{len(candidate_objects) + 1:05d}"),
-                    name=candidate_data.get('name', 'Nombre no disponible'),
-                    email=candidate_data.get('email', ''),
-                    phone=candidate_data.get('phone', ''),
-                    location=candidate_data.get('location', 'Colombia'),
+                    candidate_id=candidate_data.get(
+                        "candidate_id", f"CAND-{len(candidate_objects) + 1:05d}"
+                    ),
+                    name=candidate_data.get("name", "Nombre no disponible"),
+                    email=candidate_data.get("email", ""),
+                    phone=candidate_data.get("phone", ""),
+                    location=candidate_data.get("location", "Colombia"),
                     years_experience=years_exp,
-                    education_level=candidate_data.get('education_level', "Bachelor's"),
+                    education_level=candidate_data.get("education_level", "Bachelor's"),
                     skills=skills,
-                    primary_skill=candidate_data.get('primary_skill', ''),
+                    primary_skill=candidate_data.get("primary_skill", ""),
                     desired_salary=desired_salary,
-                    desired_position=candidate_data.get('desired_position', ''),
-                    summary=candidate_data.get('summary', ''),
-                    availability=candidate_data.get('availability', 'Immediate'),
+                    desired_position=candidate_data.get("desired_position", ""),
+                    summary=candidate_data.get("summary", ""),
+                    availability=candidate_data.get("availability", "Immediate"),
                     languages=languages,
-                    segment_id=None  # Se asignará después de la segmentación
+                    segment_id=None,  # Se asignará después de la segmentación
                 )
 
                 db.session.add(candidate)
@@ -372,7 +418,9 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
 
             # Confirmar los cambios
             db.session.commit()
-            log.info(f"Se guardaron {len(candidate_objects)} perfiles de candidatos en la base de datos.")
+            log.info(
+                f"Se guardaron {len(candidate_objects)} perfiles de candidatos en la base de datos."
+            )
             return candidate_objects
 
         except Exception as e:
@@ -381,7 +429,9 @@ def populate_candidates(app: Flask, count: int = 50) -> List[Candidate]:
             return []
 
 
-def populate_applications(app: Flask, job_count: int = 5, candidate_count: int = 10, count: int = 15) -> List[Application]:
+def populate_applications(
+    app: Flask, job_count: int = 5, candidate_count: int = 10, count: int = 15
+) -> List[Application]:
     """
     Genera y guarda aplicaciones simuladas en la base de datos.
 
@@ -407,9 +457,11 @@ def populate_applications(app: Flask, job_count: int = 5, candidate_count: int =
             log.info(f"Generando {count} aplicaciones simuladas...")
 
             # Filtrar trabajos con estado 'open'
-            open_jobs = [job for job in jobs if job.status == 'open']
+            open_jobs = [job for job in jobs if job.status == "open"]
             if not open_jobs:
-                log.warning("No hay trabajos con estado 'open' disponibles para generar aplicaciones.")
+                log.warning(
+                    "No hay trabajos con estado 'open' disponibles para generar aplicaciones."
+                )
                 open_jobs = jobs  # Usar todos los trabajos si no hay ninguno con estado 'open'
 
             # Verificar combinaciones existentes para evitar duplicados
@@ -426,7 +478,9 @@ def populate_applications(app: Flask, job_count: int = 5, candidate_count: int =
             # Calcular el máximo teórico de aplicaciones posibles
             max_possible = len(candidates) * len(open_jobs)
             if max_possible < count:
-                log.warning(f"Se solicitaron {count} aplicaciones, pero solo son posibles {max_possible} combinaciones únicas.")
+                log.warning(
+                    f"Se solicitaron {count} aplicaciones, pero solo son posibles {max_possible} combinaciones únicas."
+                )
                 count = max_possible
 
             while len(application_objects) < count and attempts < max_attempts:
@@ -440,7 +494,10 @@ def populate_applications(app: Flask, job_count: int = 5, candidate_count: int =
                 job_id = job.job_id
 
                 # Verificar si esta combinación ya existe
-                if (candidate_id, job_id) in existing_applications or (candidate_id, job_id) in generated_pairs:
+                if (candidate_id, job_id) in existing_applications or (
+                    candidate_id,
+                    job_id,
+                ) in generated_pairs:
                     continue
 
                 # Generar fecha de aplicación realista
@@ -467,8 +524,12 @@ def populate_applications(app: Flask, job_count: int = 5, candidate_count: int =
                     candidate_id=candidate_id,
                     job_id=job_id,
                     application_date=application_date,
-                    status=random.choice(['Pending', 'Reviewed', 'Interviewed', 'Rejected', 'Hired']),
-                    source_platform=random.choice(['Meta', 'Google', 'X', 'TikTok', 'LinkedIn', 'Direct'])
+                    status=random.choice(
+                        ["Pending", "Reviewed", "Interviewed", "Rejected", "Hired"]
+                    ),
+                    source_platform=random.choice(
+                        ["Meta", "Google", "X", "TikTok", "LinkedIn", "Direct"]
+                    ),
                 )
 
                 db.session.add(application)
@@ -490,7 +551,9 @@ def populate_applications(app: Flask, job_count: int = 5, candidate_count: int =
             return []
 
 
-def reset_and_populate_database(app: Flask, job_count: int = 20, candidate_count: int = 50, application_count: int = 100) -> Tuple[bool, Dict[str, int]]:
+def reset_and_populate_database(
+    app: Flask, job_count: int = 20, candidate_count: int = 50, application_count: int = 100
+) -> Tuple[bool, Dict[str, int]]:
     """
     Limpia la base de datos y la llena con datos simulados.
 
@@ -517,31 +580,30 @@ def reset_and_populate_database(app: Flask, job_count: int = 20, candidate_count
     jobs = populate_jobs(app, job_count)
     if not jobs:
         log.error("No se pudieron generar ofertas de trabajo. Abortando.")
-        return False, {'jobs': 0, 'candidates': 0, 'applications': 0}
+        return False, {"jobs": 0, "candidates": 0, "applications": 0}
 
     # Generar y guardar perfiles de candidatos
     candidates = populate_candidates(app, candidate_count)
     if not candidates:
         log.error("No se pudieron generar perfiles de candidatos. Abortando.")
-        return False, {'jobs': len(jobs), 'candidates': 0, 'applications': 0}
+        return False, {"jobs": len(jobs), "candidates": 0, "applications": 0}
 
     # Generar y guardar aplicaciones
     applications = populate_applications(app, len(jobs), len(candidates), application_count)
 
     # Devolver estadísticas
-    stats = {
-        'jobs': len(jobs),
-        'candidates': len(candidates),
-        'applications': len(applications)
-    }
+    stats = {"jobs": len(jobs), "candidates": len(candidates), "applications": len(applications)}
 
-    log.info(f"Base de datos poblada exitosamente con {stats['jobs']} trabajos, {stats['candidates']} candidatos y {stats['applications']} aplicaciones.")
+    log.info(
+        f"Base de datos poblada exitosamente con {stats['jobs']} trabajos, {stats['candidates']} candidatos y {stats['applications']} aplicaciones."
+    )
     return True, stats
 
 
 if __name__ == "__main__":
     # Este código se ejecuta solo si se ejecuta el script directamente
     import sys
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
     from adflux import create_app
@@ -577,7 +639,7 @@ if __name__ == "__main__":
     success, stats = reset_and_populate_database(app, JOB_COUNT, CANDIDATE_COUNT, APPLICATION_COUNT)
 
     if success:
-        print(f"✅ Base de datos poblada exitosamente con:")
+        print("✅ Base de datos poblada exitosamente con:")
         print(f"   - {stats['jobs']} ofertas de trabajo")
         print(f"   - {stats['candidates']} perfiles de candidatos")
         print(f"   - {stats['applications']} aplicaciones")

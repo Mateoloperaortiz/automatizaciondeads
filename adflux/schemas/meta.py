@@ -14,6 +14,7 @@ class MetaInsightSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo MetaInsight.
     """
+
     # Definir explícitamente TODOS los campos usando auto_field
     object_id = auto_field(dump_only=True)
     level = auto_field(dump_only=True)
@@ -53,13 +54,16 @@ class MetaAdSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo MetaAd.
     """
+
     id = fields.Str(dump_only=True)
     name = fields.Str(allow_none=True)
     status = fields.Str(allow_none=True)
     effective_status = fields.Str(allow_none=True)
     created_time = fields.DateTime(allow_none=True)
     creative_id = fields.Str(allow_none=True)
-    creative_details = fields.Dict(allow_none=True)  # Asumiendo que creative_details se almacena como JSON/Dict
+    creative_details = fields.Dict(
+        allow_none=True
+    )  # Asumiendo que creative_details se almacena como JSON/Dict
     # Campos de relación
     ad_set_id = fields.Str()
     # Insights anidados (opcional)
@@ -74,6 +78,7 @@ class MetaAdSetSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo MetaAdSet.
     """
+
     id = fields.Str(dump_only=True)
     name = fields.Str(allow_none=True)
     status = fields.Str(allow_none=True)
@@ -102,6 +107,7 @@ class MetaCampaignSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo MetaCampaign.
     """
+
     id = fields.Str(dump_only=True)
     name = fields.Str(allow_none=True)
     status = fields.Str(allow_none=True)

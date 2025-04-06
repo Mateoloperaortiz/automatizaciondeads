@@ -5,7 +5,7 @@ Este módulo proporciona funciones para el logging consistente
 en todas las llamadas a APIs externas.
 """
 
-from typing import Optional, Any
+from typing import Optional
 
 # Intentar importar Flask, pero no fallar si no está disponible
 try:

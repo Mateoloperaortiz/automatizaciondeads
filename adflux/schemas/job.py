@@ -12,6 +12,7 @@ class JobOpeningSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo JobOpening.
     """
+
     class Meta:
         model = JobOpening
         load_instance = True

@@ -7,7 +7,6 @@ utilizando la API de Gemini.
 
 import logging
 import random
-import json
 import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
@@ -34,7 +33,7 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
         return None
 
     # Prompt para Gemini
-    prompt = f"""
+    prompt = """
     Eres un asistente especializado en recursos humanos. Tu tarea es generar datos realistas para una oferta de trabajo en Colombia.
 
     Genera un objeto JSON con los siguientes campos:
@@ -66,44 +65,70 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
 
     if generated_data:
         # Verificar que se hayan generado todos los campos requeridos
-        required_keys = ['job_id', 'title', 'company_name', 'location', 'description', 'requirements',
-                         'salary_range', 'employment_type', 'experience_level', 'education_level',
-                         'application_url', 'posting_date', 'closing_date', 'status', 'department',
-                         'remote', 'skills', 'benefits', 'short_description']
+        required_keys = [
+            "job_id",
+            "title",
+            "company_name",
+            "location",
+            "description",
+            "requirements",
+            "salary_range",
+            "employment_type",
+            "experience_level",
+            "education_level",
+            "application_url",
+            "posting_date",
+            "closing_date",
+            "status",
+            "department",
+            "remote",
+            "skills",
+            "benefits",
+            "short_description",
+        ]
 
         if all(key in generated_data for key in required_keys):
             # Asegurar que job_id sea el proporcionado
-            generated_data['job_id'] = job_id
+            generated_data["job_id"] = job_id
 
             # Asegurar que las fechas estén en formato ISO
             try:
                 # Validar posting_date
-                posting_date = datetime.fromisoformat(generated_data['posting_date'].replace('Z', '+00:00'))
+                posting_date = datetime.fromisoformat(
+                    generated_data["posting_date"].replace("Z", "+00:00")
+                )
 
                 # Validar closing_date
-                closing_date = datetime.fromisoformat(generated_data['closing_date'].replace('Z', '+00:00'))
+                closing_date = datetime.fromisoformat(
+                    generated_data["closing_date"].replace("Z", "+00:00")
+                )
 
                 # Verificar que closing_date sea posterior a posting_date
                 if closing_date <= posting_date:
                     # Ajustar closing_date si es necesario
                     closing_date = posting_date + timedelta(days=random.randint(15, 60))
-                    generated_data['closing_date'] = closing_date.isoformat()
+                    generated_data["closing_date"] = closing_date.isoformat()
             except (ValueError, TypeError):
                 # Si hay error en las fechas, generar nuevas
                 now = datetime.now()
                 posting_date = now - timedelta(days=random.randint(0, 30))
                 closing_date = posting_date + timedelta(days=random.randint(15, 60))
-                generated_data['posting_date'] = posting_date.isoformat()
-                generated_data['closing_date'] = closing_date.isoformat()
+                generated_data["posting_date"] = posting_date.isoformat()
+                generated_data["closing_date"] = closing_date.isoformat()
 
             # Asegurar que status sea uno de los valores permitidos
-            valid_statuses = ['open', 'closed', 'draft']
-            if generated_data['status'] not in valid_statuses:
-                generated_data['status'] = random.choice(valid_statuses)
+            valid_statuses = ["open", "closed", "draft"]
+            if generated_data["status"] not in valid_statuses:
+                generated_data["status"] = random.choice(valid_statuses)
 
             # Asegurar que remote sea booleano
-            if not isinstance(generated_data['remote'], bool):
-                generated_data['remote'] = str(generated_data['remote']).lower() in ['true', 'yes', 'si', '1']
+            if not isinstance(generated_data["remote"], bool):
+                generated_data["remote"] = str(generated_data["remote"]).lower() in [
+                    "true",
+                    "yes",
+                    "si",
+                    "1",
+                ]
 
             log.info(f"Datos de trabajo generados correctamente para job_id {job_id}")
             return generated_data
@@ -147,8 +172,8 @@ def generate_multiple_jobs(count: int = 10) -> List[Dict[str, Any]]:
         job_data = generate_job_opening(job_id)
 
         if job_data:
-            title = job_data.get('title')
-            company = job_data.get('company_name')
+            title = job_data.get("title")
+            company = job_data.get("company_name")
 
             # Verificar unicidad del título y compañía combinados
             title_company_key = f"{title}|{company}".lower() if title and company else None
@@ -160,10 +185,12 @@ def generate_multiple_jobs(count: int = 10) -> List[Dict[str, Any]]:
                 log.debug(f"Trabajo único añadido: {title} en {company} ({len(jobs)}/{count})")
                 consecutive_failures = 0  # Reiniciar contador de fallos
             elif title_company_key:
-                log.warning(f"Combinación de título y compañía duplicada generada y descartada: '{title}' en '{company}'")
+                log.warning(
+                    f"Combinación de título y compañía duplicada generada y descartada: '{title}' en '{company}'"
+                )
                 consecutive_failures += 1
             else:
-                log.warning(f"Datos de trabajo generados sin título o compañía, descartados.")
+                log.warning("Datos de trabajo generados sin título o compañía, descartados.")
                 consecutive_failures += 1
         else:
             log.warning(f"Fallo la generación de trabajo en el intento {attempts}.")
@@ -171,9 +198,13 @@ def generate_multiple_jobs(count: int = 10) -> List[Dict[str, Any]]:
 
         # Pausa si hay demasiados fallos consecutivos (posible límite de API)
         if consecutive_failures >= max_consecutive_failures:
-            log.warning(f"Detectados {consecutive_failures} fallos consecutivos. Pausando por 5 segundos...")
+            log.warning(
+                f"Detectados {consecutive_failures} fallos consecutivos. Pausando por 5 segundos..."
+            )
             time.sleep(5)
             consecutive_failures = 0
 
-    log.info(f"Generación de trabajos completada: {len(jobs)}/{count} trabajos generados en {attempts} intentos.")
+    log.info(
+        f"Generación de trabajos completada: {len(jobs)}/{count} trabajos generados en {attempts} intentos."
+    )
     return jobs

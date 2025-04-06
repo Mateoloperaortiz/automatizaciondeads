@@ -13,6 +13,7 @@ import yaml
 try:
     from google.ads.googleads.client import GoogleAdsClient
     from google.ads.googleads.errors import GoogleAdsException
+
     GOOGLE_ADS_SDK_AVAILABLE = True
 except ImportError:
     GoogleAdsClient = None
@@ -38,7 +39,7 @@ class GoogleAdsApiClient:
         developer_token: Optional[str] = None,
         refresh_token: Optional[str] = None,
         login_customer_id: Optional[str] = None,
-        config_path: Optional[str] = None
+        config_path: Optional[str] = None,
     ):
         """
         Inicializa el cliente de la API de Google Ads.
@@ -52,19 +53,39 @@ class GoogleAdsApiClient:
             config_path: Ruta al archivo de configuración YAML. Si se proporciona, se usa en lugar de los parámetros individuales.
         """
         # Buscar variables con prefijo GOOGLE_ADS_ primero, luego con prefijo GOOGLE_
-        self.client_id = client_id or os.getenv('GOOGLE_ADS_CLIENT_ID') or os.getenv('GOOGLE_CLIENT_ID')
-        self.client_secret = client_secret or os.getenv('GOOGLE_ADS_CLIENT_SECRET') or os.getenv('GOOGLE_CLIENT_SECRET')
-        self.developer_token = developer_token or os.getenv('GOOGLE_ADS_DEVELOPER_TOKEN') or os.getenv('GOOGLE_DEVELOPER_TOKEN')
-        self.refresh_token = refresh_token or os.getenv('GOOGLE_ADS_REFRESH_TOKEN') or os.getenv('GOOGLE_REFRESH_TOKEN')
-        self.login_customer_id = login_customer_id or os.getenv('GOOGLE_ADS_LOGIN_CUSTOMER_ID') or os.getenv('GOOGLE_LOGIN_CUSTOMER_ID')
+        self.client_id = (
+            client_id or os.getenv("GOOGLE_ADS_CLIENT_ID") or os.getenv("GOOGLE_CLIENT_ID")
+        )
+        self.client_secret = (
+            client_secret
+            or os.getenv("GOOGLE_ADS_CLIENT_SECRET")
+            or os.getenv("GOOGLE_CLIENT_SECRET")
+        )
+        self.developer_token = (
+            developer_token
+            or os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN")
+            or os.getenv("GOOGLE_DEVELOPER_TOKEN")
+        )
+        self.refresh_token = (
+            refresh_token
+            or os.getenv("GOOGLE_ADS_REFRESH_TOKEN")
+            or os.getenv("GOOGLE_REFRESH_TOKEN")
+        )
+        self.login_customer_id = (
+            login_customer_id
+            or os.getenv("GOOGLE_ADS_LOGIN_CUSTOMER_ID")
+            or os.getenv("GOOGLE_LOGIN_CUSTOMER_ID")
+        )
 
         # Registrar las credenciales encontradas (sin mostrar valores sensibles)
-        logger.info(f"Credenciales de Google Ads encontradas: " +
-                   f"client_id={'✓' if self.client_id else '✗'}, " +
-                   f"client_secret={'✓' if self.client_secret else '✗'}, " +
-                   f"developer_token={'✓' if self.developer_token else '✗'}, " +
-                   f"refresh_token={'✓' if self.refresh_token else '✗'}, " +
-                   f"login_customer_id={'✓' if self.login_customer_id else '✗'}")
+        logger.info(
+            "Credenciales de Google Ads encontradas: "
+            + f"client_id={'✓' if self.client_id else '✗'}, "
+            + f"client_secret={'✓' if self.client_secret else '✗'}, "
+            + f"developer_token={'✓' if self.developer_token else '✗'}, "
+            + f"refresh_token={'✓' if self.refresh_token else '✗'}, "
+            + f"login_customer_id={'✓' if self.login_customer_id else '✗'}"
+        )
         self.config_path = config_path
         self.client = None
 
@@ -76,7 +97,9 @@ class GoogleAdsApiClient:
             La instancia del cliente inicializada, o None si falla la inicialización.
         """
         if not GOOGLE_ADS_SDK_AVAILABLE:
-            logger.error("El SDK de Google Ads no está disponible. Instálalo con 'pip install google-ads'.")
+            logger.error(
+                "El SDK de Google Ads no está disponible. Instálalo con 'pip install google-ads'."
+            )
             return None
 
         try:
@@ -87,8 +110,12 @@ class GoogleAdsApiClient:
                 return self.client
 
             # De lo contrario, usar las credenciales proporcionadas
-            if not all([self.client_id, self.client_secret, self.developer_token, self.refresh_token]):
-                logger.error("Se requieren client_id, client_secret, developer_token y refresh_token para inicializar la API de Google Ads.")
+            if not all(
+                [self.client_id, self.client_secret, self.developer_token, self.refresh_token]
+            ):
+                logger.error(
+                    "Se requieren client_id, client_secret, developer_token y refresh_token para inicializar la API de Google Ads."
+                )
                 return None
 
             # Crear configuración
@@ -97,7 +124,7 @@ class GoogleAdsApiClient:
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
                 "refresh_token": self.refresh_token,
-                "use_proto_plus": True  # Recomendado para mejor rendimiento
+                "use_proto_plus": True,  # Recomendado para mejor rendimiento
             }
 
             # Añadir login_customer_id si está disponible
@@ -138,9 +165,9 @@ class GoogleAdsApiClient:
         client = self.get_client()
         if not client:
             return {
-                'success': False,
-                'message': "No se pudo inicializar el cliente de Google Ads",
-                'data': None
+                "success": False,
+                "message": "No se pudo inicializar el cliente de Google Ads",
+                "data": None,
             }
 
         try:
@@ -164,32 +191,28 @@ class GoogleAdsApiClient:
             for row in response:
                 customer = row.customer
                 return {
-                    'success': True,
-                    'message': f"Conexión exitosa a la cuenta: {customer.descriptive_name}",
-                    'data': {
-                        'customer_id': customer.id,
-                        'descriptive_name': customer.descriptive_name,
-                        'currency_code': customer.currency_code
-                    }
+                    "success": True,
+                    "message": f"Conexión exitosa a la cuenta: {customer.descriptive_name}",
+                    "data": {
+                        "customer_id": customer.id,
+                        "descriptive_name": customer.descriptive_name,
+                        "currency_code": customer.currency_code,
+                    },
                 }
 
             # Si no hay resultados
             return {
-                'success': True,
-                'message': "Conexión exitosa, pero no se encontraron datos de la cuenta",
-                'data': None
+                "success": True,
+                "message": "Conexión exitosa, pero no se encontraron datos de la cuenta",
+                "data": None,
             }
 
-        except GoogleAdsException as e:
+        except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
         except Exception as e:
             logger.error(f"Error inesperado al probar la conexión a Google Ads: {e}", e)
-            return {
-                'success': False,
-                'message': f"Error inesperado: {str(e)}",
-                'data': None
-            }
+            return {"success": False, "message": f"Error inesperado: {str(e)}", "data": None}
 
     def create_config_file(self, path: str) -> Tuple[bool, str]:
         """
@@ -202,7 +225,10 @@ class GoogleAdsApiClient:
             Una tupla con: (éxito, mensaje).
         """
         if not all([self.client_id, self.client_secret, self.developer_token, self.refresh_token]):
-            return False, "Se requieren client_id, client_secret, developer_token y refresh_token para crear el archivo de configuración."
+            return (
+                False,
+                "Se requieren client_id, client_secret, developer_token y refresh_token para crear el archivo de configuración.",
+            )
 
         try:
             # Crear configuración
@@ -211,7 +237,7 @@ class GoogleAdsApiClient:
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
                 "refresh_token": self.refresh_token,
-                "use_proto_plus": True
+                "use_proto_plus": True,
             }
 
             # Añadir login_customer_id si está disponible
@@ -219,7 +245,7 @@ class GoogleAdsApiClient:
                 config["login_customer_id"] = self.login_customer_id
 
             # Guardar configuración en archivo YAML
-            with open(path, 'w') as file:
+            with open(path, "w") as file:
                 yaml.dump(config, file)
 
             logger.info(f"Archivo de configuración de Google Ads creado en: {path}")
@@ -240,7 +266,7 @@ def get_client(
     developer_token: Optional[str] = None,
     refresh_token: Optional[str] = None,
     login_customer_id: Optional[str] = None,
-    config_path: Optional[str] = None
+    config_path: Optional[str] = None,
 ) -> GoogleAdsApiClient:
     """
     Obtiene una instancia del cliente de la API de Google Ads.
@@ -261,7 +287,9 @@ def get_client(
     """
     global _default_client
 
-    if any([client_id, client_secret, developer_token, refresh_token, login_customer_id, config_path]):
+    if any(
+        [client_id, client_secret, developer_token, refresh_token, login_customer_id, config_path]
+    ):
         return GoogleAdsApiClient(
             client_id, client_secret, developer_token, refresh_token, login_customer_id, config_path
         )

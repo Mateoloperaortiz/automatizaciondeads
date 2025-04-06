@@ -12,6 +12,7 @@ class ApplicationSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo Application.
     """
+
     class Meta:
         model = Application
         load_instance = True

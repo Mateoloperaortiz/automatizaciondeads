@@ -1,11 +1,7 @@
-from flask import request, current_app
-from flask_restx import Resource, reqparse, fields, marshal_with, marshal, abort, Api, Namespace
-from .extensions import db
-from .models import JobOpening, Candidate, Application
-from datetime import date
+from flask_restx import abort
 import datetime
-from werkzeug.exceptions import NotFound, BadRequest
-from sqlalchemy import func, select, alias, text, column # Importar column
+from sqlalchemy import func, select, alias, text, column  # Importar column
+
 
 # Función auxiliar para manejar posibles errores de conversión de cadena de fecha
 def parse_date(date_str):

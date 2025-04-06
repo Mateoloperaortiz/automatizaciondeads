@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_restx import Api, Namespace
+from flask_restx import Api
 from flask_apscheduler import APScheduler
 from flask_marshmallow import Marshmallow
 from flask_wtf.csrf import CSRFProtect
@@ -18,8 +18,8 @@ celery = Celery()
 
 # Define API object globally
 api = Api(
-    version='1.0',
-    title='AdFlux Recruitment API',
-    description='API para gestionar ofertas de trabajo y candidatos',
-    validate=True
+    version="1.0",
+    title="AdFlux Recruitment API",
+    description="API para gestionar ofertas de trabajo y candidatos",
+    validate=True,
 )

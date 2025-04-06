@@ -5,12 +5,10 @@ Este módulo contiene tareas relacionadas con la gestión de campañas publicita
 que son comunes a todas las plataformas.
 """
 
-import time
 from flask import current_app
-from sqlalchemy.exc import SQLAlchemyError
 import logging
 
-from ..extensions import db, celery
+from ..extensions import celery
 from ..models import Campaign
 from .meta_tasks import async_publish_adflux_campaign_to_meta
 from .google_tasks import async_publish_adflux_campaign_to_google
@@ -19,7 +17,7 @@ from .google_tasks import async_publish_adflux_campaign_to_google
 log = logging.getLogger(__name__)
 
 
-@celery.task(bind=True, name='tasks.async_publish_adflux_campaign')
+@celery.task(bind=True, name="tasks.async_publish_adflux_campaign")
 def async_publish_adflux_campaign(self, campaign_id: int, simulate: bool = False):
     """
     Tarea Celery para publicar asíncronamente una campaña de AdFlux en la plataforma correspondiente.
@@ -34,14 +32,11 @@ def async_publish_adflux_campaign(self, campaign_id: int, simulate: bool = False
     """
     app = current_app._get_current_object()
     logger = app.logger or log
-    logger.info(f"[Tarea {self.request.id}] Iniciando proceso de publicación para Campaña AdFlux ID: {campaign_id} (Simular: {simulate})")
+    logger.info(
+        f"[Tarea {self.request.id}] Iniciando proceso de publicación para Campaña AdFlux ID: {campaign_id} (Simular: {simulate})"
+    )
 
-    results = {
-        "message": "",
-        "success": False,
-        "platform": None,
-        "task_id": None
-    }
+    results = {"message": "", "success": False, "platform": None, "task_id": None}
 
     try:
         # 1. Obtener Campaña AdFlux
@@ -63,14 +58,18 @@ def async_publish_adflux_campaign(self, campaign_id: int, simulate: bool = False
         results["platform"] = platform
 
         # 3. Llamar a la tarea específica de la plataforma
-        if platform == 'meta' or platform == 'facebook':
-            logger.info(f"[Tarea {self.request.id}] Delegando a tarea de publicación de Meta para campaña {campaign_id}")
+        if platform == "meta" or platform == "facebook":
+            logger.info(
+                f"[Tarea {self.request.id}] Delegando a tarea de publicación de Meta para campaña {campaign_id}"
+            )
             task = async_publish_adflux_campaign_to_meta.delay(campaign_id, simulate)
             results["task_id"] = task.id
             results["success"] = True
             results["message"] = f"Tarea de publicación en Meta iniciada con ID: {task.id}"
-        elif platform == 'google':
-            logger.info(f"[Tarea {self.request.id}] Delegando a tarea de publicación de Google para campaña {campaign_id}")
+        elif platform == "google":
+            logger.info(
+                f"[Tarea {self.request.id}] Delegando a tarea de publicación de Google para campaña {campaign_id}"
+            )
             task = async_publish_adflux_campaign_to_google.delay(campaign_id, simulate)
             results["task_id"] = task.id
             results["success"] = True

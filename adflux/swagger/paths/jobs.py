@@ -14,14 +14,9 @@ JOB_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/JobOpening"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/JobOpening"}},
                 }
-            }
+            },
         },
         "post": {
             "summary": "Create a new job opening",
@@ -33,23 +28,17 @@ JOB_PATHS = {
                     "name": "body",
                     "description": "Job opening object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/JobOpening"
-                    }
+                    "schema": {"$ref": "#/definitions/JobOpening"},
                 }
             ],
             "responses": {
                 "201": {
                     "description": "Job opening created",
-                    "schema": {
-                        "$ref": "#/definitions/JobOpening"
-                    }
+                    "schema": {"$ref": "#/definitions/JobOpening"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                }
-            }
-        }
+                "400": {"description": "Invalid input"},
+            },
+        },
     },
     "/jobs/{job_id}": {
         "get": {
@@ -62,20 +51,16 @@ JOB_PATHS = {
                     "in": "path",
                     "description": "ID of job opening to return",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/JobOpening"
-                    }
+                    "schema": {"$ref": "#/definitions/JobOpening"},
                 },
-                "404": {
-                    "description": "Job opening not found"
-                }
-            }
+                "404": {"description": "Job opening not found"},
+            },
         },
         "put": {
             "summary": "Update job opening",
@@ -87,32 +72,24 @@ JOB_PATHS = {
                     "in": "path",
                     "description": "ID of job opening to update",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 },
                 {
                     "in": "body",
                     "name": "body",
                     "description": "Job opening object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/JobOpening"
-                    }
-                }
+                    "schema": {"$ref": "#/definitions/JobOpening"},
+                },
             ],
             "responses": {
                 "200": {
                     "description": "Job opening updated",
-                    "schema": {
-                        "$ref": "#/definitions/JobOpening"
-                    }
+                    "schema": {"$ref": "#/definitions/JobOpening"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                },
-                "404": {
-                    "description": "Job opening not found"
-                }
-            }
+                "400": {"description": "Invalid input"},
+                "404": {"description": "Job opening not found"},
+            },
         },
         "delete": {
             "summary": "Delete job opening",
@@ -124,17 +101,13 @@ JOB_PATHS = {
                     "in": "path",
                     "description": "ID of job opening to delete",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
-                "200": {
-                    "description": "Job opening deleted"
-                },
-                "404": {
-                    "description": "Job opening not found"
-                }
-            }
-        }
-    }
+                "200": {"description": "Job opening deleted"},
+                "404": {"description": "Job opening not found"},
+            },
+        },
+    },
 }

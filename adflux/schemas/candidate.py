@@ -12,6 +12,7 @@ class CandidateSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo Candidate.
     """
+
     class Meta:
         model = Candidate
         load_instance = True

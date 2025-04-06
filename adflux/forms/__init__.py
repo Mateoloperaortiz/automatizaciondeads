@@ -20,17 +20,14 @@ from .api_settings_forms import MetaApiSettingsForm, GoogleAdsSettingsForm, Gemi
 # Para mantener compatibilidad con el código existente
 __all__ = [
     # Funciones auxiliares
-    'get_job_openings',
-    'get_segment_choices',
-
+    "get_job_openings",
+    "get_segment_choices",
     # Formularios de campaña
-    'CampaignForm',
-
+    "CampaignForm",
     # Formularios de segmento
-    'SegmentForm',
-
+    "SegmentForm",
     # Formularios de configuración de API
-    'MetaApiSettingsForm',
-    'GoogleAdsSettingsForm',
-    'GeminiSettingsForm'
+    "MetaApiSettingsForm",
+    "GoogleAdsSettingsForm",
+    "GeminiSettingsForm",
 ]

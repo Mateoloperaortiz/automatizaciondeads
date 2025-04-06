@@ -12,6 +12,7 @@ class CampaignSchema(SQLAlchemyAutoSchema):
     """
     Esquema para el modelo Campaign.
     """
+
     class Meta:
         model = Campaign
         load_instance = True

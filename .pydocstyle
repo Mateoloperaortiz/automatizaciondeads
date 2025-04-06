@@ -1,0 +1,8 @@
+[pydocstyle]
+match = .*\.py
+match_dir = ^(?!(\.git|\.venv|migrations|tests)).*
+convention = google
+add-ignore = D107,D203,D212
+# D107: Missing docstring in __init__
+# D203: 1 blank line required before class docstring (conflicto con D211)
+# D212: Multi-line docstring summary should start at the first line (conflicto con D213)

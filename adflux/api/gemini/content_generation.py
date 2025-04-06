@@ -10,6 +10,7 @@ from typing import Tuple, Dict, Any, Optional, List
 # Intentar importar Google Generative AI SDK, pero no fallar si no está disponible
 try:
     import google.generativeai as genai
+
     GEMINI_SDK_AVAILABLE = True
 except ImportError:
     genai = None
@@ -37,7 +38,7 @@ class ContentGenerator:
             model_name: Nombre del modelo a utilizar. Si es None, se usa 'gemini-1.5-pro'.
         """
         self.client = client or get_client()
-        self.model_name = model_name or 'gemini-1.5-pro'
+        self.model_name = model_name or "gemini-1.5-pro"
 
     @handle_gemini_api_error
     def generate_ad_creative(
@@ -46,7 +47,7 @@ class ContentGenerator:
         job_description: str,
         target_audience: str = "general job seekers",
         temperature: float = 0.7,
-        max_output_tokens: int = 800
+        max_output_tokens: int = 800,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
         Genera texto creativo para anuncios de trabajo utilizando Gemini.
@@ -72,12 +73,12 @@ class ContentGenerator:
                     "temperature": temperature,
                     "max_output_tokens": max_output_tokens,
                     "top_p": 0.95,
-                    "top_k": 40
-                }
+                    "top_k": 40,
+                },
             )
 
             # Crear el prompt
-            prompt = f"""
+            prompt = """
             Eres un experto en marketing digital especializado en anuncios para ofertas de trabajo.
 
             Necesito crear contenido para un anuncio de trabajo con el siguiente título: "{job_title}".
@@ -108,7 +109,7 @@ class ContentGenerator:
             response = model.generate_content(prompt)
 
             # Procesar respuesta
-            if hasattr(response, 'text'):
+            if hasattr(response, "text"):
                 response_text = response.text
 
                 # Intentar extraer JSON de la respuesta
@@ -116,22 +117,27 @@ class ContentGenerator:
                 import re
 
                 # Buscar contenido JSON en la respuesta
-                json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
+                json_match = re.search(r"```json\s*(.*?)\s*```", response_text, re.DOTALL)
                 if json_match:
                     json_str = json_match.group(1)
                 else:
                     json_str = response_text
 
                 # Limpiar el string para asegurar que sea JSON válido
-                json_str = re.sub(r'```.*?```', '', json_str, flags=re.DOTALL)
+                json_str = re.sub(r"```.*?```", "", json_str, flags=re.DOTALL)
                 json_str = json_str.strip()
 
                 try:
                     creative_data = json.loads(json_str)
 
                     # Validar que tenga todas las claves necesarias
-                    required_keys = ['primary_headline', 'secondary_headline', 'primary_description',
-                                    'secondary_description', 'call_to_action']
+                    required_keys = [
+                        "primary_headline",
+                        "secondary_headline",
+                        "primary_description",
+                        "secondary_description",
+                        "call_to_action",
+                    ]
 
                     for key in required_keys:
                         if key not in creative_data:
@@ -142,15 +148,21 @@ class ContentGenerator:
 
                 except json.JSONDecodeError:
                     # Si no se puede decodificar como JSON, devolver el texto completo
-                    logger.warning(f"No se pudo decodificar la respuesta como JSON. Devolviendo texto completo.")
-                    return True, "Se generó contenido, pero no en formato JSON.", {
-                        "raw_text": response_text,
-                        "primary_headline": "",
-                        "secondary_headline": "",
-                        "primary_description": "",
-                        "secondary_description": "",
-                        "call_to_action": ""
-                    }
+                    logger.warning(
+                        "No se pudo decodificar la respuesta como JSON. Devolviendo texto completo."
+                    )
+                    return (
+                        True,
+                        "Se generó contenido, pero no en formato JSON.",
+                        {
+                            "raw_text": response_text,
+                            "primary_headline": "",
+                            "secondary_headline": "",
+                            "primary_description": "",
+                            "secondary_description": "",
+                            "call_to_action": "",
+                        },
+                    )
             else:
                 return False, "La respuesta no contiene texto.", {}
 
@@ -165,7 +177,7 @@ class ContentGenerator:
         skills: List[str],
         experience_years: int,
         company_description: str,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
         Genera una descripción de trabajo utilizando Gemini.
@@ -191,13 +203,13 @@ class ContentGenerator:
                     "temperature": temperature,
                     "max_output_tokens": 1000,
                     "top_p": 0.95,
-                    "top_k": 40
-                }
+                    "top_k": 40,
+                },
             )
 
             # Crear el prompt
             skills_text = ", ".join(skills)
-            prompt = f"""
+            prompt = """
             Eres un especialista en recursos humanos con experiencia en redacción de descripciones de trabajo.
 
             Necesito crear una descripción de trabajo para el puesto de "{job_title}".
@@ -224,7 +236,7 @@ class ContentGenerator:
             response = model.generate_content(prompt)
 
             # Procesar respuesta
-            if hasattr(response, 'text'):
+            if hasattr(response, "text"):
                 response_text = response.text
 
                 # Intentar extraer JSON de la respuesta
@@ -232,25 +244,25 @@ class ContentGenerator:
                 import re
 
                 # Buscar contenido JSON en la respuesta
-                json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
+                json_match = re.search(r"```json\s*(.*?)\s*```", response_text, re.DOTALL)
                 if json_match:
                     json_str = json_match.group(1)
                 else:
                     json_str = response_text
 
                 # Limpiar el string para asegurar que sea JSON válido
-                json_str = re.sub(r'```.*?```', '', json_str, flags=re.DOTALL)
+                json_str = re.sub(r"```.*?```", "", json_str, flags=re.DOTALL)
                 json_str = json_str.strip()
 
                 try:
                     job_data = json.loads(json_str)
 
                     # Validar que tenga todas las claves necesarias
-                    required_keys = ['summary', 'responsibilities', 'requirements', 'benefits']
+                    required_keys = ["summary", "responsibilities", "requirements", "benefits"]
 
                     for key in required_keys:
                         if key not in job_data:
-                            if key in ['responsibilities', 'requirements', 'benefits']:
+                            if key in ["responsibilities", "requirements", "benefits"]:
                                 job_data[key] = []
                             else:
                                 job_data[key] = ""
@@ -260,14 +272,20 @@ class ContentGenerator:
 
                 except json.JSONDecodeError:
                     # Si no se puede decodificar como JSON, devolver el texto completo
-                    logger.warning(f"No se pudo decodificar la respuesta como JSON. Devolviendo texto completo.")
-                    return True, "Se generó contenido, pero no en formato JSON.", {
-                        "raw_text": response_text,
-                        "summary": "",
-                        "responsibilities": [],
-                        "requirements": [],
-                        "benefits": []
-                    }
+                    logger.warning(
+                        "No se pudo decodificar la respuesta como JSON. Devolviendo texto completo."
+                    )
+                    return (
+                        True,
+                        "Se generó contenido, pero no en formato JSON.",
+                        {
+                            "raw_text": response_text,
+                            "summary": "",
+                            "responsibilities": [],
+                            "requirements": [],
+                            "benefits": [],
+                        },
+                    )
             else:
                 return False, "La respuesta no contiene texto.", {}
 
@@ -280,7 +298,9 @@ class ContentGenerator:
 _default_generator = None
 
 
-def get_content_generator(client: Optional[GeminiApiClient] = None, model_name: Optional[str] = None) -> ContentGenerator:
+def get_content_generator(
+    client: Optional[GeminiApiClient] = None, model_name: Optional[str] = None
+) -> ContentGenerator:
     """
     Obtiene una instancia del generador de contenido.
 

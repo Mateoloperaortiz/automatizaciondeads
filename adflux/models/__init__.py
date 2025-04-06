@@ -24,24 +24,20 @@ from .campaign import Campaign
 # Para mantener compatibilidad con el código existente
 __all__ = [
     # SQLAlchemy
-    'db',
-
+    "db",
     # Funciones de base de datos
-    'create_tables',
-    'init_db_connection',
-
+    "create_tables",
+    "init_db_connection",
     # Modelos principales
-    'Segment',
-    'JobOpening',
-    'Candidate',
-    'Application',
-
+    "Segment",
+    "JobOpening",
+    "Candidate",
+    "Application",
     # Modelos de Meta
-    'MetaCampaign',
-    'MetaAdSet',
-    'MetaAd',
-    'MetaInsight',
-
+    "MetaCampaign",
+    "MetaAdSet",
+    "MetaAd",
+    "MetaInsight",
     # Modelos de campaña
-    'Campaign'
+    "Campaign",
 ]

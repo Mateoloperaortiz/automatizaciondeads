@@ -10,37 +10,44 @@ from ..extensions import scheduler
 from ..core import run_meta_sync_for_all_accounts
 
 # Crear grupo de comandos
-scheduler_group = click.Group(name='scheduler', help='Comandos para gestionar trabajos programados.')
+scheduler_group = click.Group(
+    name="scheduler", help="Comandos para gestionar trabajos programados."
+)
 
 
-@scheduler_group.command('setup-jobs')
+@scheduler_group.command("setup-jobs")
 @with_appcontext
 def setup_jobs_command():
     """Registra los trabajos programados con APScheduler."""
     click.echo("Configurando trabajos programados...")
     try:
-        scheduler.add_job(id='sync_meta_all_accounts',
-                          func=run_meta_sync_for_all_accounts,
-                          trigger='cron',
-                          hour=3, # Ejecutar diariamente a las 3 AM
-                          minute=0,
-                          replace_existing=True)
+        scheduler.add_job(
+            id="sync_meta_all_accounts",
+            func=run_meta_sync_for_all_accounts,
+            trigger="cron",
+            hour=3,  # Ejecutar diariamente a las 3 AM
+            minute=0,
+            replace_existing=True,
+        )
 
         # Añadir trabajo programado para entrenamiento de ML
         from ..tasks import scheduled_train_and_predict
-        scheduler.add_job(id='train_and_predict_segments',
-                          func=scheduled_train_and_predict,
-                          trigger='cron',
-                          hour=2, # Ejecutar diariamente a las 2 AM
-                          minute=30,
-                          replace_existing=True)
+
+        scheduler.add_job(
+            id="train_and_predict_segments",
+            func=scheduled_train_and_predict,
+            trigger="cron",
+            hour=2,  # Ejecutar diariamente a las 2 AM
+            minute=30,
+            replace_existing=True,
+        )
 
         click.echo("Trabajos programados configurados exitosamente.")
     except Exception as e:
         click.echo(f"Error configurando trabajos programados: {e}", err=True)
 
 
-@scheduler_group.command('list-jobs')
+@scheduler_group.command("list-jobs")
 @with_appcontext
 def list_jobs_command():
     """Lista todos los trabajos programados."""
@@ -61,8 +68,8 @@ def list_jobs_command():
         click.echo(f"Error listando trabajos programados: {e}", err=True)
 
 
-@scheduler_group.command('remove-job')
-@click.argument('job_id')
+@scheduler_group.command("remove-job")
+@click.argument("job_id")
 @with_appcontext
 def remove_job_command(job_id):
     """Elimina un trabajo programado por su ID."""
@@ -74,8 +81,8 @@ def remove_job_command(job_id):
         click.echo(f"Error eliminando trabajo programado: {e}", err=True)
 
 
-@scheduler_group.command('run-job')
-@click.argument('job_id')
+@scheduler_group.command("run-job")
+@click.argument("job_id")
 @with_appcontext
 def run_job_command(job_id):
     """Ejecuta un trabajo programado inmediatamente."""

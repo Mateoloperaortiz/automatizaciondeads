@@ -40,3 +40,9 @@ celery
 redis
 gevent
 google-ads
+
+flake8
+black
+mypy
+pydocstyle
+pre-commit

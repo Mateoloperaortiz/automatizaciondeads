@@ -12,9 +12,9 @@ from .scheduler_utils import configure_scheduled_jobs, run_meta_sync_for_all_acc
 
 # Para mantener compatibilidad con el código existente
 __all__ = [
-    'create_app',
-    'make_celery',
-    'nl2br',
-    'configure_scheduled_jobs',
-    'run_meta_sync_for_all_accounts'
+    "create_app",
+    "make_celery",
+    "nl2br",
+    "configure_scheduled_jobs",
+    "run_meta_sync_for_all_accounts",
 ]

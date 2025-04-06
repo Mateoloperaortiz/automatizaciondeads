@@ -7,14 +7,15 @@ datos de trabajos, candidatos y aplicaciones.
 
 import json
 import logging
-from typing import Dict, Any, List
 
 from .job_data import generate_multiple_jobs
 from .candidate_data import generate_multiple_candidates
 from .application_data import generate_simulated_applications
 
 # Configurar logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -25,7 +26,7 @@ def run_simulation_example():
     NUM_JOBS_TO_GENERATE = 5
     NUM_CANDIDATES_TO_GENERATE = 20
     NUM_APPLICATIONS_TO_SIMULATE = 15
-    
+
     print("--- Generando Ofertas de Trabajo (Usando Gemini) ---")
     sample_jobs = generate_multiple_jobs(NUM_JOBS_TO_GENERATE)
     if sample_jobs:
@@ -33,7 +34,7 @@ def run_simulation_example():
         print(json.dumps(sample_jobs[0], indent=2))  # Mostrar solo el primero
     else:
         print("Fallo al generar trabajos de muestra.")
-    
+
     print("--- Generando Perfiles de Candidato (Usando Gemini) ---")
     sample_candidates = generate_multiple_candidates(NUM_CANDIDATES_TO_GENERATE)
     if sample_candidates:
@@ -41,10 +42,12 @@ def run_simulation_example():
         print(json.dumps(sample_candidates[0], indent=2))  # Mostrar solo el primero
     else:
         print("Fallo al generar candidatos de muestra.")
-    
+
     print("--- Simulando Aplicaciones de Trabajo ---")
     if sample_jobs and sample_candidates:
-        simulated_applications = generate_simulated_applications(sample_jobs, sample_candidates, NUM_APPLICATIONS_TO_SIMULATE)
+        simulated_applications = generate_simulated_applications(
+            sample_jobs, sample_candidates, NUM_APPLICATIONS_TO_SIMULATE
+        )
         if simulated_applications:
             print(f"Se simularon {len(simulated_applications)} aplicaciones.")
             print("Ejemplos de aplicaciones simuladas:")
@@ -56,5 +59,5 @@ def run_simulation_example():
         print("No se pueden simular aplicaciones porque faltan trabajos o candidatos.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_simulation_example()

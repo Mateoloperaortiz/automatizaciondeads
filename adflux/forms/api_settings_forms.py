@@ -12,108 +12,93 @@ from wtforms.validators import DataRequired, Optional, Length
 class MetaApiSettingsForm(FlaskForm):
     """
     Formulario para configurar la API de Meta.
-    
+
     Este formulario permite a los usuarios configurar los parámetros de conexión
     a la API de Meta (Facebook/Instagram).
     """
+
     app_id = StringField(
-        'ID de Aplicación', 
+        "ID de Aplicación",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "ID de aplicación de Meta"}
+        render_kw={"placeholder": "ID de aplicación de Meta"},
     )
     app_secret = PasswordField(
-        'Secreto de Aplicación', 
+        "Secreto de Aplicación",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "Secreto de aplicación de Meta"}
+        render_kw={"placeholder": "Secreto de aplicación de Meta"},
     )
     access_token = PasswordField(
-        'Token de Acceso', 
+        "Token de Acceso",
         validators=[DataRequired(), Length(min=5, max=500)],
-        render_kw={"placeholder": "Token de acceso de larga duración"}
+        render_kw={"placeholder": "Token de acceso de larga duración"},
     )
     ad_account_id = StringField(
-        'ID de Cuenta Publicitaria', 
+        "ID de Cuenta Publicitaria",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "ID de cuenta publicitaria (con o sin 'act_')"}
+        render_kw={"placeholder": "ID de cuenta publicitaria (con o sin 'act_')"},
     )
     page_id = StringField(
-        'ID de Página', 
+        "ID de Página",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "ID de página de Facebook"}
+        render_kw={"placeholder": "ID de página de Facebook"},
     )
-    test_connection = BooleanField(
-        'Probar Conexión', 
-        default=True,
-        validators=[Optional()]
-    )
-    submit = SubmitField('Guardar Configuración de Meta')
+    test_connection = BooleanField("Probar Conexión", default=True, validators=[Optional()])
+    submit = SubmitField("Guardar Configuración de Meta")
 
 
 class GoogleAdsSettingsForm(FlaskForm):
     """
     Formulario para configurar la API de Google Ads.
-    
+
     Este formulario permite a los usuarios configurar los parámetros de conexión
     a la API de Google Ads.
     """
+
     client_id = StringField(
-        'ID de Cliente', 
+        "ID de Cliente",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "ID de cliente de OAuth"}
+        render_kw={"placeholder": "ID de cliente de OAuth"},
     )
     client_secret = PasswordField(
-        'Secreto de Cliente', 
+        "Secreto de Cliente",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "Secreto de cliente de OAuth"}
+        render_kw={"placeholder": "Secreto de cliente de OAuth"},
     )
     developer_token = PasswordField(
-        'Token de Desarrollador', 
+        "Token de Desarrollador",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "Token de desarrollador de Google Ads"}
+        render_kw={"placeholder": "Token de desarrollador de Google Ads"},
     )
     refresh_token = PasswordField(
-        'Token de Actualización', 
+        "Token de Actualización",
         validators=[DataRequired(), Length(min=5, max=500)],
-        render_kw={"placeholder": "Token de actualización de OAuth"}
+        render_kw={"placeholder": "Token de actualización de OAuth"},
     )
     customer_id = StringField(
-        'ID de Cliente de Google Ads', 
+        "ID de Cliente de Google Ads",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "ID de cliente de Google Ads (sin guiones)"}
+        render_kw={"placeholder": "ID de cliente de Google Ads (sin guiones)"},
     )
-    test_connection = BooleanField(
-        'Probar Conexión', 
-        default=True,
-        validators=[Optional()]
-    )
+    test_connection = BooleanField("Probar Conexión", default=True, validators=[Optional()])
     generate_config = BooleanField(
-        'Generar Archivo de Configuración', 
-        default=False,
-        validators=[Optional()]
+        "Generar Archivo de Configuración", default=False, validators=[Optional()]
     )
-    submit = SubmitField('Guardar Configuración de Google Ads')
+    submit = SubmitField("Guardar Configuración de Google Ads")
 
 
 class GeminiSettingsForm(FlaskForm):
     """
     Formulario para configurar la API de Gemini.
-    
+
     Este formulario permite a los usuarios configurar los parámetros de conexión
     a la API de Gemini de Google.
     """
+
     api_key = PasswordField(
-        'Clave API', 
+        "Clave API",
         validators=[DataRequired(), Length(min=5, max=100)],
-        render_kw={"placeholder": "Clave API de Gemini"}
+        render_kw={"placeholder": "Clave API de Gemini"},
     )
-    test_connection = BooleanField(
-        'Probar Conexión', 
-        default=True,
-        validators=[Optional()]
-    )
-    list_models = BooleanField(
-        'Listar Modelos Disponibles', 
-        default=False,
-        validators=[Optional()]
-    )
-    submit = SubmitField('Guardar Configuración de Gemini')
+    test_connection = BooleanField("Probar Conexión", default=True, validators=[Optional()])
+    list_models = BooleanField("Listar Modelos Disponibles", default=False, validators=[Optional()])
+    submit = SubmitField("Guardar Configuración de Gemini")

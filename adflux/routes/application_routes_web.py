@@ -8,10 +8,10 @@ from flask import Blueprint, render_template, flash
 from ..models import Application, JobOpening, Candidate
 
 # Definir el blueprint
-application_bp = Blueprint('application', __name__, template_folder='../templates')
+application_bp = Blueprint("application", __name__, template_folder="../templates")
 
 
-@application_bp.route('/')
+@application_bp.route("/")
 def list_applications():
     """Renderiza la página de lista de aplicaciones."""
     try:
@@ -25,9 +25,9 @@ def list_applications():
             if app.candidate_id:
                 app.candidate = Candidate.query.filter_by(candidate_id=app.candidate_id).first()
     except Exception as e:
-        flash(f"Error al obtener aplicaciones: {e}", 'error')
-        applications = [] # Asegurar que applications sea siempre una lista
+        flash(f"Error al obtener aplicaciones: {e}", "error")
+        applications = []  # Asegurar que applications sea siempre una lista
 
-    return render_template('applications_list.html',
-                           title="Aplicaciones",
-                           applications=applications)
+    return render_template(
+        "applications_list.html", title="Aplicaciones", applications=applications
+    )

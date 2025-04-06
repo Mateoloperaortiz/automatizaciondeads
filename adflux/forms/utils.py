@@ -6,7 +6,7 @@ Este módulo contiene funciones auxiliares utilizadas por los formularios de AdF
 
 from sqlalchemy import distinct
 from ..models import db, JobOpening, Candidate, Segment
-from ..constants import SEGMENT_MAP, DEFAULT_SEGMENT_NAME
+from ..constants import SEGMENT_MAP
 
 
 def get_job_openings():
@@ -17,7 +17,7 @@ def get_job_openings():
         Lista de objetos JobOpening ordenados por ID.
     """
     # Consultar trabajos abiertos, ordenados por ID. Quizás quieras ajustar el filtrado/orden.
-    return JobOpening.query.filter_by(status='open').order_by(JobOpening.job_id).all()
+    return JobOpening.query.filter_by(status="open").order_by(JobOpening.job_id).all()
 
 
 def get_segment_choices():
@@ -32,9 +32,12 @@ def get_segment_choices():
         segments = Segment.query.order_by(Segment.name).all()
 
         # Consultar IDs de segmentos distintos y no nulos de la tabla Candidate
-        segment_ids_in_use = db.session.query(distinct(Candidate.segment_id))\
-                          .filter(Candidate.segment_id.isnot(None))\
-                          .order_by(Candidate.segment_id).all()
+        segment_ids_in_use = (
+            db.session.query(distinct(Candidate.segment_id))
+            .filter(Candidate.segment_id.isnot(None))
+            .order_by(Candidate.segment_id)
+            .all()
+        )
         segment_ids_in_use = [s[0] for s in segment_ids_in_use]
 
         # Si hay segmentos en la tabla Segment, usarlos
@@ -55,4 +58,4 @@ def get_segment_choices():
     except Exception as e:
         # Registrar error o manejar apropiadamente
         print(f"Error al obtener las opciones de segmento: {e}")
-        return [] # Devolver lista vacía en caso de error
+        return []  # Devolver lista vacía en caso de error

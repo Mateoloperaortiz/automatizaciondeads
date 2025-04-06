@@ -19,6 +19,7 @@ except ImportError:
 try:
     from facebook_business.api import FacebookAdsApi
     from facebook_business.exceptions import FacebookRequestError
+
     FACEBOOK_SDK_AVAILABLE = True
 except ImportError:
     FacebookAdsApi = None
@@ -49,9 +50,9 @@ class MetaApiClient:
             app_secret: Secreto de la aplicación de Meta. Si es None, se usa META_APP_SECRET del entorno.
             access_token: Token de acceso de Meta. Si es None, se usa META_ACCESS_TOKEN del entorno.
         """
-        self.app_id = app_id or os.getenv('META_APP_ID')
-        self.app_secret = app_secret or os.getenv('META_APP_SECRET')
-        self.access_token = access_token or os.getenv('META_ACCESS_TOKEN')
+        self.app_id = app_id or os.getenv("META_APP_ID")
+        self.app_secret = app_secret or os.getenv("META_APP_SECRET")
+        self.access_token = access_token or os.getenv("META_ACCESS_TOKEN")
         self.api = None
 
     def initialize(self) -> Optional[FacebookAdsApi]:
@@ -62,7 +63,9 @@ class MetaApiClient:
             La instancia de la API inicializada, o None si falla la inicialización.
         """
         if not all([self.app_id, self.app_secret, self.access_token]):
-            logger.error("META_APP_ID, META_APP_SECRET y META_ACCESS_TOKEN deben estar configurados.")
+            logger.error(
+                "META_APP_ID, META_APP_SECRET y META_ACCESS_TOKEN deben estar configurados."
+            )
             return None
 
         try:
@@ -108,7 +111,11 @@ class MetaApiClient:
         account.api_get(fields=[AdAccount.Field.name])
 
         account_name = account.get(AdAccount.Field.name, "Nombre Desconocido")
-        return True, f"¡Conexión exitosa! Nombre de la Cuenta: {account_name}", {"account_name": account_name}
+        return (
+            True,
+            f"¡Conexión exitosa! Nombre de la Cuenta: {account_name}",
+            {"account_name": account_name},
+        )
 
     @handle_meta_api_error
     def get_ad_accounts(self) -> Tuple[bool, str, list]:
@@ -124,15 +131,11 @@ class MetaApiClient:
 
         from facebook_business.adobjects.user import User
 
-        user = User(fbid='me')
-        ad_accounts = user.get_ad_accounts(fields=['id', 'name', 'account_status'])
+        user = User(fbid="me")
+        ad_accounts = user.get_ad_accounts(fields=["id", "name", "account_status"])
 
         accounts_list = [
-            {
-                'id': account['id'],
-                'name': account['name'],
-                'status': account['account_status']
-            }
+            {"id": account["id"], "name": account["name"], "status": account["account_status"]}
             for account in ad_accounts
         ]
 

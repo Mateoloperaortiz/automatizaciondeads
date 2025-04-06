@@ -10,6 +10,7 @@ from typing import Tuple, List, Dict, Any, Optional
 # Intentar importar Facebook Business SDK, pero no fallar si no está disponible
 try:
     from facebook_business.exceptions import FacebookRequestError
+
     FACEBOOK_SDK_AVAILABLE = True
 except ImportError:
     FacebookRequestError = Exception
@@ -78,24 +79,26 @@ class CampaignManager:
             campaigns_list = []
             for campaign in campaigns:
                 campaign_data = {
-                    'id': campaign.get(Campaign.Field.id),
-                    'name': campaign.get(Campaign.Field.name),
-                    'status': campaign.get(Campaign.Field.status),
-                    'objective': campaign.get(Campaign.Field.objective),
-                    'effective_status': campaign.get(Campaign.Field.effective_status),
-                    'created_time': campaign.get(Campaign.Field.created_time),
-                    'start_time': campaign.get(Campaign.Field.start_time),
-                    'stop_time': campaign.get(Campaign.Field.stop_time),
-                    'daily_budget': campaign.get(Campaign.Field.daily_budget),
-                    'lifetime_budget': campaign.get(Campaign.Field.lifetime_budget),
-                    'budget_remaining': campaign.get(Campaign.Field.budget_remaining),
+                    "id": campaign.get(Campaign.Field.id),
+                    "name": campaign.get(Campaign.Field.name),
+                    "status": campaign.get(Campaign.Field.status),
+                    "objective": campaign.get(Campaign.Field.objective),
+                    "effective_status": campaign.get(Campaign.Field.effective_status),
+                    "created_time": campaign.get(Campaign.Field.created_time),
+                    "start_time": campaign.get(Campaign.Field.start_time),
+                    "stop_time": campaign.get(Campaign.Field.stop_time),
+                    "daily_budget": campaign.get(Campaign.Field.daily_budget),
+                    "lifetime_budget": campaign.get(Campaign.Field.lifetime_budget),
+                    "budget_remaining": campaign.get(Campaign.Field.budget_remaining),
                 }
                 campaigns_list.append(campaign_data)
 
-            logger.info(f"Se recuperaron {len(campaigns_list)} campañas para la cuenta {ad_account_id}.")
+            logger.info(
+                f"Se recuperaron {len(campaigns_list)} campañas para la cuenta {ad_account_id}."
+            )
             return True, f"Se recuperaron {len(campaigns_list)} campañas.", campaigns_list
 
-        except FacebookRequestError as e:
+        except FacebookRequestError:
             # Este error ya será manejado por el decorador handle_meta_api_error
             raise
         except ImportError as e:
@@ -108,8 +111,8 @@ class CampaignManager:
         ad_account_id: str,
         name: str,
         objective: str,
-        status: str = 'PAUSED',
-        special_ad_categories: List[str] = None
+        status: str = "PAUSED",
+        special_ad_categories: List[str] = None,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
         Crea una nueva campaña en la cuenta publicitaria especificada.
@@ -151,14 +154,13 @@ class CampaignManager:
 
             logger.info(f"Se creó correctamente la campaña '{name}' con ID: {campaign_id}")
 
-            return True, f"Se creó correctamente la campaña '{name}'", {
-                'id': campaign_id,
-                'name': name,
-                'objective': objective,
-                'status': status
-            }
+            return (
+                True,
+                f"Se creó correctamente la campaña '{name}'",
+                {"id": campaign_id, "name": name, "objective": objective, "status": status},
+            )
 
-        except FacebookRequestError as e:
+        except FacebookRequestError:
             # Este error ya será manejado por el decorador handle_meta_api_error
             raise
         except ImportError as e:

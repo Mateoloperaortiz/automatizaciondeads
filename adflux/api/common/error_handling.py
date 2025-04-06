@@ -16,6 +16,7 @@ except ImportError:
 
 # Importaciones específicas para cada API
 from facebook_business.exceptions import FacebookRequestError
+
 # Estas importaciones se habilitarán cuando se implementen los módulos correspondientes
 # from google.ads.googleads.errors import GoogleAdsException
 
@@ -30,6 +31,7 @@ def handle_meta_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Meta.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> Tuple[bool, str, Any]:
         try:
@@ -55,6 +57,7 @@ def handle_meta_api_error(func: Callable) -> Callable:
             else:
                 print(mensaje_error)
             return False, f"Error inesperado: {e}", None
+
     return wrapper
 
 
@@ -68,6 +71,7 @@ def handle_google_ads_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Google Ads.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> Dict[str, Any]:
         try:
@@ -79,10 +83,11 @@ def handle_google_ads_api_error(func: Callable) -> Callable:
             else:
                 print(mensaje_error)
             return {
-                'success': False,
-                'message': f"Error de API Google Ads: {str(e)}",
-                'external_ids': None
+                "success": False,
+                "message": f"Error de API Google Ads: {str(e)}",
+                "external_ids": None,
             }
+
     return wrapper
 
 
@@ -96,6 +101,7 @@ def handle_gemini_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Google Gemini.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> Tuple[bool, str, Dict[str, Any]]:
         try:
@@ -107,4 +113,5 @@ def handle_gemini_api_error(func: Callable) -> Callable:
             else:
                 print(mensaje_error)
             return False, f"Error de API Gemini: {str(e)}", {}
+
     return wrapper

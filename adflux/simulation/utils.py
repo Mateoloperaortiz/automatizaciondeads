@@ -12,7 +12,7 @@ import logging
 import time
 import re
 import google.generativeai as genai
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional
 
 # Configurar logging
 log = logging.getLogger(__name__)
@@ -36,10 +36,12 @@ def setup_gemini_client(api_key: Optional[str] = None) -> bool:
     """
     # Intentar obtener la clave API de la variable de entorno si no se proporciona
     if not api_key:
-        api_key = os.environ.get('GEMINI_API_KEY')
+        api_key = os.environ.get("GEMINI_API_KEY")
 
     if not api_key:
-        log.error("No se proporcionó clave API para Gemini y no se encontró en variables de entorno.")
+        log.error(
+            "No se proporcionó clave API para Gemini y no se encontró en variables de entorno."
+        )
         return False
 
     try:
@@ -60,7 +62,7 @@ def generate_with_gemini(
     top_p: float = DEFAULT_TOP_P,
     response_format: str = "json",
     max_retries: int = 3,
-    retry_delay: float = 2.0
+    retry_delay: float = 2.0,
 ) -> Optional[Dict[str, Any]]:
     """
     Genera datos utilizando la API de Gemini con reintentos automáticos.
@@ -93,11 +95,13 @@ def generate_with_gemini(
             }
 
             # Si queremos JSON, configurar el modelo para responder en formato JSON
-            if response_format.lower() == 'json':
+            if response_format.lower() == "json":
                 generation_config["response_mime_type"] = "application/json"
 
             # Crear el modelo generativo
-            model_instance = genai.GenerativeModel(model_name=model, generation_config=generation_config)
+            model_instance = genai.GenerativeModel(
+                model_name=model, generation_config=generation_config
+            )
 
             # Generar respuesta
             response = model_instance.generate_content(prompt)
@@ -107,50 +111,50 @@ def generate_with_gemini(
                 raise ValueError("Respuesta nula de Gemini.")
 
             # Manejar el caso donde response.candidates está vacío
-            if not hasattr(response, 'candidates') or not response.candidates:
+            if not hasattr(response, "candidates") or not response.candidates:
                 raise ValueError("response.candidates está vacío.")
 
             # Acceder al texto de manera segura
             response_text = ""
             try:
                 # Intentar usar el acceso rápido .text
-                if hasattr(response, 'text'):
+                if hasattr(response, "text"):
                     response_text = response.text
                 # Si no funciona, intentar acceder directamente a candidates y parts
-                elif response.candidates and hasattr(response.candidates[0], 'content'):
+                elif response.candidates and hasattr(response.candidates[0], "content"):
                     content = response.candidates[0].content
-                    if hasattr(content, 'parts') and content.parts:
+                    if hasattr(content, "parts") and content.parts:
                         for part in content.parts:
-                            if hasattr(part, 'text'):
+                            if hasattr(part, "text"):
                                 response_text += part.text
-                            elif isinstance(part, dict) and 'text' in part:
-                                response_text += part['text']
+                            elif isinstance(part, dict) and "text" in part:
+                                response_text += part["text"]
                 if not response_text:
                     raise ValueError("No se pudo extraer texto de la respuesta.")
             except Exception as e:
                 raise ValueError(f"Error al extraer texto de la respuesta: {e}")
 
             # Procesar respuesta según el formato solicitado
-            if response_format.lower() == 'json':
+            if response_format.lower() == "json":
                 try:
                     # Intentar parsear como JSON
                     json_text = response_text.strip()
 
                     # Eliminar comillas de código si están presentes
-                    if json_text.startswith('```json'):
-                        json_text = json_text.replace('```json', '', 1)
-                    elif json_text.startswith('```'):
-                        json_text = json_text.replace('```', '', 1)
-                    if json_text.endswith('```'):
-                        json_text = json_text.replace('```', '', 1)
+                    if json_text.startswith("```json"):
+                        json_text = json_text.replace("```json", "", 1)
+                    elif json_text.startswith("```"):
+                        json_text = json_text.replace("```", "", 1)
+                    if json_text.endswith("```"):
+                        json_text = json_text.replace("```", "", 1)
 
                     # Eliminar cualquier texto antes o después del JSON
                     # Buscar el primer '{' y el último '}'
-                    start_idx = json_text.find('{')
-                    end_idx = json_text.rfind('}')
+                    start_idx = json_text.find("{")
+                    end_idx = json_text.rfind("}")
 
                     if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                        json_text = json_text[start_idx:end_idx+1]
+                        json_text = json_text[start_idx : end_idx + 1]
 
                     json_text = json_text.strip()
 
@@ -159,7 +163,9 @@ def generate_with_gemini(
                         return json.loads(json_text)
                     except json.JSONDecodeError as e1:
                         # Si falla, intentar reparar problemas comunes de formato
-                        log.warning(f"Primer intento de parseo JSON falló: {e1}. Intentando reparar...")
+                        log.warning(
+                            f"Primer intento de parseo JSON falló: {e1}. Intentando reparar..."
+                        )
 
                         # Reemplazar comillas simples por comillas dobles en claves y valores
                         # Reemplazar comillas simples en claves
@@ -168,15 +174,17 @@ def generate_with_gemini(
                         json_text = re.sub(r":\s*'([^']*)'([,}])", r':"\1"\2', json_text)
 
                         # Asegurar que los valores booleanos estén en minúsculas
-                        json_text = json_text.replace('True', 'true').replace('False', 'false')
+                        json_text = json_text.replace("True", "true").replace("False", "false")
 
                         # Asegurar que null esté en minúsculas
-                        json_text = json_text.replace('None', 'null').replace('NULL', 'null')
+                        json_text = json_text.replace("None", "null").replace("NULL", "null")
 
                         # Intentar cargar el JSON reparado
                         return json.loads(json_text)
                 except json.JSONDecodeError as e:
-                    log.warning(f"Intento {retries+1}/{max_retries+1}: Error al decodificar JSON: {e}")
+                    log.warning(
+                        f"Intento {retries+1}/{max_retries+1}: Error al decodificar JSON: {e}"
+                    )
                     log.debug(f"Texto recibido: {response_text}")
                     last_error = e
             else:

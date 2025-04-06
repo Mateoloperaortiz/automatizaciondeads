@@ -30,27 +30,27 @@ DEFAULT_SEGMENT_COLOR = "bg-gray-100 text-gray-800"
 
 # Estados de campaña estandarizados
 CAMPAIGN_STATUS = {
-    'DRAFT': 'Draft',
-    'PENDING': 'Pending',
-    'ACTIVE': 'Active',
-    'PAUSED': 'Paused',
-    'PUBLISHED': 'Active',  # Mapear 'PUBLISHED' a 'Active' para consistencia
-    'COMPLETED': 'Completed',
-    'ARCHIVED': 'Archived',
-    'REJECTED': 'Rejected',
-    'DELETED': 'Deleted',
-    'FAILED': 'Failed'
+    "DRAFT": "Draft",
+    "PENDING": "Pending",
+    "ACTIVE": "Active",
+    "PAUSED": "Paused",
+    "PUBLISHED": "Active",  # Mapear 'PUBLISHED' a 'Active' para consistencia
+    "COMPLETED": "Completed",
+    "ARCHIVED": "Archived",
+    "REJECTED": "Rejected",
+    "DELETED": "Deleted",
+    "FAILED": "Failed",
 }
 
 # Colores para los estados de campaña
 CAMPAIGN_STATUS_COLORS = {
-    'Draft': 'bg-gray-100 text-gray-800',
-    'Pending': 'bg-yellow-100 text-yellow-800',
-    'Active': 'bg-green-100 text-green-800',
-    'Paused': 'bg-blue-100 text-blue-800',
-    'Completed': 'bg-purple-100 text-purple-800',
-    'Archived': 'bg-gray-100 text-gray-800',
-    'Rejected': 'bg-red-100 text-red-800',
-    'Deleted': 'bg-red-100 text-red-800',
-    'Failed': 'bg-red-100 text-red-800'
+    "Draft": "bg-gray-100 text-gray-800",
+    "Pending": "bg-yellow-100 text-yellow-800",
+    "Active": "bg-green-100 text-green-800",
+    "Paused": "bg-blue-100 text-blue-800",
+    "Completed": "bg-purple-100 text-purple-800",
+    "Archived": "bg-gray-100 text-gray-800",
+    "Rejected": "bg-red-100 text-red-800",
+    "Deleted": "bg-red-100 text-red-800",
+    "Failed": "bg-red-100 text-red-800",
 }

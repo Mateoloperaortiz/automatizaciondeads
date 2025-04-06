@@ -14,14 +14,9 @@ APPLICATION_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/Application"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/Application"}},
                 }
-            }
+            },
         },
         "post": {
             "summary": "Create a new application",
@@ -33,23 +28,17 @@ APPLICATION_PATHS = {
                     "name": "body",
                     "description": "Application object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/Application"
-                    }
+                    "schema": {"$ref": "#/definitions/Application"},
                 }
             ],
             "responses": {
                 "201": {
                     "description": "Application created",
-                    "schema": {
-                        "$ref": "#/definitions/Application"
-                    }
+                    "schema": {"$ref": "#/definitions/Application"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                }
-            }
-        }
+                "400": {"description": "Invalid input"},
+            },
+        },
     },
     "/applications/{application_id}": {
         "get": {
@@ -62,20 +51,16 @@ APPLICATION_PATHS = {
                     "in": "path",
                     "description": "ID of application to return",
                     "required": True,
-                    "type": "integer"
+                    "type": "integer",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/Application"
-                    }
+                    "schema": {"$ref": "#/definitions/Application"},
                 },
-                "404": {
-                    "description": "Application not found"
-                }
-            }
+                "404": {"description": "Application not found"},
+            },
         },
         "put": {
             "summary": "Update application",
@@ -87,32 +72,24 @@ APPLICATION_PATHS = {
                     "in": "path",
                     "description": "ID of application to update",
                     "required": True,
-                    "type": "integer"
+                    "type": "integer",
                 },
                 {
                     "in": "body",
                     "name": "body",
                     "description": "Application object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/Application"
-                    }
-                }
+                    "schema": {"$ref": "#/definitions/Application"},
+                },
             ],
             "responses": {
                 "200": {
                     "description": "Application updated",
-                    "schema": {
-                        "$ref": "#/definitions/Application"
-                    }
+                    "schema": {"$ref": "#/definitions/Application"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                },
-                "404": {
-                    "description": "Application not found"
-                }
-            }
+                "400": {"description": "Invalid input"},
+                "404": {"description": "Application not found"},
+            },
         },
         "delete": {
             "summary": "Delete application",
@@ -124,17 +101,13 @@ APPLICATION_PATHS = {
                     "in": "path",
                     "description": "ID of application to delete",
                     "required": True,
-                    "type": "integer"
+                    "type": "integer",
                 }
             ],
             "responses": {
-                "200": {
-                    "description": "Application deleted"
-                },
-                "404": {
-                    "description": "Application not found"
-                }
-            }
-        }
-    }
+                "200": {"description": "Application deleted"},
+                "404": {"description": "Application not found"},
+            },
+        },
+    },
 }

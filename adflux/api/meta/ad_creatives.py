@@ -6,7 +6,7 @@ en la plataforma Meta Ads.
 """
 
 import logging
-from typing import Dict, Any, Tuple, Optional, List
+from typing import Dict, Any, Tuple, Optional
 
 from facebook_business.exceptions import FacebookRequestError
 
@@ -41,7 +41,7 @@ class AdCreativeManager:
         link_title: str,
         link_description: str,
         image_hash: Optional[str] = None,
-        call_to_action_type: str = 'APPLY_NOW'
+        call_to_action_type: str = "APPLY_NOW",
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
         Crea un nuevo creativo de anuncio en la cuenta publicitaria especificada.
@@ -76,44 +76,45 @@ class AdCreativeManager:
 
             # Crear un anuncio simple con solo los campos requeridos
             params = {
-                'name': name,
-                'object_story_spec': {
-                    'page_id': page_id,
-                    'link_data': {
-                        'message': message,
-                        'link': link,
-                        'call_to_action': {
-                            'type': call_to_action_type,
-                            'value': {
-                                'link': link
-                            }
-                        }
-                    }
-                }
+                "name": name,
+                "object_story_spec": {
+                    "page_id": page_id,
+                    "link_data": {
+                        "message": message,
+                        "link": link,
+                        "call_to_action": {"type": call_to_action_type, "value": {"link": link}},
+                    },
+                },
             }
 
             # Si tenemos un hash de imagen, añadirlo
             if image_hash:
-                params['object_story_spec']['link_data']['image_hash'] = image_hash
+                params["object_story_spec"]["link_data"]["image_hash"] = image_hash
 
             # Crear el creativo
             creative = account.create_ad_creative(params=params)
             creative_id = creative.get(AdCreative.Field.id)
 
-            logger.info(f"Se creó correctamente el creativo de anuncio '{name}' con ID: {creative_id}")
+            logger.info(
+                f"Se creó correctamente el creativo de anuncio '{name}' con ID: {creative_id}"
+            )
 
-            return True, f"Se creó correctamente el creativo de anuncio '{name}'", {
-                'id': creative_id,
-                'name': name,
-                'page_id': page_id,
-                'message': message,
-                'link': link,
-                'link_title': link_title,
-                'link_description': link_description,
-                'image_hash': image_hash
-            }
+            return (
+                True,
+                f"Se creó correctamente el creativo de anuncio '{name}'",
+                {
+                    "id": creative_id,
+                    "name": name,
+                    "page_id": page_id,
+                    "message": message,
+                    "link": link,
+                    "link_title": link_title,
+                    "link_description": link_description,
+                    "image_hash": image_hash,
+                },
+            )
 
-        except FacebookRequestError as e:
+        except FacebookRequestError:
             # Este error ya será manejado por el decorador handle_meta_api_error
             raise
         except ImportError as e:

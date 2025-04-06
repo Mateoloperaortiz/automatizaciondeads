@@ -375,7 +375,34 @@ flask ml train  # Entrenar el modelo de segmentación
 flask ml predict  # Aplicar el modelo para segmentar candidatos
 ```
 
-## Pruebas
+## Calidad de Código y Pruebas
+
+### Linting y Formateo
+
+AdFlux utiliza varias herramientas para mantener la calidad y consistencia del código:
+
+```bash
+# Instalar dependencias de desarrollo
+pip install -r requirements.txt
+
+# Ejecutar todas las herramientas de linting
+python lint.py --all
+
+# Formatear código automáticamente
+python lint.py --black-fix
+
+# Verificar tipos con mypy
+python lint.py --mypy
+
+# Verificar estilo de documentación
+python lint.py --pydocstyle
+```
+
+También puedes configurar pre-commit para ejecutar estas verificaciones automáticamente antes de cada commit:
+
+```bash
+pre-commit install
+```
 
 ### Ejecutando Pruebas
 

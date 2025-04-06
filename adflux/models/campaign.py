@@ -18,13 +18,18 @@ class Campaign(db.Model):
     en diferentes plataformas como Meta, Google, etc. Contiene información sobre
     el presupuesto, el trabajo asociado, los segmentos objetivo, etc.
     """
-    __tablename__ = 'campaigns'
+
+    __tablename__ = "campaigns"
 
     id = db.Column(Integer, primary_key=True)
     name = db.Column(String(255), nullable=False)
     description = db.Column(Text, nullable=True)
-    platform = db.Column(String(50), nullable=False, index=True)  # ej., 'meta', 'linkedin', 'google'
-    status = db.Column(String(50), nullable=False, default='draft', index=True)  # ej., 'borrador', 'activa', 'pausada', 'archivada'
+    platform = db.Column(
+        String(50), nullable=False, index=True
+    )  # ej., 'meta', 'linkedin', 'google'
+    status = db.Column(
+        String(50), nullable=False, default="draft", index=True
+    )  # ej., 'borrador', 'activa', 'pausada', 'archivada'
 
     # Presupuesto (en centavos)
     daily_budget = db.Column(Integer, nullable=True)  # ej., 500 para $5.00
@@ -34,7 +39,7 @@ class Campaign(db.Model):
     end_date = db.Column(DateTime, nullable=True)
 
     # Enlace a la oferta de trabajo específica para la que es esta campaña
-    job_opening_id = db.Column(String(50), db.ForeignKey('job_openings.job_id'), nullable=True)
+    job_opening_id = db.Column(String(50), db.ForeignKey("job_openings.job_id"), nullable=True)
 
     # Almacenar lista de IDs de segmentos objetivo (de nuestro modelo ML)
     target_segment_ids = db.Column(JSON, nullable=True)
@@ -43,7 +48,9 @@ class Campaign(db.Model):
     primary_text = db.Column(String(200), nullable=True)
     headline = db.Column(String(40), nullable=True)
     link_description = db.Column(String(50), nullable=True)
-    creative_image_filename = db.Column(String(255), nullable=True)  # Nombre de archivo de la imagen subida
+    creative_image_filename = db.Column(
+        String(255), nullable=True
+    )  # Nombre de archivo de la imagen subida
 
     # URL de destino
     landing_page_url = db.Column(String(255), nullable=True)
@@ -54,7 +61,7 @@ class Campaign(db.Model):
     meta_objective = db.Column(String(50), nullable=True)
     google_customer_id = db.Column(String(50), nullable=True)
     targeting_spec = db.Column(JSON, nullable=True)
-    initial_status = db.Column(String(50), nullable=True, default='PAUSED')
+    initial_status = db.Column(String(50), nullable=True, default="PAUSED")
 
     # Almacenar IDs después de publicar en la plataforma externa
     external_id = db.Column(String(255), nullable=True, index=True)
@@ -68,7 +75,9 @@ class Campaign(db.Model):
 
     # Campos de auditoría
     created_at = db.Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = db.Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    updated_at = db.Column(
+        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
+    )
 
     # Propiedades para compatibilidad con código existente
     @property
@@ -84,4 +93,4 @@ class Campaign(db.Model):
         return self.link_description
 
     def __repr__(self):
-        return f'<Campaign {self.id}: {self.name} ({self.platform} - {self.status})>'
+        return f"<Campaign {self.id}: {self.name} ({self.platform} - {self.status})>"

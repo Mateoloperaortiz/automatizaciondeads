@@ -14,14 +14,9 @@ META_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/MetaCampaign"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/MetaCampaign"}},
                 }
-            }
+            },
         }
     },
     "/meta/campaigns/{campaign_id}": {
@@ -35,20 +30,16 @@ META_PATHS = {
                     "in": "path",
                     "description": "ID of Meta campaign to return",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/MetaCampaign"
-                    }
+                    "schema": {"$ref": "#/definitions/MetaCampaign"},
                 },
-                "404": {
-                    "description": "Campaign not found"
-                }
-            }
+                "404": {"description": "Campaign not found"},
+            },
         }
     },
     "/meta/ad_sets": {
@@ -59,14 +50,9 @@ META_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/MetaAdSet"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/MetaAdSet"}},
                 }
-            }
+            },
         }
     },
     "/meta/ad_sets/{ad_set_id}": {
@@ -80,20 +66,16 @@ META_PATHS = {
                     "in": "path",
                     "description": "ID of Meta ad set to return",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/MetaAdSet"
-                    }
+                    "schema": {"$ref": "#/definitions/MetaAdSet"},
                 },
-                "404": {
-                    "description": "Ad set not found"
-                }
-            }
+                "404": {"description": "Ad set not found"},
+            },
         }
     },
     "/meta/ads": {
@@ -104,14 +86,9 @@ META_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/MetaAd"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/MetaAd"}},
                 }
-            }
+            },
         }
     },
     "/meta/ads/{ad_id}": {
@@ -125,20 +102,16 @@ META_PATHS = {
                     "in": "path",
                     "description": "ID of Meta ad to return",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/MetaAd"
-                    }
+                    "schema": {"$ref": "#/definitions/MetaAd"},
                 },
-                "404": {
-                    "description": "Ad not found"
-                }
-            }
+                "404": {"description": "Ad not found"},
+            },
         }
     },
     "/meta/insights": {
@@ -149,14 +122,9 @@ META_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/MetaInsight"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/MetaInsight"}},
                 }
-            }
+            },
         }
     },
     "/meta/sync": {
@@ -175,15 +143,33 @@ META_PATHS = {
                         "properties": {
                             "ad_account_id": {
                                 "type": "string",
-                                "description": "Meta Ad Account ID"
+                                "description": "Meta Ad Account ID",
                             },
                             "date_preset": {
                                 "type": "string",
                                 "description": "Date preset for insights",
-                                "enum": ["today", "yesterday", "this_month", "last_month", "this_quarter", "maximum", "last_3d", "last_7d", "last_14d", "last_28d", "last_30d", "last_90d", "last_week_mon_sun", "last_week_sun_sat", "last_quarter", "last_year", "this_year"]
-                            }
-                        }
-                    }
+                                "enum": [
+                                    "today",
+                                    "yesterday",
+                                    "this_month",
+                                    "last_month",
+                                    "this_quarter",
+                                    "maximum",
+                                    "last_3d",
+                                    "last_7d",
+                                    "last_14d",
+                                    "last_28d",
+                                    "last_30d",
+                                    "last_90d",
+                                    "last_week_mon_sun",
+                                    "last_week_sun_sat",
+                                    "last_quarter",
+                                    "last_year",
+                                    "this_year",
+                                ],
+                            },
+                        },
+                    },
                 }
             ],
             "responses": {
@@ -192,19 +178,13 @@ META_PATHS = {
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "message": {
-                                "type": "string"
-                            },
-                            "task_id": {
-                                "type": "string"
-                            }
-                        }
-                    }
+                            "message": {"type": "string"},
+                            "task_id": {"type": "string"},
+                        },
+                    },
                 },
-                "400": {
-                    "description": "Invalid input"
-                }
-            }
+                "400": {"description": "Invalid input"},
+            },
         }
-    }
+    },
 }

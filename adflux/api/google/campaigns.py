@@ -6,13 +6,13 @@ campañas publicitarias en Google Ads.
 """
 
 import uuid
-import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 # Intentar importar Google Ads SDK, pero no fallar si no está disponible
 try:
     from google.ads.googleads.client import GoogleAdsClient
     from google.ads.googleads.errors import GoogleAdsException
+
     GOOGLE_ADS_SDK_AVAILABLE = True
 except ImportError:
     GoogleAdsClient = None
@@ -55,9 +55,9 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client:
             return {
-                'success': False,
-                'message': "No se pudo inicializar el cliente de Google Ads",
-                'campaigns': []
+                "success": False,
+                "message": "No se pudo inicializar el cliente de Google Ads",
+                "campaigns": [],
             }
 
         try:
@@ -88,34 +88,32 @@ class CampaignManager:
                 budget = row.campaign_budget
 
                 campaign_data = {
-                    'id': campaign.id,
-                    'name': campaign.name,
-                    'status': campaign.status.name,
-                    'channel_type': campaign.advertising_channel_type.name,
-                    'start_date': campaign.start_date,
-                    'end_date': campaign.end_date,
-                    'budget_micros': budget.amount_micros if budget else None,
-                    'budget_dollars': budget.amount_micros / 1000000 if budget else None
+                    "id": campaign.id,
+                    "name": campaign.name,
+                    "status": campaign.status.name,
+                    "channel_type": campaign.advertising_channel_type.name,
+                    "start_date": campaign.start_date,
+                    "end_date": campaign.end_date,
+                    "budget_micros": budget.amount_micros if budget else None,
+                    "budget_dollars": budget.amount_micros / 1000000 if budget else None,
                 }
                 campaigns.append(campaign_data)
 
             logger.info(f"Se recuperaron {len(campaigns)} campañas para el cliente {customer_id}.")
             return {
-                'success': True,
-                'message': f"Se recuperaron {len(campaigns)} campañas.",
-                'campaigns': campaigns
+                "success": True,
+                "message": f"Se recuperaron {len(campaigns)} campañas.",
+                "campaigns": campaigns,
             }
 
-        except GoogleAdsException as e:
+        except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
         except Exception as e:
-            logger.error(f"Error inesperado al obtener campañas para el cliente {customer_id}: {e}", e)
-            return {
-                'success': False,
-                'message': f"Error inesperado: {str(e)}",
-                'campaigns': []
-            }
+            logger.error(
+                f"Error inesperado al obtener campañas para el cliente {customer_id}: {e}", e
+            )
+            return {"success": False, "message": f"Error inesperado: {str(e)}", "campaigns": []}
 
     @handle_google_ads_api_error
     def create_campaign(
@@ -124,7 +122,7 @@ class CampaignManager:
         name: str,
         daily_budget_micros: int,
         adflux_campaign_id: Optional[int] = None,
-        status: str = "PAUSED"
+        status: str = "PAUSED",
     ) -> Dict[str, Any]:
         """
         Crea una nueva campaña en Google Ads.
@@ -142,9 +140,9 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client:
             return {
-                'success': False,
-                'message': "No se pudo inicializar el cliente de Google Ads",
-                'external_ids': None
+                "success": False,
+                "message": "No se pudo inicializar el cliente de Google Ads",
+                "external_ids": None,
             }
 
         try:
@@ -169,8 +167,7 @@ class CampaignManager:
 
             # Crear presupuesto
             campaign_budget_response = campaign_budget_service.mutate_campaign_budgets(
-                customer_id=customer_id,
-                operations=[campaign_budget_operation]
+                customer_id=customer_id, operations=[campaign_budget_operation]
             )
             budget_resource_name = campaign_budget_response.results[0].resource_name
 
@@ -182,7 +179,9 @@ class CampaignManager:
             campaign.name = campaign_name
             campaign.status = campaign_status
             campaign.campaign_budget = budget_resource_name
-            campaign.advertising_channel_type = google_client.enums.AdvertisingChannelTypeEnum.SEARCH
+            campaign.advertising_channel_type = (
+                google_client.enums.AdvertisingChannelTypeEnum.SEARCH
+            )
 
             # Añadir estrategia de puja (requerido por la API)
             # Usar estrategia de puja maximize_conversions (maximizar conversiones)
@@ -197,11 +196,12 @@ class CampaignManager:
 
             # Crear campaña
             campaign_response = campaign_service.mutate_campaigns(
-                customer_id=customer_id,
-                operations=[campaign_operation]
+                customer_id=customer_id, operations=[campaign_operation]
             )
             campaign_resource_name = campaign_response.results[0].resource_name
-            campaign_id = campaign_service.parse_campaign_path(campaign_resource_name)["campaign_id"]
+            campaign_id = campaign_service.parse_campaign_path(campaign_resource_name)[
+                "campaign_id"
+            ]
 
             logger.info(f"Se creó correctamente la campaña '{campaign_name}' con ID: {campaign_id}")
 
@@ -216,41 +216,41 @@ class CampaignManager:
 
             # Crear grupo de anuncios
             ad_group_response = ad_group_service.mutate_ad_groups(
-                customer_id=customer_id,
-                operations=[ad_group_operation]
+                customer_id=customer_id, operations=[ad_group_operation]
             )
             ad_group_resource_name = ad_group_response.results[0].resource_name
-            ad_group_id = ad_group_service.parse_ad_group_path(ad_group_resource_name)["ad_group_id"]
+            ad_group_id = ad_group_service.parse_ad_group_path(ad_group_resource_name)[
+                "ad_group_id"
+            ]
 
             logger.info(f"Se creó correctamente el grupo de anuncios con ID: {ad_group_id}")
 
             return {
-                'success': True,
-                'message': f"Se creó correctamente la campaña '{campaign_name}'",
-                'external_ids': {
-                    'campaign_id': campaign_id,
-                    'ad_group_id': ad_group_id,
-                    'budget_id': campaign_budget_service.parse_campaign_budget_path(budget_resource_name)["campaign_budget_id"]
-                }
+                "success": True,
+                "message": f"Se creó correctamente la campaña '{campaign_name}'",
+                "external_ids": {
+                    "campaign_id": campaign_id,
+                    "ad_group_id": ad_group_id,
+                    "budget_id": campaign_budget_service.parse_campaign_budget_path(
+                        budget_resource_name
+                    )["campaign_budget_id"],
+                },
             }
 
-        except GoogleAdsException as e:
+        except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
         except Exception as e:
             logger.error(f"Error inesperado al crear la campaña '{name}': {e}", e)
             return {
-                'success': False,
-                'message': f"Error inesperado: {str(e)}",
-                'external_ids': None
+                "success": False,
+                "message": f"Error inesperado: {str(e)}",
+                "external_ids": None,
             }
 
     @handle_google_ads_api_error
     def publish_campaign(
-        self,
-        customer_id: str,
-        adflux_campaign_id: int,
-        campaign_data: Dict[str, Any]
+        self, customer_id: str, adflux_campaign_id: int, campaign_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Publica una campaña completa en Google Ads, incluyendo grupo de anuncios y anuncios.
@@ -268,17 +268,19 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client:
             return {
-                'success': False,
-                'message': "No se pudo inicializar el cliente de Google Ads",
-                'external_ids': None
+                "success": False,
+                "message": "No se pudo inicializar el cliente de Google Ads",
+                "external_ids": None,
             }
 
         try:
             # Extraer datos de la campaña
-            name = campaign_data.get('name', 'Campaña sin título')
-            daily_budget_cents = campaign_data.get('daily_budget', 1000)  # Valor predeterminado: $10
-            primary_text = campaign_data.get('primary_text', '')
-            headline = campaign_data.get('headline', '')
+            name = campaign_data.get("name", "Campaña sin título")
+            daily_budget_cents = campaign_data.get(
+                "daily_budget", 1000
+            )  # Valor predeterminado: $10
+            campaign_data.get("primary_text", "")
+            campaign_data.get("headline", "")
 
             # Convertir presupuesto de centavos a micros (1 dólar = 1,000,000 micros)
             daily_budget_micros = daily_budget_cents * 10000  # centavos * 10000 = micros
@@ -289,34 +291,37 @@ class CampaignManager:
                 name=name,
                 daily_budget_micros=daily_budget_micros,
                 adflux_campaign_id=adflux_campaign_id,
-                status="PAUSED"
+                status="PAUSED",
             )
 
-            if not result['success']:
+            if not result["success"]:
                 return result
 
             # Extraer IDs
-            campaign_id = result['external_ids']['campaign_id']
-            ad_group_id = result['external_ids']['ad_group_id']
+            result["external_ids"]["campaign_id"]
+            result["external_ids"]["ad_group_id"]
 
             # TODO: Crear anuncios de texto expandidos
             # Esta funcionalidad se implementará en una versión futura
 
             return {
-                'success': True,
-                'message': f"Se publicó correctamente la campaña '{name}'",
-                'external_ids': result['external_ids']
+                "success": True,
+                "message": f"Se publicó correctamente la campaña '{name}'",
+                "external_ids": result["external_ids"],
             }
 
-        except GoogleAdsException as e:
+        except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
         except Exception as e:
-            logger.error(f"Error inesperado al publicar la campaña para AdFlux ID {adflux_campaign_id}: {e}", e)
+            logger.error(
+                f"Error inesperado al publicar la campaña para AdFlux ID {adflux_campaign_id}: {e}",
+                e,
+            )
             return {
-                'success': False,
-                'message': f"Error inesperado: {str(e)}",
-                'external_ids': None
+                "success": False,
+                "message": f"Error inesperado: {str(e)}",
+                "external_ids": None,
             }
 
 

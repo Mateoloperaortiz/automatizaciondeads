@@ -15,24 +15,30 @@ from ..models import JobOpening, Candidate
 from ..extensions import db
 
 # Crear grupo de comandos
-data_ops_group = click.Group(name='data_ops', help='Comandos personalizados de operaciones de datos (crear, sembrar).')
+data_ops_group = click.Group(
+    name="data_ops", help="Comandos personalizados de operaciones de datos (crear, sembrar)."
+)
 
 
-@data_ops_group.command('create')
+@data_ops_group.command("create")
 @with_appcontext
 def db_create():
     """Crea las tablas de la base de datos basadas en models.py."""
     with current_app.app_context():
         try:
             db.create_all()
-            click.echo('Tablas de base de datos creadas correctamente.')
+            click.echo("Tablas de base de datos creadas correctamente.")
         except Exception as e:
-            click.echo(f'Error creando tablas: {e}', err=True)
+            click.echo(f"Error creando tablas: {e}", err=True)
 
 
-@data_ops_group.command('seed')
-@click.option('--jobs', default=20, help='Número de ofertas de trabajo a generar y sembrar.', type=int)
-@click.option('--candidates', default=50, help='Número de candidatos a generar y sembrar.', type=int)
+@data_ops_group.command("seed")
+@click.option(
+    "--jobs", default=20, help="Número de ofertas de trabajo a generar y sembrar.", type=int
+)
+@click.option(
+    "--candidates", default=50, help="Número de candidatos a generar y sembrar.", type=int
+)
 @with_appcontext
 def db_seed(jobs, candidates):
     """Siembra la base de datos con datos simulados de trabajos y candidatos."""
@@ -56,15 +62,19 @@ def db_seed(jobs, candidates):
             click.echo(f"Sembrando {len(generated_jobs)} trabajos en la base de datos...")
             for job_data in generated_jobs:
                 # Convertir fechas de string a objetos date
-                if 'posting_date' in job_data and job_data['posting_date']:
-                    job_data['posting_date'] = datetime.datetime.fromisoformat(job_data['posting_date'].replace('Z', '+00:00')).date()
-                if 'closing_date' in job_data and job_data['closing_date']:
-                    job_data['closing_date'] = datetime.datetime.fromisoformat(job_data['closing_date'].replace('Z', '+00:00')).date()
-                
+                if "posting_date" in job_data and job_data["posting_date"]:
+                    job_data["posting_date"] = datetime.datetime.fromisoformat(
+                        job_data["posting_date"].replace("Z", "+00:00")
+                    ).date()
+                if "closing_date" in job_data and job_data["closing_date"]:
+                    job_data["closing_date"] = datetime.datetime.fromisoformat(
+                        job_data["closing_date"].replace("Z", "+00:00")
+                    ).date()
+
                 # Crear objeto JobOpening
                 job = JobOpening(**job_data)
                 db.session.add(job)
-            
+
             # Confirmar para obtener IDs de trabajo antes de sembrar candidatos
             db.session.commit()
             click.echo(f"Sembrados {len(generated_jobs)} trabajos exitosamente.")
@@ -75,7 +85,7 @@ def db_seed(jobs, candidates):
                 # Crear objeto Candidate
                 candidate = Candidate(**candidate_data)
                 db.session.add(candidate)
-            
+
             # Confirmar cambios
             db.session.commit()
             click.echo(f"Sembrados {len(generated_candidates)} candidatos exitosamente.")
@@ -83,46 +93,61 @@ def db_seed(jobs, candidates):
             # Generar algunas aplicaciones aleatorias
             click.echo("Generando aplicaciones aleatorias...")
             from ..simulation.application_data import generate_simulated_applications
-            
+
             # Obtener trabajos y candidatos de la base de datos
             jobs_db = JobOpening.query.all()
             candidates_db = Candidate.query.all()
-            
+
             # Convertir a formato esperado por la función de simulación
-            jobs_list = [{'job_id': job.job_id, 'status': job.status, 'posting_date': job.posted_date.isoformat() if job.posted_date else None, 'closing_date': job.closing_date.isoformat() if job.closing_date else None} for job in jobs_db]
-            candidates_list = [{'candidate_id': candidate.candidate_id} for candidate in candidates_db]
-            
+            jobs_list = [
+                {
+                    "job_id": job.job_id,
+                    "status": job.status,
+                    "posting_date": job.posted_date.isoformat() if job.posted_date else None,
+                    "closing_date": job.closing_date.isoformat() if job.closing_date else None,
+                }
+                for job in jobs_db
+            ]
+            candidates_list = [
+                {"candidate_id": candidate.candidate_id} for candidate in candidates_db
+            ]
+
             # Generar aplicaciones simuladas
-            applications = generate_simulated_applications(jobs_list, candidates_list, min(len(jobs_db) * 2, len(candidates_db)))
-            
+            applications = generate_simulated_applications(
+                jobs_list, candidates_list, min(len(jobs_db) * 2, len(candidates_db))
+            )
+
             # Sembrar aplicaciones
             click.echo(f"Sembrando {len(applications)} aplicaciones en la base de datos...")
             from ..models import Application
-            
+
             for app_data in applications:
                 # Convertir fecha de string a objeto date
-                if 'application_date' in app_data and app_data['application_date']:
-                    app_data['application_date'] = datetime.datetime.fromisoformat(app_data['application_date'].replace('Z', '+00:00')).date()
-                
+                if "application_date" in app_data and app_data["application_date"]:
+                    app_data["application_date"] = datetime.datetime.fromisoformat(
+                        app_data["application_date"].replace("Z", "+00:00")
+                    ).date()
+
                 # Crear objeto Application
                 application = Application(**app_data)
                 db.session.add(application)
-            
+
             # Confirmar cambios
             db.session.commit()
             click.echo(f"Sembradas {len(applications)} aplicaciones exitosamente.")
 
             click.echo("Siembra de datos completada exitosamente.")
-        
+
         except Exception as e:
             db.session.rollback()
             click.echo(f"Error durante la siembra de datos: {e}", err=True)
             import traceback
+
             click.echo(traceback.format_exc())
 
 
-@data_ops_group.command('reset')
-@click.confirmation_option(prompt='¿Estás seguro de que quieres eliminar TODOS los datos?')
+@data_ops_group.command("reset")
+@click.confirmation_option(prompt="¿Estás seguro de que quieres eliminar TODOS los datos?")
 @with_appcontext
 def db_reset():
     """Elimina todas las tablas y las recrea vacías."""
@@ -137,9 +162,11 @@ def db_reset():
             click.echo(f"Error reiniciando la base de datos: {e}", err=True)
 
 
-@data_ops_group.command('export')
-@click.argument('model_name', type=click.Choice(['jobs', 'candidates', 'applications', 'campaigns']))
-@click.option('--output', '-o', default='export.json', help='Nombre del archivo de salida')
+@data_ops_group.command("export")
+@click.argument(
+    "model_name", type=click.Choice(["jobs", "candidates", "applications", "campaigns"])
+)
+@click.option("--output", "-o", default="export.json", help="Nombre del archivo de salida")
 @with_appcontext
 def db_export(model_name, output):
     """Exporta datos de un modelo específico a un archivo JSON."""
@@ -147,21 +174,21 @@ def db_export(model_name, output):
         try:
             # Mapear nombres de modelos a clases
             model_map = {
-                'jobs': JobOpening,
-                'candidates': Candidate,
-                'applications': db.session.registry._class_registry.get('Application'),
-                'campaigns': db.session.registry._class_registry.get('Campaign')
+                "jobs": JobOpening,
+                "candidates": Candidate,
+                "applications": db.session.registry._class_registry.get("Application"),
+                "campaigns": db.session.registry._class_registry.get("Campaign"),
             }
-            
+
             model_class = model_map.get(model_name)
             if not model_class:
                 click.echo(f"Modelo no encontrado: {model_name}", err=True)
                 return
-            
+
             # Consultar todos los registros
             records = model_class.query.all()
             click.echo(f"Exportando {len(records)} registros de {model_name}...")
-            
+
             # Convertir a diccionarios
             data = []
             for record in records:
@@ -174,14 +201,15 @@ def db_export(model_name, output):
                         value = value.isoformat()
                     record_dict[column.name] = value
                 data.append(record_dict)
-            
+
             # Guardar a archivo
-            with open(output, 'w') as f:
+            with open(output, "w") as f:
                 json.dump(data, f, indent=2)
-            
+
             click.echo(f"Datos exportados exitosamente a {output}")
-        
+
         except Exception as e:
             click.echo(f"Error exportando datos: {e}", err=True)
             import traceback
+
             click.echo(traceback.format_exc())

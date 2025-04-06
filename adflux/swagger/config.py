@@ -17,7 +17,7 @@ SWAGGER_SPEC = {
     "info": {
         "title": "AdFlux API",
         "description": "API for managing job openings and candidates",
-        "version": "1.0"
+        "version": "1.0",
     },
     "basePath": "/api",
     "schemes": ["http", "https"],
@@ -28,7 +28,7 @@ SWAGGER_SPEC = {
         **JOB_PATHS,
         **CANDIDATE_PATHS,
         **APPLICATION_PATHS,
-        **META_PATHS
+        **META_PATHS,
     },
-    "definitions": DEFINITIONS
+    "definitions": DEFINITIONS,
 }

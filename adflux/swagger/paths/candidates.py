@@ -14,14 +14,9 @@ CANDIDATE_PATHS = {
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/Candidate"
-                        }
-                    }
+                    "schema": {"type": "array", "items": {"$ref": "#/definitions/Candidate"}},
                 }
-            }
+            },
         },
         "post": {
             "summary": "Create a new candidate",
@@ -33,23 +28,17 @@ CANDIDATE_PATHS = {
                     "name": "body",
                     "description": "Candidate object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/Candidate"
-                    }
+                    "schema": {"$ref": "#/definitions/Candidate"},
                 }
             ],
             "responses": {
                 "201": {
                     "description": "Candidate created",
-                    "schema": {
-                        "$ref": "#/definitions/Candidate"
-                    }
+                    "schema": {"$ref": "#/definitions/Candidate"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                }
-            }
-        }
+                "400": {"description": "Invalid input"},
+            },
+        },
     },
     "/candidates/{candidate_id}": {
         "get": {
@@ -62,20 +51,16 @@ CANDIDATE_PATHS = {
                     "in": "path",
                     "description": "ID of candidate to return",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
                 "200": {
                     "description": "Successful operation",
-                    "schema": {
-                        "$ref": "#/definitions/Candidate"
-                    }
+                    "schema": {"$ref": "#/definitions/Candidate"},
                 },
-                "404": {
-                    "description": "Candidate not found"
-                }
-            }
+                "404": {"description": "Candidate not found"},
+            },
         },
         "put": {
             "summary": "Update candidate",
@@ -87,32 +72,24 @@ CANDIDATE_PATHS = {
                     "in": "path",
                     "description": "ID of candidate to update",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 },
                 {
                     "in": "body",
                     "name": "body",
                     "description": "Candidate object",
                     "required": True,
-                    "schema": {
-                        "$ref": "#/definitions/Candidate"
-                    }
-                }
+                    "schema": {"$ref": "#/definitions/Candidate"},
+                },
             ],
             "responses": {
                 "200": {
                     "description": "Candidate updated",
-                    "schema": {
-                        "$ref": "#/definitions/Candidate"
-                    }
+                    "schema": {"$ref": "#/definitions/Candidate"},
                 },
-                "400": {
-                    "description": "Invalid input"
-                },
-                "404": {
-                    "description": "Candidate not found"
-                }
-            }
+                "400": {"description": "Invalid input"},
+                "404": {"description": "Candidate not found"},
+            },
         },
         "delete": {
             "summary": "Delete candidate",
@@ -124,17 +101,13 @@ CANDIDATE_PATHS = {
                     "in": "path",
                     "description": "ID of candidate to delete",
                     "required": True,
-                    "type": "string"
+                    "type": "string",
                 }
             ],
             "responses": {
-                "200": {
-                    "description": "Candidate deleted"
-                },
-                "404": {
-                    "description": "Candidate not found"
-                }
-            }
-        }
-    }
+                "200": {"description": "Candidate deleted"},
+                "404": {"description": "Candidate not found"},
+            },
+        },
+    },
 }

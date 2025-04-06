@@ -18,64 +18,70 @@ from .application_routes_web import application_bp
 from .api_routes import api_bp
 
 # Create a test namespace for API verification
-from flask_restx import Namespace, Resource, fields, Api
+from flask_restx import Namespace, Resource, fields
 
 # Create a root namespace for API information
-root_ns = Namespace('', description='API Information')
+root_ns = Namespace("", description="API Information")
 
-api_info_model = root_ns.model('ApiInfo', {
-    'name': fields.String(required=True, description='API name'),
-    'version': fields.String(required=True, description='API version'),
-    'description': fields.String(required=True, description='API description'),
-    'documentation': fields.String(required=True, description='API documentation URL')
-})
+api_info_model = root_ns.model(
+    "ApiInfo",
+    {
+        "name": fields.String(required=True, description="API name"),
+        "version": fields.String(required=True, description="API version"),
+        "description": fields.String(required=True, description="API description"),
+        "documentation": fields.String(required=True, description="API documentation URL"),
+    },
+)
 
-@root_ns.route('/')
+
+@root_ns.route("/")
 class ApiInfoResource(Resource):
-    @root_ns.doc('api_info')
+    @root_ns.doc("api_info")
     @root_ns.marshal_with(api_info_model)
     def get(self):
         """Get API information"""
         return {
-            'name': 'AdFlux API',
-            'version': '1.0',
-            'description': 'API for managing job openings and candidates',
-            'documentation': '/api/docs/'
+            "name": "AdFlux API",
+            "version": "1.0",
+            "description": "API for managing job openings and candidates",
+            "documentation": "/api/docs/",
         }
 
+
 # Create a test namespace for API verification
-test_ns = Namespace('test', description='Test API operations')
+test_ns = Namespace("test", description="Test API operations")
 
-test_model = test_ns.model('Test', {
-    'message': fields.String(required=True, description='Test message')
-})
+test_model = test_ns.model(
+    "Test", {"message": fields.String(required=True, description="Test message")}
+)
 
-@test_ns.route('/')
+
+@test_ns.route("/")
 class TestResource(Resource):
-    @test_ns.doc('test_get')
+    @test_ns.doc("test_get")
     @test_ns.marshal_with(test_model)
     def get(self):
         """Test API endpoint"""
-        return {'message': 'API is working!'}
+        return {"message": "API is working!"}
+
 
 # Define __all__ for wildcard imports
 __all__ = [
     # Namespaces
-    'jobs_ns',
-    'candidates_ns',
-    'applications_ns',
-    'meta_ns',
-    'root_ns',
-    'test_ns',
-
+    "jobs_ns",
+    "candidates_ns",
+    "applications_ns",
+    "meta_ns",
+    "root_ns",
+    "test_ns",
     # Blueprints
-    'dashboard_bp',
-    'campaign_bp',
-    'segmentation_bp',
-    'settings_bp',
-    'report_bp',
-    'job_bp',
-    'candidate_bp',
-    'application_bp',
-    'api_bp'
+    "dashboard_bp",
+    "campaign_bp",
+    "segmentation_bp",
+    "settings_bp",
+    "report_bp",
+    "job_bp",
+    "candidate_bp",
+    "application_bp",
+    "api_bp",
 ]
