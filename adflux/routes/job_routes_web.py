@@ -13,6 +13,7 @@ from datetime import datetime
 import uuid
 
 from ..models import JobOpening, db
+from .job_routes_web_triggers import notify_job_created, notify_job_updated
 
 # Definir el blueprint
 job_bp = Blueprint("job", __name__, template_folder="../templates")
@@ -118,6 +119,8 @@ def create_job():
             db.session.add(new_job)
             db.session.commit()
             
+            notify_job_created(new_job)
+            
             flash(f"Trabajo '{new_job.title}' creado exitosamente.", "success")
             return redirect(url_for('job.job_details', job_id=new_job.job_id))
             
@@ -160,6 +163,8 @@ def update_job(job_id):
             job.benefits = [benefit.strip() for benefit in form.benefits.data.split(',')] if form.benefits.data else []
             
             db.session.commit()
+            
+            notify_job_updated(job)
             
             flash(f"Trabajo '{job.title}' actualizado exitosamente.", "success")
             return redirect(url_for('job.job_details', job_id=job.job_id))

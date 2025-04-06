@@ -13,6 +13,7 @@ from wtforms.validators import DataRequired, Optional, Email
 from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
 import uuid
+from .candidate_routes_web_triggers import notify_candidate_created, notify_candidate_updated
 
 # Definir el blueprint
 candidate_bp = Blueprint("candidate", __name__, template_folder="../templates")
@@ -198,6 +199,8 @@ def create_candidate():
             db.session.add(new_candidate)
             db.session.commit()
             
+            notify_candidate_created(new_candidate)
+            
             flash(f"Candidato '{new_candidate.name}' creado exitosamente.", "success")
             return redirect(url_for('candidate.candidate_details', candidate_id=new_candidate.candidate_id))
             
@@ -236,6 +239,8 @@ def update_candidate(candidate_id):
             candidate.languages = [language.strip() for language in form.languages.data.split(',')] if form.languages.data else []
             
             db.session.commit()
+            
+            notify_candidate_updated(candidate)
             
             flash(f"Candidato '{candidate.name}' actualizado exitosamente.", "success")
             return redirect(url_for('candidate.candidate_details', candidate_id=candidate.candidate_id))

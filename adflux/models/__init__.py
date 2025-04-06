@@ -21,6 +21,8 @@ from .meta import MetaCampaign, MetaAdSet, MetaAd, MetaInsight
 # Importar modelos de campaña
 from .campaign import Campaign
 
+from .notification import Notification, NotificationType, NotificationCategory, DeliveryStatus
+
 # Para mantener compatibilidad con el código existente
 __all__ = [
     # SQLAlchemy
@@ -40,4 +42,8 @@ __all__ = [
     "MetaInsight",
     # Modelos de campaña
     "Campaign",
+    "Notification",
+    "NotificationType",
+    "NotificationCategory",
+    "DeliveryStatus",
 ]
