@@ -32,10 +32,10 @@ class NotificationCategory(enum.Enum):
 
 class DeliveryStatus(enum.Enum):
     """Estado de entrega de la notificación."""
-    PENDING = "pending"
-    DELIVERED = "delivered"
-    READ = "read"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    DELIVERED = "DELIVERED"
+    READ = "READ"
+    FAILED = "FAILED"
 
 
 class Notification(db.Model):
