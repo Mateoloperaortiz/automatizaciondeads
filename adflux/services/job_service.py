@@ -13,9 +13,12 @@ import uuid
 from ..models import db, JobOpening
 from ..models.notifications.service import NotificationService
 from ..models.notification import NotificationType, NotificationCategory
+from ..api.common.excepciones import ErrorValidacion
+from .base_service import BaseService
+from ..utils.validation import ValidationUtils
 
 
-class JobService:
+class JobService(BaseService[JobOpening]):
     """
     Servicio para operaciones relacionadas con trabajos.
     
@@ -24,8 +27,13 @@ class JobService:
     mediante joins y carga diferida.
     """
     
-    @staticmethod
+    model_class = JobOpening
+    id_attribute = "job_id"
+    entity_name = "trabajo"
+    
+    @classmethod
     def get_jobs(
+        cls,
         page: int = 1, 
         per_page: int = 10,
         query: str = "",
@@ -43,10 +51,12 @@ class JobService:
             status: Filtro opcional por estado del trabajo
             sort_by: Campo por el cual ordenar los resultados
             sort_order: Orden de clasificación ('asc' o 'desc')
-            
+                
         Returns:
             Tupla con la lista de trabajos y el objeto de paginación
         """
+        page, per_page = ValidationUtils.validate_pagination_params(page, per_page)
+        
         job_query = JobOpening.query
         
         if query:
@@ -73,121 +83,117 @@ class JobService:
         
         return jobs, pagination
     
-    @staticmethod
-    def get_job_by_id(job_id: str) -> Optional[JobOpening]:
+    @classmethod
+    def get_job_by_id(cls, job_id: str) -> Optional[JobOpening]:
         """
         Obtiene un trabajo por su ID.
         
         Args:
             job_id: ID único del trabajo
-            
+                
         Returns:
             Objeto JobOpening o None si no se encuentra
         """
-        return JobOpening.query.filter_by(job_id=job_id).first()
+        return cls.get_by_id(job_id)
     
-    @staticmethod
-    def create_job(job_data: Dict[str, Any]) -> Tuple[Union[JobOpening, None], str, int]:
+    @classmethod
+    def create_job(cls, job_data: Dict[str, Any]) -> Tuple[Union[JobOpening, None], str, int]:
         """
         Crea un nuevo trabajo.
         
         Args:
             job_data: Diccionario con datos del trabajo
-            
+                
         Returns:
             Tupla con (trabajo creado, mensaje, código de estado)
         """
-        try:
-            job_id = f"JOB-{uuid.uuid4().hex[:8].upper()}"
-            
-            if 'required_skills' in job_data and isinstance(job_data['required_skills'], str):
-                job_data['required_skills'] = [skill.strip() for skill in job_data['required_skills'].split(',') if skill.strip()]
-                
-            if 'benefits' in job_data and isinstance(job_data['benefits'], str):
-                job_data['benefits'] = [benefit.strip() for benefit in job_data['benefits'].split(',') if benefit.strip()]
-            
-            if 'posted_date' not in job_data or not job_data['posted_date']:
-                job_data['posted_date'] = datetime.now().date()
-            
-            new_job = JobOpening(job_id=job_id, **job_data)
-            
-            db.session.add(new_job)
-            db.session.commit()
-            
-            JobService._notify_job_created(new_job)
-            
-            return new_job, f"Trabajo '{new_job.title}' creado exitosamente.", 201
-            
-        except Exception as e:
-            db.session.rollback()
-            return None, f"Error al crear trabajo: {str(e)}", 500
+        ValidationUtils.validate_required_fields(job_data, ["title"])
+        
+        if "salary_min" in job_data and "salary_max" in job_data:
+            if job_data["salary_min"] is not None and job_data["salary_max"] is not None:
+                if job_data["salary_min"] > job_data["salary_max"]:
+                    raise ErrorValidacion(
+                        mensaje="El salario mínimo no puede ser mayor que el salario máximo",
+                        errores={"salary_min": ["Debe ser menor o igual al salario máximo"]}
+                    )
+        
+        job_data["job_id"] = f"JOB-{uuid.uuid4().hex[:8].upper()}"
+        
+        job, mensaje, codigo = cls.create(job_data)
+        
+        if job:
+            cls._notify_job_created(job)
+            return job, f"Trabajo '{job.title}' creado exitosamente.", codigo
+        
+        return job, mensaje, codigo
     
-    @staticmethod
-    def update_job(job_id: str, job_data: Dict[str, Any]) -> Tuple[Union[JobOpening, None], str, int]:
+    @classmethod
+    def update_job(cls, job_id: str, job_data: Dict[str, Any]) -> Tuple[Union[JobOpening, None], str, int]:
         """
         Actualiza un trabajo existente.
         
         Args:
             job_id: ID único del trabajo
             job_data: Diccionario con datos actualizados
-            
+                
         Returns:
             Tupla con (trabajo actualizado, mensaje, código de estado)
         """
-        job = JobService.get_job_by_id(job_id)
+        if "salary_min" in job_data and "salary_max" in job_data:
+            if job_data["salary_min"] is not None and job_data["salary_max"] is not None:
+                if job_data["salary_min"] > job_data["salary_max"]:
+                    raise ErrorValidacion(
+                        mensaje="El salario mínimo no puede ser mayor que el salario máximo",
+                        errores={"salary_min": ["Debe ser menor o igual al salario máximo"]}
+                    )
         
-        if not job:
-            return None, f"Trabajo con ID {job_id} no encontrado.", 404
+        job, mensaje, codigo = cls.update(job_id, job_data)
         
-        try:
-            if 'required_skills' in job_data and isinstance(job_data['required_skills'], str):
-                job_data['required_skills'] = [skill.strip() for skill in job_data['required_skills'].split(',') if skill.strip()]
-                
-            if 'benefits' in job_data and isinstance(job_data['benefits'], str):
-                job_data['benefits'] = [benefit.strip() for benefit in job_data['benefits'].split(',') if benefit.strip()]
-            
-            for key, value in job_data.items():
-                if hasattr(job, key):
-                    setattr(job, key, value)
-            
-            db.session.commit()
-            
-            JobService._notify_job_updated(job)
-            
-            return job, f"Trabajo '{job.title}' actualizado exitosamente.", 200
-            
-        except Exception as e:
-            db.session.rollback()
-            return None, f"Error al actualizar trabajo: {str(e)}", 500
+        if job:
+            cls._notify_job_updated(job)
+            return job, f"Trabajo '{job.title}' actualizado exitosamente.", codigo
+        
+        return job, mensaje, codigo
     
-    @staticmethod
-    def delete_job(job_id: str) -> Tuple[bool, str, int]:
+    @classmethod
+    def delete_job(cls, job_id: str) -> Tuple[bool, str, int]:
         """
         Elimina un trabajo.
         
         Args:
             job_id: ID único del trabajo
-            
+                
         Returns:
             Tupla con (éxito, mensaje, código de estado)
         """
-        job = JobService.get_job_by_id(job_id)
-        
-        if not job:
-            return False, f"Trabajo con ID {job_id} no encontrado.", 404
-        
-        try:
-            db.session.delete(job)
-            db.session.commit()
-            
-            return True, f"Trabajo eliminado exitosamente.", 204
-            
-        except Exception as e:
-            db.session.rollback()
-            return False, f"Error al eliminar trabajo: {str(e)}", 500
+        return cls.delete(job_id)
     
-    @staticmethod
-    def _notify_job_created(job: JobOpening) -> None:
+    @classmethod
+    def _preprocess_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Preprocesa datos antes de crear o actualizar un trabajo.
+        
+        Args:
+            data: Diccionario con datos a procesar
+                
+        Returns:
+            Diccionario con datos procesados
+        """
+        processed_data = data.copy()
+        
+        if 'required_skills' in processed_data and isinstance(processed_data['required_skills'], str):
+            processed_data['required_skills'] = ValidationUtils.string_to_list(processed_data['required_skills'])
+        
+        if 'benefits' in processed_data and isinstance(processed_data['benefits'], str):
+            processed_data['benefits'] = ValidationUtils.string_to_list(processed_data['benefits'])
+        
+        if 'posted_date' not in processed_data or not processed_data['posted_date']:
+            processed_data['posted_date'] = datetime.now().date()
+        
+        return processed_data
+    
+    @classmethod
+    def _notify_job_created(cls, job: JobOpening) -> None:
         """
         Genera una notificación cuando se crea un nuevo trabajo.
         
@@ -204,8 +210,8 @@ class JobService:
             send_realtime=True
         )
     
-    @staticmethod
-    def _notify_job_updated(job: JobOpening) -> None:
+    @classmethod
+    def _notify_job_updated(cls, job: JobOpening) -> None:
         """
         Genera una notificación cuando se actualiza un trabajo.
         
