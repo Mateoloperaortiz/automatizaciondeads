@@ -45,6 +45,7 @@ def registrar_error(
     nivel: str = "error",
     exc_info: bool = True,
     extra: Optional[Dict[str, Any]] = None,
+    contexto: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Registra un error en el sistema de logging.
@@ -55,9 +56,12 @@ def registrar_error(
         nivel: Nivel de logging (error, warning, info, etc.).
         exc_info: Si se debe incluir información detallada de la excepción.
         extra: Información adicional para el registro.
+        contexto: Información contextual sobre dónde ocurrió el error.
     """
     if not current_app:
         print(f"{nivel.upper()}: {mensaje}")
+        if contexto:
+            print(f"Contexto: {contexto}")
         if excepcion and exc_info:
             print(f"Excepción: {excepcion}")
             traceback.print_exc()
@@ -66,9 +70,13 @@ def registrar_error(
     logger = current_app.logger
     log_method = getattr(logger, nivel, logger.error)
 
+    if not extra:
+        extra = {}
+    
+    if contexto:
+        extra.update({"contexto": contexto})
+
     if excepcion and isinstance(excepcion, AdFluxError) and hasattr(excepcion, 'detalles'):
-        if not extra:
-            extra = {}
         extra.update(getattr(excepcion, 'detalles', {}))
 
     if excepcion and exc_info:
