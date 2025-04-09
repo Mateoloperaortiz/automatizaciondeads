@@ -43,7 +43,7 @@ def create_app(config_class=Config):
     # Eliminar manejadores predeterminados si no estamos en modo debug y no usamos nuestro manejador de consola
     # O simplemente establecer el nivel y añadir nuestros manejadores.
     # Probemos añadiendo primero.
-    log_formatter = logging.Formatter(app.config["LOG_FORMAT"])
+    log_formatter = logging.Formatter(app.config.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     log_level_name = app.config.get("LOG_LEVEL", "INFO").upper()
     log_level = getattr(logging, log_level_name, logging.INFO)
 
@@ -69,7 +69,7 @@ def create_app(config_class=Config):
                   os.makedirs(log_dir)
              except OSError:
                   app.logger.error(f"No se pudo crear el directorio de logs: {log_dir}")
-        
+
         # 10 MB por archivo, 5 archivos de respaldo
         file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 10, backupCount=5, encoding='utf-8')
         file_handler.setFormatter(log_formatter)

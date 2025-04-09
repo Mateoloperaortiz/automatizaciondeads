@@ -159,7 +159,7 @@ class DashboardService:
                     func.sum(MetaInsight.clicks).label("total_clicks"),
                 )
                 .select_from(MetaInsight)
-                .join(Campaign, Campaign.external_campaign_id == MetaInsight.meta_campaign_id)
+                .join(Campaign, Campaign.external_id == MetaInsight.meta_campaign_id)
                 .filter(
                     MetaInsight.date_start >= start_date,
                     MetaInsight.date_stop <= end_date
@@ -206,4 +206,4 @@ class DashboardService:
              current_app.logger.error(error_msg, exc_info=True)
              stats["errors"].append(error_msg)
 
-        return stats 
+        return stats
