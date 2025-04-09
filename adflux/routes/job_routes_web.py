@@ -7,7 +7,7 @@ Este módulo contiene las rutas web relacionadas con la gestión de trabajos.
 from flask import Blueprint, render_template, flash, redirect, url_for, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, BooleanField, DateField
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, Optional, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models import JobOpening
@@ -78,8 +78,20 @@ class JobForm(FlaskForm):
         default="open",
     )
     remote = BooleanField("Trabajo Remoto", default=False)
-    required_skills = TextAreaField("Habilidades Requeridas", validators=[Optional()])
-    benefits = TextAreaField("Beneficios", validators=[Optional()])
+    required_skills = TextAreaField("Habilidades Requeridas (separadas por coma)", validators=[Optional()])
+    benefits = TextAreaField("Beneficios (separados por coma)", validators=[Optional()])
+
+    # Validador personalizado para salario máximo
+    def validate_salary_max(self, field):
+        if self.salary_min.data is not None and field.data is not None:
+            if self.salary_min.data > field.data:
+                raise ValidationError("El salario máximo no puede ser menor que el salario mínimo.")
+
+    # Validador personalizado para fecha de cierre
+    def validate_closing_date(self, field):
+        if self.posted_date.data and field.data:
+            if self.posted_date.data > field.data:
+                raise ValidationError("La fecha de cierre no puede ser anterior a la fecha de publicación.")
 
 
 @job_bp.route("/")
@@ -144,18 +156,6 @@ def create_job():
     form = JobForm()
 
     if form.validate_on_submit():
-        if form.salary_min.data is not None and form.salary_max.data is not None:
-            if form.salary_min.data > form.salary_max.data:
-                raise ErrorValidacion(
-                    mensaje="El salario mínimo no puede ser mayor que el salario máximo"
-                )
-
-        if form.posted_date.data and form.closing_date.data:
-            if form.posted_date.data > form.closing_date.data:
-                raise ErrorValidacion(
-                    mensaje="La fecha de publicación no puede ser posterior a la fecha de cierre"
-                )
-
         job_data = {
             "title": form.title.data,
             "short_description": form.short_description.data,
@@ -172,8 +172,8 @@ def create_job():
             "closing_date": form.closing_date.data,
             "status": form.status.data,
             "remote": form.remote.data,
-            "required_skills": form.required_skills.data,  # El servicio procesará esto
-            "benefits": form.benefits.data,  # El servicio procesará esto
+            "required_skills": form.required_skills.data,
+            "benefits": form.benefits.data,
         }
 
         try:
@@ -187,11 +187,20 @@ def create_job():
                     flash("Trabajo creado pero no se pudo obtener su ID", "warning")
                     return redirect(url_for("job.list_jobs"))
             else:
-                raise AdFluxError(mensaje=message, codigo=status_code)
+                # Usar flash para mostrar el error del servicio si no es una excepción
+                flash(f"Error al crear trabajo: {message}", "error")
 
         except SQLAlchemyError as e:
+            # Esto todavía puede ocurrir si hay un problema de BD no capturado por el servicio
             raise ErrorBaseDatos(mensaje=f"Error de base de datos al crear trabajo: {str(e)}")
+        except Exception as e:
+             # Capturar otras excepciones inesperadas
+             if not isinstance(e, AdFluxError): # Evitar recapturar AdFluxError si se lanza arriba
+                 current_app.logger.error(f"Error inesperado al crear trabajo: {e}", exc_info=True)
+                 flash("Ocurrió un error inesperado al crear el trabajo.", "error")
 
+    # Si el formulario no es válido (incluyendo validadores personalizados) o hubo error en el servicio,
+    # se vuelve a renderizar el formulario.
     return render_template("job_form.html", title="Crear Trabajo", form=form, job=None)
 
 
@@ -202,6 +211,7 @@ def update_job(job_id):
     job = JobService.get_job_by_id(job_id)
 
     if not job:
+        # Esta excepción será capturada por @manejar_error_web
         raise ErrorRecursoNoEncontrado(
             mensaje=f"Trabajo con ID {job_id} no encontrado.",
             recurso="Trabajo",
@@ -211,22 +221,11 @@ def update_job(job_id):
     form = JobForm(obj=job)
 
     if request.method == "GET":
+        # Poblar skills/benefits como string para el TextArea
         form.required_skills.data = ", ".join(job.required_skills) if job.required_skills else ""
         form.benefits.data = ", ".join(job.benefits) if job.benefits else ""
 
     if form.validate_on_submit():
-        if form.salary_min.data is not None and form.salary_max.data is not None:
-            if form.salary_min.data > form.salary_max.data:
-                raise ErrorValidacion(
-                    mensaje="El salario mínimo no puede ser mayor que el salario máximo"
-                )
-
-        if form.posted_date.data and form.closing_date.data:
-            if form.posted_date.data > form.closing_date.data:
-                raise ErrorValidacion(
-                    mensaje="La fecha de publicación no puede ser posterior a la fecha de cierre"
-                )
-
         job_data = {
             "title": form.title.data,
             "short_description": form.short_description.data,
@@ -243,8 +242,8 @@ def update_job(job_id):
             "closing_date": form.closing_date.data,
             "status": form.status.data,
             "remote": form.remote.data,
-            "required_skills": form.required_skills.data,  # El servicio procesará esto
-            "benefits": form.benefits.data,  # El servicio procesará esto
+            "required_skills": form.required_skills.data,
+            "benefits": form.benefits.data,
         }
 
         try:
@@ -255,12 +254,23 @@ def update_job(job_id):
                 if updated_job and hasattr(updated_job, "job_id"):
                     return redirect(url_for("job.job_details", job_id=updated_job.job_id))
                 else:
+                    # Esto no debería pasar si status_code es 200, pero por si acaso
                     flash("Trabajo actualizado pero no se pudo obtener su ID", "warning")
                     return redirect(url_for("job.list_jobs"))
             else:
-                raise AdFluxError(mensaje=message, codigo=status_code)
+                 # Usar flash para mostrar el error del servicio si no es una excepción
+                 flash(f"Error al actualizar trabajo: {message}", "error")
 
         except SQLAlchemyError as e:
             raise ErrorBaseDatos(mensaje=f"Error de base de datos al actualizar trabajo: {str(e)}")
+        except Exception as e:
+            if not isinstance(e, AdFluxError):
+                 current_app.logger.error(f"Error inesperado al actualizar trabajo: {e}", exc_info=True)
+                 flash("Ocurrió un error inesperado al actualizar el trabajo.", "error")
 
+    # Si el formulario no es válido o hubo error en el servicio, se vuelve a renderizar.
+    # Nota: Si hubo un error en el servicio (POST), los datos del formulario
+    # que se muestran son los que el usuario envió (correctamente manejado por WTForms).
+    # Sin embargo, los campos de skills/benefits se mostrarán como el usuario los escribió,
+    # no como se procesaron para el servicio (lo cual está bien).
     return render_template("job_form.html", title="Editar Trabajo", form=form, job=job)

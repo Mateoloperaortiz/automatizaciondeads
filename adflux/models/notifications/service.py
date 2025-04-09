@@ -71,6 +71,20 @@ class NotificationService:
         return notification
     
     @staticmethod
+    def get_unread_count():
+        """
+        Obtiene el número total de notificaciones no leídas.
+        
+        Returns:
+            Número entero de notificaciones no leídas.
+        """
+        try:
+            return Notification.query.filter_by(is_read=False).count()
+        except Exception as e:
+            current_app.logger.error(f"Error al contar notificaciones no leídas: {e}", exc_info=True)
+            return 0 # Devolver 0 en caso de error
+    
+    @staticmethod
     def get_unread_notifications(limit=10):
         """
         Obtiene las notificaciones no leídas más recientes.

@@ -244,14 +244,11 @@ def manejar_excepcion(
             return mensaje
 
     elif isinstance(excepcion, FacebookRequestError):
-        mensaje_error = ""
+        mensaje_api_error = ""
         get_api_error = lambda obj: obj.api_error_message() if hasattr(obj, 'api_error_message') and callable(getattr(obj, 'api_error_message', None)) else str(obj)
-        try:
-            mensaje_error = get_api_error(excepcion)
-        except Exception:
-            mensaje_error = str(excepcion)
-            
-        mensaje = f"{prefijo_mensaje}: Error de API Meta - {mensaje_error}"
+        # Directly call the lambda, let other exceptions propagate if needed
+        mensaje_api_error = get_api_error(excepcion)
+        mensaje = f"{prefijo_mensaje}: Error de API Meta - {mensaje_api_error}"
         registrar_error(mensaje, excepcion, exc_info=True)
         if es_api:
             return respuesta_error_api(mensaje, 500, detalles={"api": "Meta"})
@@ -332,27 +329,22 @@ def handle_meta_api_error(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Tuple[bool, str, Any]:
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except FacebookRequestError as e:
-            mensaje_error = f"Error de API Meta en {func.__name__}: {e}"
-            registrar_error(mensaje_error, e)
+            # Handle Facebook errors specifically
             mensaje_api_error = ""
+            # Use lambda to safely attempt calling api_error_message()
             get_api_error = lambda obj: obj.api_error_message() if hasattr(obj, 'api_error_message') and callable(getattr(obj, 'api_error_message', None)) else str(obj)
-            try:
-                mensaje_api_error = get_api_error(e)
-            except Exception:
-                mensaje_api_error = str(e)
-            return False, f"Error de API: {mensaje_api_error}", None
+            # Directly call the lambda, let other exceptions propagate if needed
+            mensaje_api_error = get_api_error(e)
+            raise ErrorAPI(mensaje=f"Error de API Meta: {mensaje_api_error}", api="Meta", excepcion_original=e)
         except ImportError as e:
-            mensaje_error = f"Error de importación en {func.__name__}: {e}"
-            registrar_error(mensaje_error, e)
-            return False, f"Error de importación del SDK: {e}", None
+            raise AdFluxError(mensaje=f"Error de importación del SDK de Meta: {e}", codigo=500)
         except Exception as e:
-            mensaje_error = f"Error inesperado en {func.__name__}: {e}"
-            registrar_error(mensaje_error, e, exc_info=True)
-            return False, f"Error inesperado: {e}", None
+            # Wrap other exceptions
+            raise ErrorAPI(mensaje=f"Error inesperado interactuando con API Meta: {e}", api="Meta", excepcion_original=e)
 
     return wrapper
 
@@ -370,17 +362,11 @@ def handle_google_ads_api_error(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Dict[str, Any]:
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception as e:  # Reemplazar con GoogleAdsException cuando se implemente
-            mensaje_error = f"Error de API Google Ads en {func.__name__}: {e}"
-            registrar_error(mensaje_error, e, exc_info=True)
-            return {
-                "success": False,
-                "message": f"Error de API Google Ads: {str(e)}",
-                "external_ids": None,
-            }
+        except Exception as e:
+            raise ErrorAPI(mensaje=f"Error de API Google Ads: {str(e)}", api="Google Ads", excepcion_original=e)
 
     return wrapper
 
@@ -398,12 +384,11 @@ def handle_gemini_api_error(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Tuple[bool, str, Dict[str, Any]]:
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            mensaje_error = f"Error de API Gemini en {func.__name__}: {e}"
-            registrar_error(mensaje_error, e, exc_info=True)
-            return False, f"Error de API Gemini: {str(e)}", {}
+            # Raise standardized ErrorAPI
+            raise ErrorAPI(mensaje=f"Error de API Gemini: {str(e)}", api="Gemini", excepcion_original=e)
 
     return wrapper

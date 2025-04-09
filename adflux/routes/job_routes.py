@@ -1,9 +1,15 @@
 from flask_restx import Namespace, Resource, fields, reqparse
-from ..models import db, JobOpening, Candidate  # Importar modelos necesarios
-from ..schemas import job_schema, jobs_schema  # Asumiendo que los esquemas existen
-from flask import current_app
-from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado
+from ..models import db, JobOpening, Candidate  # Mantener para tipos?
+from ..schemas import job_schema, jobs_schema
+from flask import current_app, request # Añadir request
+from ..api.common.excepciones import AdFluxError, ErrorValidacion, ErrorRecursoNoEncontrado, ErrorBaseDatos # Asegurar ErrorBaseDatos
 from ..api.common.error_handling import manejar_error_api
+
+# Importar el servicio
+from ..services.job_service import JobService
+
+# Instanciar el servicio
+job_service = JobService()
 
 # Namespace para Puestos
 jobs_ns = Namespace("jobs", description="Operaciones de Ofertas de Empleo")
@@ -16,23 +22,24 @@ job_model = jobs_ns.model(
             readonly=True, description="El identificador único del puesto (ej., JOB-0001)"
         ),
         "title": fields.String(required=True, description="Título del puesto"),
-        "description": fields.String(required=True, description="Descripción del puesto"),
+        "short_description": fields.String(description="Descripción corta"),
+        "description": fields.String(description="Descripción completa"),
+        "company_name": fields.String(description="Nombre de la empresa"),
         "location": fields.String(description="Ubicación del puesto"),
-        "company": fields.String(description="Nombre de la empresa"),
-        "required_skills": fields.List(
-            fields.String, description="Lista de habilidades requeridas"
-        ),
+        "department": fields.String(description="Departamento"),
         "salary_min": fields.Integer(description="Salario mínimo"),
         "salary_max": fields.Integer(description="Salario máximo"),
-        "posted_date": fields.Date(description="Fecha en que se publicó el puesto"),
-        "status": fields.String(
-            default="open", description="Estado del puesto (ej., abierto, cerrado, cubierto)"
-        ),
-        "target_segments": fields.List(
-            fields.Integer,
-            readonly=True,
-            description="Lista de IDs de segmentos de candidatos objetivo",
-        ),
+        "employment_type": fields.String(description="Tipo de empleo"),
+        "experience_level": fields.String(description="Nivel de experiencia"),
+        "education_level": fields.String(description="Nivel de educación"),
+        "posted_date": fields.Date(description="Fecha de publicación"),
+        "closing_date": fields.Date(description="Fecha de cierre"),
+        "status": fields.String(description="Estado del puesto (open, closed, draft)"),
+        "remote": fields.Boolean(description="Indica si es trabajo remoto"),
+        "required_skills": fields.List(fields.String, description="Lista de habilidades requeridas"),
+        "benefits": fields.List(fields.String, description="Lista de beneficios"),
+        "created_at": fields.DateTime(readonly=True, description="Fecha de creación"),
+        "updated_at": fields.DateTime(readonly=True, description="Fecha de última actualización"),
     },
 )
 
@@ -85,7 +92,6 @@ publish_meta_ad_model = jobs_ns.model(
             required=False,
             description="Opcional: Ruta local a un archivo de imagen para subir y usar (ej., images/image1.png)",
         ),
-        # Añadir campos opcionales como image_hash, link_title, start/end times más tarde si es necesario
     },
 )
 
@@ -96,185 +102,209 @@ job_list_parser.add_argument(
     "per_page", type=int, location="args", default=10, help="Elementos por página"
 )
 job_list_parser.add_argument(
-    "status", type=str, location="args", default="open", help="Filtrar por estado"
+    "status", type=str, location="args", help="Filtrar por estado (open, closed, draft)"
+)
+job_list_parser.add_argument(
+    "query", type=str, location="args", help="Término de búsqueda para título o descripción"
+)
+job_list_parser.add_argument(
+    "sort_by", type=str, location="args", default="created_at", help="Campo para ordenar"
+)
+job_list_parser.add_argument(
+    "sort_order", type=str, location="args", default="desc", help="Orden (asc o desc)"
 )
 
-
 # --- Recursos de Puestos ---
-@jobs_ns.route("/")  # Ruta dentro del namespace
+@jobs_ns.route("/")
 class JobListResource(Resource):
     @jobs_ns.doc("list_jobs", parser=job_list_parser)
-    @jobs_ns.marshal_list_with(job_model)
+    @jobs_ns.response(200, "Lista de trabajos obtenida", job_model)
     def get(self):
-        """Listar todas las ofertas de empleo"""
+        """Listar todas las ofertas de empleo usando JobService"""
         args = job_list_parser.parse_args()
-        query = JobOpening.query
-        if args["status"]:
-            query = query.filter_by(status=args["status"])
+        try:
+            # Validar paginación
+            if args['page'] < 1:
+                 raise ErrorValidacion(mensaje="El número de página debe ser >= 1")
+            if args['per_page'] < 1 or args['per_page'] > 100:
+                 raise ErrorValidacion(mensaje="per_page debe estar entre 1 y 100")
 
-        pagination = query.paginate(page=args["page"], per_page=args["per_page"], error_out=False)
-        # Usar esquema Marshmallow para la serialización real
-        return jobs_schema.dump(pagination.items), 200, {"X-Total-Count": pagination.total}
+            # Llamar al servicio
+            jobs, pagination = JobService.get_jobs(
+                page=args["page"],
+                per_page=args["per_page"],
+                status=args["status"],
+                query=args["query"],
+                sort_by=args["sort_by"],
+                sort_order=args["sort_order"],
+            )
+
+            # Usar esquema Marshmallow para la serialización
+            result = jobs_schema.dump(jobs)
+            # Devolver metadatos de paginación en encabezados
+            headers = {
+                 "X-Total-Count": pagination.total,
+                 "X-Page": pagination.page,
+                 "X-Per-Page": pagination.per_page,
+                 "X-Total-Pages": pagination.pages,
+            }
+            return result, 200, headers
+
+        except (ErrorValidacion, ErrorBaseDatos) as e:
+            return manejar_error_api(e)
+        except Exception as e:
+            # Capturar errores inesperados
+            current_app.logger.error(f"Error inesperado al listar trabajos: {e}", exc_info=True)
+            error = AdFluxError(mensaje="Error interno del servidor al listar trabajos", codigo=500)
+            return manejar_error_api(error)
 
     @jobs_ns.doc("create_job")
     @jobs_ns.expect(job_model, validate=True)
-    @jobs_ns.marshal_with(job_model, code=201)
+    @jobs_ns.response(201, "Trabajo creado exitosamente", job_model)
+    @jobs_ns.response(400, "Error de validación")
+    @jobs_ns.response(500, "Error interno del servidor")
     def post(self):
-        """Crear una nueva oferta de empleo"""
-        # Usar esquema Marshmallow para deserialización y validación
+        """Crear una nueva oferta de empleo usando JobService"""
         try:
-            job_data = job_schema.load(jobs_ns.payload)
-        except Exception as e:  # Reemplazar con error específico de validación de Marshmallow
-            error = ErrorValidacion(
-                mensaje="La validación del payload de entrada falló",
-                errores=str(e),
-                codigo=400
-            )
-            return manejar_error_api(error)
+            # La validación con Marshmallow debería hacerse en el servicio
+            # para mantener la lógica de negocio allí.
+            # Aquí solo pasamos el payload.
+            job_data = request.json # Obtener payload JSON
+            if not job_data:
+                 raise ErrorValidacion(mensaje="Payload JSON vacío o faltante.")
 
-        try:
-            new_job = JobOpening(**job_data)
-            db.session.add(new_job)
-            db.session.commit()
-            # Usar esquema Marshmallow para la serialización de la respuesta
-            return job_schema.dump(new_job), 201
+            # Llamar al servicio para crear
+            # El servicio se encarga de la validación detallada (Marshmallow) y creación
+            job, message, status_code = job_service.create_job(job_data)
+
+            # El servicio debería lanzar excepciones para errores, que se capturan abajo
+            # O manejar el código de estado devuelto
+            if status_code == 201:
+                 return job_schema.dump(job), 201
+            else:
+                 # Si el servicio devuelve código de error sin lanzar excepción
+                 # (se prefiere lanzar excepciones específicas)
+                 raise AdFluxError(mensaje=message, codigo=status_code)
+
+        except (ErrorValidacion, ErrorBaseDatos) as e:
+             # Errores específicos lanzados por el servicio
+             return manejar_error_api(e)
         except Exception as e:
-            current_app.logger.error(f"Error al crear oferta de empleo: {e}", exc_info=True)
-            error = AdFluxError(mensaje=f"Error al crear oferta de empleo: {e}", codigo=500)
-            return manejar_error_api(error)
+             # Otros errores inesperados
+             current_app.logger.error(f"Error inesperado al crear trabajo: {e}", exc_info=True)
+             error = AdFluxError(mensaje="Error interno del servidor al crear trabajo", codigo=500)
+             return manejar_error_api(error)
 
 
-@jobs_ns.route("/<int:job_id>")
-@jobs_ns.param("job_id", "El identificador del puesto")
+@jobs_ns.route("/<string:job_id>")
+@jobs_ns.param("job_id", "El identificador del puesto (ej., JOB-0001)")
 @jobs_ns.response(404, "Puesto no encontrado")
 class JobResource(Resource):
     @jobs_ns.doc("get_job")
-    @jobs_ns.marshal_with(job_model)
+    @jobs_ns.response(200, "Detalles del trabajo", job_model)
     def get(self, job_id):
-        """Obtener una oferta de empleo dado su identificador"""
-        job = JobOpening.query.get(job_id)
-        if not job:
-            error = ErrorRecursoNoEncontrado(
-                recurso="Oferta de empleo",
-                identificador=job_id
-            )
+        """Obtener una oferta de empleo por su ID usando JobService"""
+        try:
+            job = job_service.get_job_by_id(job_id)
+            # El servicio debe lanzar ErrorRecursoNoEncontrado si no existe
+            return job_schema.dump(job), 200
+        except ErrorRecursoNoEncontrado as e:
+            return manejar_error_api(e)
+        except Exception as e:
+            current_app.logger.error(f"Error inesperado al obtener trabajo {job_id}: {e}", exc_info=True)
+            error = AdFluxError(mensaje="Error interno del servidor", codigo=500)
             return manejar_error_api(error)
-        return job_schema.dump(job)
 
     @jobs_ns.doc("update_job")
-    @jobs_ns.expect(job_model)
-    @jobs_ns.marshal_with(job_model)
+    @jobs_ns.expect(job_model, validate=True)
+    @jobs_ns.response(200, "Trabajo actualizado", job_model)
+    @jobs_ns.response(400, "Error de validación")
+    @jobs_ns.response(404, "Puesto no encontrado")
     def put(self, job_id):
-        """Actualizar una oferta de empleo"""
-        job = JobOpening.query.get(job_id)
-        if not job:
-            error = ErrorRecursoNoEncontrado(
-                recurso="Oferta de empleo",
-                identificador=job_id
-            )
-            return manejar_error_api(error)
-            
+        """Actualizar una oferta de empleo usando JobService"""
         try:
-            job_data = job_schema.load(
-                jobs_ns.payload, partial=True
-            )  # Permitir actualizaciones parciales
-        except Exception as e:
-            error = ErrorValidacion(
-                mensaje="La validación del payload de entrada falló",
-                errores=str(e),
-                codigo=400
-            )
-            return manejar_error_api(error)
+            job_data = request.json
+            if not job_data:
+                 raise ErrorValidacion(mensaje="Payload JSON vacío o faltante.")
 
-        try:
-            for key, value in job_data.items():
-                setattr(job, key, value)
+            # Llamar al servicio para actualizar
+            # El servicio se encarga de buscar, validar (partial) y actualizar
+            updated_job, message, status_code = job_service.update_job(job_id, job_data)
 
-            db.session.commit()
-            return job_schema.dump(job)
+            if status_code == 200:
+                 return job_schema.dump(updated_job), 200
+            else:
+                 # Asumiendo que el servicio lanza excepciones para 404, 400, etc.
+                 # Si no, manejar el código de estado aquí.
+                 raise AdFluxError(mensaje=message, codigo=status_code)
+
+        except (ErrorValidacion, ErrorRecursoNoEncontrado, ErrorBaseDatos) as e:
+            return manejar_error_api(e)
         except Exception as e:
-            current_app.logger.error(f"Error al actualizar oferta de empleo: {e}", exc_info=True)
-            error = AdFluxError(mensaje=f"Error al actualizar oferta de empleo: {e}", codigo=500)
+            current_app.logger.error(f"Error inesperado al actualizar trabajo {job_id}: {e}", exc_info=True)
+            error = AdFluxError(mensaje="Error interno del servidor al actualizar trabajo", codigo=500)
             return manejar_error_api(error)
 
     @jobs_ns.doc("delete_job")
     @jobs_ns.response(204, "Puesto eliminado")
+    @jobs_ns.response(404, "Puesto no encontrado")
     def delete(self, job_id):
-        """Eliminar una oferta de empleo"""
-        job = JobOpening.query.get(job_id)
-        if not job:
-            error = ErrorRecursoNoEncontrado(
-                recurso="Oferta de empleo",
-                identificador=job_id
-            )
-            return manejar_error_api(error)
-            
+        """Eliminar una oferta de empleo usando JobService"""
         try:
-            db.session.delete(job)
-            db.session.commit()
-            return "", 204
+            success, message = job_service.delete_job(job_id)
+            # El servicio debe lanzar ErrorRecursoNoEncontrado si no existe
+            # y devolver True/False para éxito/error genérico
+            if success:
+                return "", 204
+            else:
+                # Si el servicio no lanza excepción pero falla
+                raise AdFluxError(mensaje=message or "Error al eliminar trabajo", codigo=500)
+        except ErrorRecursoNoEncontrado as e:
+            return manejar_error_api(e)
         except Exception as e:
-            current_app.logger.error(f"Error al eliminar oferta de empleo: {e}", exc_info=True)
-            error = AdFluxError(mensaje=f"Error al eliminar oferta de empleo: {e}", codigo=500)
+            current_app.logger.error(f"Error inesperado al eliminar trabajo {job_id}: {e}", exc_info=True)
+            error = AdFluxError(mensaje="Error interno del servidor al eliminar trabajo", codigo=500)
             return manejar_error_api(error)
 
 
 # --- Endpoint de Publicación de Anuncios de Meta ---
-@jobs_ns.route("/<string:job_id>/publish-meta-ad")  # Usar job_id de tipo string del modelo
+@jobs_ns.route("/<string:job_id>/publish-meta-ad")
 @jobs_ns.param("job_id", "El identificador del puesto (ej., JOB-0001)")
 class JobPublishMetaAdResource(Resource):
     @jobs_ns.doc("publish_meta_ad_for_job")
     @jobs_ns.expect(publish_meta_ad_model, validate=True)
-    # Actualizar códigos de respuesta y descripciones para tarea asíncrona
     @jobs_ns.response(202, "Tarea de creación de estructura de Meta aceptada.")
     @jobs_ns.response(400, "Solicitud Incorrecta / Error de Validación")
     @jobs_ns.response(404, "Puesto no encontrado")
     @jobs_ns.response(500, "Error al enviar la tarea")
     def post(self, job_id):
-        """Desencadena una tarea asíncrona para crear la estructura de la campaña de Meta para una oferta de empleo específica."""
-        # 0. Importar la tarea Celery
+        """Desencadena una tarea asíncrona para crear la estructura de Meta para un trabajo."""
         from ..tasks import async_create_meta_structure_for_job
-        from flask import current_app  # Para logging
 
-        # 1. Verificar que el Puesto Existe (Verificación rápida antes de encolar la tarea)
-        job_exists = JobOpening.query.filter_by(job_id=job_id).count() > 0
-        if not job_exists:
-            return {"message": f"Puesto con ID {job_id} no encontrado."}, 404
-
-        # 2. Obtener Payload (Esto se pasa directamente a la tarea)
-        payload = jobs_ns.payload
-        # La validación básica puede ocurrir aquí, pero la validación detallada debería estar en la tarea
-        # Por ejemplo, verificar las claves requeridas para la tarea misma
-        required_keys = [
-            "ad_account_id",
-            "page_id",
-            "campaign_name",
-            "ad_set_name",
-            "daily_budget_cents",
-            "ad_creative_name",
-            "ad_message",
-            "ad_link_url",
-            "ad_name",
-        ]
-        missing_keys = [k for k in required_keys if k not in payload]
-        if missing_keys:
-            return {"message": f"Faltan campos requeridos en el payload: {missing_keys}"}, 400
-
-        # 3. Desencadenar Tarea Celery
         try:
-            current_app.logger.info(
-                f"Enviando tarea de creación de estructura de Meta para el ID de Puesto: {job_id}"
-            )
-            # Pasar el job_id y el diccionario completo del payload a la tarea
+            # 1. Verificar que el Puesto Existe usando el servicio
+            job_service.get_job_by_id(job_id) # Lanza ErrorRecursoNoEncontrado si no existe
+
+            # 2. Obtener Payload y validación básica
+            payload = request.json
+
+            # 2. Validar Payload usando el servicio
+            job_service.validate_meta_publish_payload(payload)
+
+            # 3. Desencadenar Tarea Celery
+            current_app.logger.info(f"Enviando tarea de creación de estructura de Meta para Job ID: {job_id}")
             task = async_create_meta_structure_for_job.delay(job_id=job_id, params=payload)
-            current_app.logger.info(f"Tarea {task.id} enviada para el ID de Puesto: {job_id}")
-            # Devolver 202 Aceptado
+            current_app.logger.info(f"Tarea {task.id} enviada para Job ID: {job_id}")
             return {
                 "message": "Tarea de creación de estructura de Meta aceptada.",
                 "task_id": task.id,
             }, 202
+
+        except (ErrorValidacion, ErrorRecursoNoEncontrado) as e:
+             # Errores conocidos
+             return manejar_error_api(e)
         except Exception as e:
-            current_app.logger.error(
-                f"Error al enviar la tarea para el puesto {job_id}: {e}", exc_info=True
-            )
-            return {"message": "Error al enviar la tarea a la cola."}, 500
+             # Error al encolar la tarea u otro error inesperado
+             current_app.logger.error(f"Error al enviar la tarea para el puesto {job_id}: {e}", exc_info=True)
+             error = AdFluxError(mensaje="Error interno al enviar la tarea a la cola.", codigo=500)
+             return manejar_error_api(error)

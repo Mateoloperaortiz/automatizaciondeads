@@ -1,0 +1,13 @@
+# Development and Testing Dependencies
+-c requirements.txt # Constrain versions based on runtime requirements
+
+pytest
+pytest-cov
+coverage # Explicitly add coverage if needed by your CI/run scripts
+flake8
+black
+mypy
+pydocstyle
+pre-commit
+# Add pip-tools itself if you want to pin its version for consistency
+# pip-tools

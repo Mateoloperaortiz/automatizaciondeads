@@ -40,71 +40,71 @@ def scheduled_train_and_predict():
     Se ejecuta dentro del contexto de la aplicación proporcionado por Flask-APScheduler.
     """
     app = current_app._get_current_object()  # Obtener la instancia real de la aplicación Flask
-    app.logger.info("Iniciando tarea programada de segmentación de candidatos...")
+    logger = app.logger or log # Use configured logger
+    log_prefix = "[APScheduler train_and_predict_segments]"
+    logger.info(f"{log_prefix} Iniciando tarea programada...")
 
     start_time = time.time()
 
     try:
-        # 1. Cargar todos los candidatos de la BD
-        app.logger.info("Cargando datos de candidatos desde la base de datos...")
+        logger.info(f"{log_prefix} Paso 1: Cargando datos de candidatos...")
         all_candidates = Candidate.query.all()
         if not all_candidates:
-            app.logger.info(
-                "No se encontraron candidatos en la base de datos. Omitiendo segmentación."
-            )
+            logger.info(f"{log_prefix} No se encontraron candidatos. Tarea finalizada.")
             return
+
+        num_candidates = len(all_candidates)
+        logger.info(f"{log_prefix} Encontrados {num_candidates} candidatos.")
+        if num_candidates > 10000: # Example threshold
+            logger.warning(f"{log_prefix} Alerta: Cargando un gran número de candidatos ({num_candidates}), considerar optimización de memoria si es necesario.")
 
         candidate_df = load_candidate_data(candidates=all_candidates)
         if candidate_df.empty:
-            app.logger.info(
-                "El DataFrame de candidatos está vacío después de la carga. Omitiendo segmentación."
-            )
+            logger.info(f"{log_prefix} DataFrame de candidatos vacío después de la carga. Tarea finalizada.")
             return
 
-        app.logger.info(f"Cargados {len(candidate_df)} candidatos.")
-
-        # 2. Entrenar (o reentrenar) el modelo
-        # Usando las rutas predeterminadas definidas en ml_model.py
-        app.logger.info("Entrenando/reentrenando modelo de segmentación...")
+        logger.info(f"{log_prefix} Paso 2: Entrenando/reentrenando modelo de segmentación...")
+        n_clusters = app.config.get("ML_N_CLUSTERS", DEFAULT_N_CLUSTERS)
         model, preprocessor = train_segmentation_model(
             candidate_df,
-            n_clusters=app.config.get(
-                "ML_N_CLUSTERS", DEFAULT_N_CLUSTERS
-            ),  # Permitir sobrescribir mediante configuración
+            n_clusters=n_clusters
         )
-        app.logger.info("Entrenamiento del modelo completo.")
+        logger.info(f"{log_prefix} Entrenamiento del modelo completo (Clusters: {n_clusters}).")
 
-        if not ensure_segment_records(model, logger=app.logger):
-            app.logger.error("No se pudieron crear los registros de segmento necesarios.")
+        logger.info(f"{log_prefix} Paso 3: Asegurando registros de Segmento en BD...")
+        if not ensure_segment_records(model, logger=logger):
+            logger.error(f"{log_prefix} No se pudieron crear/verificar los registros de Segmento. Abortando actualización.")
             return
 
-        app.logger.info(f"Actualizando segmentos para {len(all_candidates)} candidatos en lotes de {BATCH_SIZE}...")
+        logger.info(f"{log_prefix} Paso 4: Actualizando segmentos para {num_candidates} candidatos (Batch size: {BATCH_SIZE})...")
         update_count, error_count = update_candidate_segments(
             candidates=all_candidates,
             model=model,
             preprocessor=preprocessor,
-            logger=app.logger,
+            logger=logger,
             batch_size=BATCH_SIZE
         )
         
         if update_count > 0:
-            app.logger.info(f"Segmentos actualizados exitosamente para {update_count} candidatos.")
-        else:
-            app.logger.info("No fue necesario actualizar ningún segmento de candidato.")
+            logger.info(f"{log_prefix} Segmentos actualizados exitosamente para {update_count} candidatos.")
+        elif update_count == 0:
+            logger.info(f"{log_prefix} No fue necesario actualizar ningún segmento de candidato.")
             
         if error_count > 0:
-            app.logger.warning(f"Se encontraron errores al procesar segmentos para {error_count} candidatos.")
+            logger.warning(f"{log_prefix} Se encontraron errores al procesar segmentos para {error_count} candidatos.")
 
     except Exception as e:
-        # Registrar cualquier otro error inesperado durante la tarea
         db.session.rollback()  # Revertir cualquier cambio parcial potencial
-        app.logger.error(f"Error durante la tarea de segmentación programada: {e}")
-        app.logger.error(traceback.format_exc())
+        err_msg = f"Error INESPERADO durante la tarea de segmentación programada: {e}"
+        logger.error(f"{log_prefix} {err_msg}")
+        logger.error(traceback.format_exc())
+        # Note: APScheduler tasks do not automatically retry on failure.
+        # Consider moving to Celery if automatic retries are needed for transient errors.
 
     finally:
         end_time = time.time()
-        app.logger.info(
-            f"Tarea programada de segmentación de candidatos finalizada. Duración: {end_time - start_time:.2f} segundos"
+        logger.info(
+            f"{log_prefix} Tarea finalizada. Duración: {end_time - start_time:.2f} segundos"
         )
 
 
@@ -113,18 +113,20 @@ def trigger_train_and_predict():
     # Esto necesita el contexto de la aplicación para ejecutarse
     app = current_app._get_current_object()
     with app.app_context():
-        app.logger.info("Disparando manualmente la tarea de segmentación de candidatos...")
+        logger = app.logger or log
+        logger.info("[Manual Trigger] Disparando tarea scheduled_train_and_predict...")
         # Nota: La función scheduled_train_and_predict espera ser ejecutada
         # por el scheduler que proporciona el contexto implícitamente.
         # Llamarla directamente requiere el envoltorio de contexto.
         scheduled_train_and_predict()
-        app.logger.info("Disparo manual de la tarea de segmentación finalizado.")
+        logger.info("[Manual Trigger] Tarea scheduled_train_and_predict finalizada.")
 
         # Devolver estado de éxito y mensaje
         return True, "Tarea de segmentación disparada exitosamente."
 
 
-@celery.task(bind=True, name="tasks.run_candidate_segmentation_task")
+@celery.task(bind=True, name="tasks.run_candidate_segmentation_task",
+             autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 30})
 def run_candidate_segmentation_task(self, candidate_ids=None):
     """
     Tarea Celery para ejecutar la segmentación de candidatos.
@@ -139,41 +141,49 @@ def run_candidate_segmentation_task(self, candidate_ids=None):
     """
     app = current_app._get_current_object()
     logger = app.logger or log
-    logger.info(f"[Tarea {self.request.id}] Iniciando tarea de segmentación de candidatos...")
+    task_id = self.request.id
+    log_prefix = f"[Celery {task_id} run_candidate_segmentation]"
+    logger.info(f"{log_prefix} Iniciando tarea (Candidatos: {candidate_ids or 'Todos'})...")
 
     results = {"success": False, "message": "", "updated_count": 0, "error_count": 0}
+    candidates = [] # Initialize
 
     try:
-        # 1. Cargar el modelo y preprocesador existentes
-        logger.info(f"[Tarea {self.request.id}] Cargando modelo de segmentación existente...")
+        logger.info(f"{log_prefix} Paso 1: Cargando modelo y preprocesador existentes...")
         model, preprocessor = load_segmentation_model()
         if model is None or preprocessor is None:
             msg = "No se pudo cargar el modelo de segmentación. Ejecute primero el entrenamiento."
-            logger.error(f"[Tarea {self.request.id}] {msg}")
+            logger.error(f"{log_prefix} {msg}")
             results["message"] = msg
+            # Non-retryable setup error
             return results
 
-        # 2. Cargar candidatos
+        logger.info(f"{log_prefix} Paso 2: Cargando candidatos...")
         if candidate_ids:
-            logger.info(
-                f"[Tarea {self.request.id}] Cargando {len(candidate_ids)} candidatos específicos..."
-            )
+            logger.debug(f"{log_prefix} Cargando {len(candidate_ids)} candidatos específicos.")
             candidates = Candidate.query.filter(Candidate.candidate_id.in_(candidate_ids)).all()
             if not candidates:
                 msg = f"No se encontraron candidatos con los IDs proporcionados: {candidate_ids}"
-                logger.warning(f"[Tarea {self.request.id}] {msg}")
+                logger.warning(f"{log_prefix} {msg}")
                 results["message"] = msg
+                results["success"] = True # Not an error if IDs don't match
                 return results
         else:
-            logger.info(f"[Tarea {self.request.id}] Cargando todos los candidatos...")
+            logger.debug(f"{log_prefix} Cargando todos los candidatos.")
             candidates = Candidate.query.all()
             if not candidates:
                 msg = "No se encontraron candidatos en la base de datos."
-                logger.warning(f"[Tarea {self.request.id}] {msg}")
+                logger.warning(f"{log_prefix} {msg}")
                 results["message"] = msg
+                results["success"] = True # Not an error if DB is empty
                 return results
 
-        logger.info(f"[Tarea {self.request.id}] Actualizando segmentos para {len(candidates)} candidatos en lotes de {BATCH_SIZE}...")
+        num_candidates = len(candidates)
+        logger.info(f"{log_prefix} Encontrados {num_candidates} candidatos para procesar.")
+        if not candidate_ids and num_candidates > 10000:
+            logger.warning(f"{log_prefix} Alerta: Procesando todos los candidatos ({num_candidates}), podría ser intensivo en recursos.")
+
+        logger.info(f"{log_prefix} Paso 3: Actualizando segmentos para {num_candidates} candidatos (Batch size: {BATCH_SIZE})...")
         update_count, error_count = update_candidate_segments(
             candidates=candidates,
             model=model,
@@ -189,14 +199,15 @@ def run_candidate_segmentation_task(self, candidate_ids=None):
         results["updated_count"] = update_count
         results["error_count"] = error_count
 
-        logger.info(f"[Tarea {self.request.id}] {results['message']}")
+        logger.info(f"{log_prefix} {results['message']}")
         return results
 
     except Exception as e:
         db.session.rollback()
-        logger.error(
-            f"[Tarea {self.request.id}] Error inesperado durante la segmentación: {e}",
-            exc_info=True,
-        )
-        results["message"] = f"Error inesperado: {str(e)}"
-        return results
+        # Log and re-raise for Celery retry/failure handling
+        err_msg = f"Error INESPERADO durante la segmentación: {e}"
+        logger.error(f"{log_prefix} {err_msg}", exc_info=True)
+        results["message"] = err_msg
+        results["success"] = False
+        # Re-raise the exception caught
+        raise

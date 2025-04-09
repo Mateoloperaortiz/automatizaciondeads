@@ -1,0 +1,35 @@
+# Runtime dependencies for AdFlux
+
+Flask>=2.0.0,<3.0.0
+Flask-RESTful>=0.3.9,<0.4.0
+Flask-SQLAlchemy>=3.0.0,<4.0.0
+SQLAlchemy>=2.0.0,<2.1.0
+scikit-learn==1.6.1 # Pinned due to previous build issues
+numpy==2.2.4         # Pinned (dependency of pinned scikit-learn)
+joblib==1.4.0        # Pinned (dependency of pinned scikit-learn)
+scipy==1.15.2        # Pinned (dependency of pinned scikit-learn)
+# threadpoolctl will be resolved by pip-compile
+pandas==2.2.2        # Pinned
+psycopg2-binary>=2.9.0,<2.10.0
+click>=8.0.0,<9.0.0
+Faker>=10.0.0,<20.0.0
+flask-restx>=1.0
+Flask-Migrate>=4.0
+marshmallow>=3.0.0
+python-dotenv>=0.15.0
+python-dateutil>=2.8.0
+Flask-APScheduler>=1.12.0
+Flask-Marshmallow>=0.14.0
+marshmallow-sqlalchemy
+facebook_business>=22.0.0
+# yarl will be resolved by pip-compile
+google-generativeai>=0.5.0
+requests==2.32.3 # Pinned
+Flask-WTF>=1.0
+WTForms-SQLAlchemy>=0.3
+Flask-Mail>=0.9.0
+email_validator>=2.0.0
+celery
+redis
+gevent
+google-ads

@@ -15,7 +15,7 @@ notification_bp = Blueprint("notification", __name__, template_folder="../templa
 def list_notifications():
     """Renderiza la página de lista de notificaciones."""
     notifications = NotificationService.get_all_notifications(limit=100)
-    unread_count = Notification.query.filter_by(is_read=False).count()
+    unread_count = NotificationService.get_unread_count()
     
     return render_template(
         "notifications_list.html",
@@ -29,7 +29,7 @@ def list_notifications():
 def unread_notifications():
     """Renderiza la página de notificaciones no leídas."""
     notifications = NotificationService.get_unread_notifications(limit=100)
-    unread_count = len(notifications)
+    unread_count = NotificationService.get_unread_count()
     
     return render_template(
         "notifications_list.html",
@@ -74,7 +74,7 @@ def mark_all_as_read():
 @notification_bp.route("/count")
 def notification_count():
     """Retorna el número de notificaciones no leídas."""
-    count = Notification.query.filter_by(is_read=False).count()
+    count = NotificationService.get_unread_count()
     return jsonify({"count": count})
 
 

@@ -8,6 +8,8 @@ import os
 from flask import Flask
 from jinja2 import ChainableUndefined
 from flask_restx import Api
+import logging
+from logging.handlers import RotatingFileHandler
 
 from ..config import Config
 from ..extensions import db, migrate, scheduler, ma, csrf
@@ -36,6 +38,45 @@ def create_app(config_class=Config):
         template_folder=template_folder,
     )
     app.config.from_object(config_class)
+
+    # --- Configurar Logging --- #
+    # Eliminar manejadores predeterminados si no estamos en modo debug y no usamos nuestro manejador de consola
+    # O simplemente establecer el nivel y añadir nuestros manejadores.
+    # Probemos añadiendo primero.
+    log_formatter = logging.Formatter(app.config["LOG_FORMAT"])
+    log_level_name = app.config.get("LOG_LEVEL", "INFO").upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
+
+    app.logger.setLevel(log_level)
+
+    # Manejador de consola
+    if app.config.get("LOG_TO_CONSOLE", True):
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(log_formatter)
+        stream_handler.setLevel(log_level)
+        app.logger.addHandler(stream_handler)
+
+    # Manejador de archivo rotatorio
+    if app.config.get("LOG_TO_FILE", False):
+        log_file = app.config.get("LOG_FILE", "adflux.log")
+        # Asegurarse de que la ruta del log sea absoluta o relativa a la instancia
+        if not os.path.isabs(log_file):
+             log_file = os.path.join(app.instance_path, log_file)
+        # Crear directorio si no existe
+        log_dir = os.path.dirname(log_file)
+        if log_dir and not os.path.exists(log_dir):
+             try:
+                  os.makedirs(log_dir)
+             except OSError:
+                  app.logger.error(f"No se pudo crear el directorio de logs: {log_dir}")
+        
+        # 10 MB por archivo, 5 archivos de respaldo
+        file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 10, backupCount=5, encoding='utf-8')
+        file_handler.setFormatter(log_formatter)
+        file_handler.setLevel(log_level)
+        app.logger.addHandler(file_handler)
+
+    app.logger.info(f"Logging configurado. Nivel: {log_level_name}, Consola: {app.config.get('LOG_TO_CONSOLE')}, Archivo: {app.config.get('LOG_TO_FILE')}")
 
     # --- Habilitar Extensiones Jinja2 ---
     app.jinja_env.add_extension("jinja2.ext.do")

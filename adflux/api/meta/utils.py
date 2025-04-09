@@ -25,6 +25,7 @@ except ImportError:
 from adflux.api.common.error_handling import handle_meta_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.meta.client import get_client, MetaApiClient
+from adflux.api.common.excepciones import AdFluxError, ErrorValidacion
 
 # Configurar logger
 logger = get_logger("MetaUtils")
@@ -58,12 +59,14 @@ class MetaUtils:
         """
         api = self.client.get_api()
         if not api:
-            return False, "No se pudo inicializar la API de Meta", {}
+            # Raise exception instead of returning tuple
+            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
 
         try:
             # Verificar que el archivo existe
             if not os.path.exists(image_path):
-                return False, f"El archivo de imagen no existe: {image_path}", {}
+                # Raise validation error
+                raise ErrorValidacion(f"El archivo de imagen no existe: {image_path}")
 
             # Obtener la cuenta publicitaria
             account = AdAccount(ad_account_id)
@@ -90,9 +93,6 @@ class MetaUtils:
         except FacebookRequestError:
             # Este error ya será manejado por el decorador handle_meta_api_error
             raise
-        except Exception as e:
-            logger.error(f"Error inesperado al subir la imagen: {e}", e)
-            return False, f"Error inesperado al subir la imagen: {e}", {}
 
     @handle_meta_api_error
     def create_custom_audience(
@@ -122,7 +122,8 @@ class MetaUtils:
         """
         api = self.client.get_api()
         if not api:
-            return False, "No se pudo inicializar la API de Meta", {}
+            # Raise exception instead of returning tuple
+            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
 
         try:
             # Obtener la cuenta publicitaria
@@ -179,9 +180,6 @@ class MetaUtils:
         except FacebookRequestError:
             # Este error ya será manejado por el decorador handle_meta_api_error
             raise
-        except Exception as e:
-            logger.error(f"Error inesperado al crear la audiencia personalizada: {e}", e)
-            return False, f"Error inesperado al crear la audiencia personalizada: {e}", {}
 
     def _is_hashed(self, value: str) -> bool:
         """

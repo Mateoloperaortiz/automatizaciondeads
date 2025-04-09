@@ -227,3 +227,27 @@ class JobService(BaseService[JobOpening]):
             entity_id=str(job.job_id),
             send_realtime=True
         )
+
+    @classmethod
+    def validate_meta_publish_payload(cls, payload: Dict[str, Any]) -> None:
+        """
+        Valida que el payload para la publicación de Meta contenga los campos requeridos.
+
+        Args:
+            payload: Diccionario del cuerpo JSON de la solicitud.
+
+        Raises:
+            ErrorValidacion: Si faltan campos requeridos.
+        """
+        if not payload:
+            raise ErrorValidacion(mensaje="Payload JSON vacío o faltante.")
+
+        required_keys = [
+            "ad_account_id", "page_id", "campaign_name", "ad_set_name",
+            "daily_budget_cents", "ad_creative_name", "ad_message",
+            "ad_link_url", "ad_name",
+        ]
+        missing_keys = [k for k in required_keys if k not in payload or not payload[k]]
+
+        if missing_keys:
+            raise ErrorValidacion(mensaje=f"Faltan campos requeridos en el payload: {missing_keys}")

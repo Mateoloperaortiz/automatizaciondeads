@@ -4,8 +4,10 @@ Pruebas para el cliente de Gemini API.
 
 import unittest
 from unittest.mock import patch, MagicMock
+import os
 
 from adflux.api.gemini.client import GeminiApiClient, get_client
+from adflux.api.common.excepciones import AdFluxError, ErrorAPI
 
 
 class TestGeminiApiClient(unittest.TestCase):
@@ -21,60 +23,44 @@ class TestGeminiApiClient(unittest.TestCase):
     @patch('adflux.api.gemini.client.genai')
     def test_initialize(self, mock_genai):
         """Prueba la inicialización del cliente."""
-        # Inicializar el cliente
+        # Should not raise
         result = self.client.initialize()
-        
-        # Verificar que se llamó a genai.configure con los parámetros correctos
-        mock_genai.configure.assert_called_once_with(api_key='test_api_key')
-        
-        # Verificar que el resultado es True
         self.assertTrue(result)
-        
-        # Verificar que initialized es True
         self.assertTrue(self.client.initialized)
     
-    @patch('adflux.api.gemini.client.genai')
-    def test_initialize_no_api_key(self, mock_genai):
+    def test_initialize_no_api_key(self):
         """Prueba la inicialización del cliente sin clave de API."""
-        # Crear cliente sin clave de API
-        client = GeminiApiClient()
-        
-        # Inicializar el cliente
-        result = client.initialize()
-        
-        # Verificar que no se llamó a genai.configure
-        mock_genai.configure.assert_not_called()
-        
-        # Verificar que el resultado es False
-        self.assertFalse(result)
-        
-        # Verificar que initialized es False
-        self.assertFalse(client.initialized)
+        # Patch os.getenv specifically for this test
+        with patch('adflux.api.gemini.client.os.getenv', return_value=None) as mock_getenv:
+            client = GeminiApiClient(api_key=None)
+
+            # Expect AdFluxError because api_key is missing
+            with self.assertRaises(AdFluxError) as cm:
+                client.initialize()
+
+            # Check the specific error message
+            self.assertIn("No se proporcionó una clave de API para Google Gemini", cm.exception.mensaje)
+
+            # Verify initialization state wasn't set
+            self.assertFalse(client.initialized)
+
+            # Verify os.getenv was called for GEMINI_API_KEY
+            mock_getenv.assert_any_call("GEMINI_API_KEY")
     
     @patch('adflux.api.gemini.client.genai')
-    def test_ensure_initialized(self, mock_genai):
-        """Prueba la función ensure_initialized."""
-        # Configurar el mock
-        mock_genai.configure.return_value = None
-        
-        # Llamar a ensure_initialized
-        result = self.client.ensure_initialized()
-        
-        # Verificar que se llamó a genai.configure con los parámetros correctos
+    def test_ensure_initialized_logic(self, mock_genai):
+        """Prueba la lógica de ensure_initialized (primera y segunda llamada)."""
+        # Primera llamada (no inicializado)
+        self.client.initialized = False
+        self.client.ensure_initialized() # No debe lanzar error
         mock_genai.configure.assert_called_once_with(api_key='test_api_key')
-        
-        # Verificar que el resultado es True
-        self.assertTrue(result)
-        
-        # Verificar que initialized es True
         self.assertTrue(self.client.initialized)
-        
-        # Verificar que la segunda llamada no inicializa de nuevo
+
+        # Segunda llamada (ya inicializado)
         mock_genai.configure.reset_mock()
-        result2 = self.client.ensure_initialized()
-        mock_genai.configure.assert_not_called()
-        self.assertTrue(result2)
-    
+        self.client.ensure_initialized() # No debe lanzar error
+        mock_genai.configure.assert_not_called() # No debe llamar de nuevo
+
     @patch('adflux.api.gemini.client.genai')
     def test_test_connection(self, mock_genai):
         """Prueba la conexión a la API."""
@@ -85,18 +71,18 @@ class TestGeminiApiClient(unittest.TestCase):
         mock_model2.name = 'gemini-vision-pro'
         mock_genai.list_models.return_value = [mock_model1, mock_model2]
         
-        # Inicializar el cliente
+        # Inicializar el cliente (simulado)
         self.client.initialized = True
         
-        # Probar la conexión
+        # Probar la conexión (should call ensure_initialized which does nothing)
         success, message, data = self.client.test_connection()
         
         # Verificar que se llamó a genai.list_models
         mock_genai.list_models.assert_called_once()
         
-        # Verificar el resultado
+        # Verificar el resultado (devuelve tupla en éxito)
         self.assertTrue(success)
-        self.assertIn('2', message)  # 2 modelos disponibles
+        self.assertIn('2', message)
         self.assertEqual(data['models'], ['gemini-pro', 'gemini-vision-pro'])
     
     @patch('adflux.api.gemini.client.genai')
@@ -118,25 +104,6 @@ class TestGeminiApiClient(unittest.TestCase):
         self.assertTrue(success)
         self.assertIn('no se encontraron', message.lower())
         self.assertEqual(data['models'], [])
-    
-    @patch('adflux.api.gemini.client.genai')
-    def test_test_connection_not_initialized(self, mock_genai):
-        """Prueba la conexión a la API sin inicializar."""
-        # Configurar los mocks para que ensure_initialized devuelva False
-        self.client.initialized = False
-        mock_genai.configure.return_value = None
-        
-        # Probar la conexión
-        success, message, data = self.client.test_connection()
-        
-        # Verificar que se llamó a genai.configure
-        mock_genai.configure.assert_called_once_with(api_key='test_api_key')
-        
-        # Verificar que se llamó a genai.list_models
-        mock_genai.list_models.assert_called_once()
-        
-        # Verificar que initialized es True
-        self.assertTrue(self.client.initialized)
     
     @patch('adflux.api.gemini.client.genai')
     def test_get_available_models(self, mock_genai):

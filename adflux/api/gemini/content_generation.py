@@ -20,6 +20,9 @@ from adflux.api.common.error_handling import handle_gemini_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.gemini.client import get_client, GeminiApiClient
 
+# Import exceptions
+from adflux.api.common.excepciones import AdFluxError, ErrorAPI
+
 # Configurar logger
 logger = get_logger("GeminiContent")
 
@@ -48,7 +51,7 @@ class ContentGenerator:
         target_audience: str = "general job seekers",
         temperature: float = 0.7,
         max_output_tokens: int = 800,
-    ) -> Tuple[bool, str, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         Genera texto creativo para anuncios de trabajo utilizando Gemini.
 
@@ -60,10 +63,14 @@ class ContentGenerator:
             max_output_tokens: Número máximo de tokens en la salida.
 
         Returns:
-            Una tupla con: (éxito, mensaje, datos generados).
+            Diccionario con los datos creativos generados.
+
+        Raises:
+            ErrorAPI: Si ocurre un error durante la generación o procesamiento.
+            AdFluxError: Si el cliente no está inicializado.
         """
-        if not self.client.ensure_initialized():
-            return False, "No se pudo inicializar la API de Google Gemini", {}
+        # Ensure initialized (will raise exception on failure)
+        self.client.ensure_initialized()
 
         try:
             # Crear el modelo
@@ -128,7 +135,13 @@ class ContentGenerator:
                 json_str = json_str.strip()
 
                 try:
-                    creative_data = json.loads(json_str)
+                    # Attempt to parse JSON, raise ErrorAPI on failure
+                    try:
+                        creative_data = json.loads(json_str)
+                    except json.JSONDecodeError as e:
+                        msg = f"No se pudo decodificar la respuesta de Gemini como JSON: {e}. Texto: '{response_text[:100]}...'"
+                        logger.warning(msg)
+                        raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
 
                     # Validar que tenga todas las claves necesarias
                     required_keys = [
@@ -144,31 +157,21 @@ class ContentGenerator:
                             creative_data[key] = ""
 
                     logger.info(f"Se generó contenido creativo para el trabajo '{job_title}'.")
-                    return True, "Se generó contenido creativo exitosamente.", creative_data
+                    # Return data directly on success
+                    return creative_data
 
                 except json.JSONDecodeError:
                     # Si no se puede decodificar como JSON, devolver el texto completo
-                    logger.warning(
-                        "No se pudo decodificar la respuesta como JSON. Devolviendo texto completo."
-                    )
-                    return (
-                        True,
-                        "Se generó contenido, pero no en formato JSON.",
-                        {
-                            "raw_text": response_text,
-                            "primary_headline": "",
-                            "secondary_headline": "",
-                            "primary_description": "",
-                            "secondary_description": "",
-                            "call_to_action": "",
-                        },
-                    )
+                    msg = "Se generó contenido, pero no en formato JSON."
+                    logger.warning(msg)
+                    raise ErrorAPI(msg, api="Gemini")
             else:
-                return False, "La respuesta no contiene texto.", {}
+                # Raise ErrorAPI if response has no text
+                raise ErrorAPI("La respuesta de Gemini no contiene texto.", api="Gemini")
 
         except Exception as e:
             logger.error(f"Error al generar contenido creativo: {e}", e)
-            return False, f"Error al generar contenido creativo: {str(e)}", {}
+            raise ErrorAPI(f"Error al generar contenido creativo: {str(e)}", api="Gemini")
 
     @handle_gemini_api_error
     def generate_job_description(
@@ -178,7 +181,7 @@ class ContentGenerator:
         experience_years: int,
         company_description: str,
         temperature: float = 0.7,
-    ) -> Tuple[bool, str, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         Genera una descripción de trabajo utilizando Gemini.
 
@@ -190,10 +193,14 @@ class ContentGenerator:
             temperature: Temperatura para la generación (0.0 a 1.0).
 
         Returns:
-            Una tupla con: (éxito, mensaje, datos generados).
+            Diccionario con los datos de descripción generados.
+
+        Raises:
+            ErrorAPI: Si ocurre un error durante la generación o procesamiento.
+            AdFluxError: Si el cliente no está inicializado.
         """
-        if not self.client.ensure_initialized():
-            return False, "No se pudo inicializar la API de Google Gemini", {}
+        # Ensure initialized (will raise exception on failure)
+        self.client.ensure_initialized()
 
         try:
             # Crear el modelo
@@ -255,7 +262,13 @@ class ContentGenerator:
                 json_str = json_str.strip()
 
                 try:
-                    job_data = json.loads(json_str)
+                    # Attempt to parse JSON, raise ErrorAPI on failure
+                    try:
+                        job_data = json.loads(json_str)
+                    except json.JSONDecodeError as e:
+                        msg = f"No se pudo decodificar la respuesta de Gemini como JSON: {e}. Texto: '{response_text[:100]}...'"
+                        logger.warning(msg)
+                        raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
 
                     # Validar que tenga todas las claves necesarias
                     required_keys = ["summary", "responsibilities", "requirements", "benefits"]

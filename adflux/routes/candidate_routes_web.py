@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, url_for, flash, request, redirect
 from ..models import Segment
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, EmailField
-from wtforms.validators import DataRequired, Optional, Email
+from wtforms.validators import DataRequired, Optional, Email, ValidationError
 from flask_wtf.csrf import generate_csrf
 from ..constants import SEGMENT_MAP, SEGMENT_COLORS, DEFAULT_SEGMENT_NAME, DEFAULT_SEGMENT_COLOR
 from ..services.candidate_service import CandidateService
@@ -60,8 +60,18 @@ class CandidateForm(FlaskForm):
         ],
         validators=[Optional()],
     )
-    skills = TextAreaField("Habilidades", validators=[Optional()])
-    languages = TextAreaField("Idiomas", validators=[Optional()])
+    skills = TextAreaField("Habilidades (separadas por coma)", validators=[Optional()])
+    languages = TextAreaField("Idiomas (separados por coma)", validators=[Optional()])
+
+    # Validador personalizado para email (si se proporciona, no debe estar vacío)
+    def validate_email(self, field):
+        if field.data and not field.data.strip():
+            raise ValidationError("El correo electrónico no puede consistir solo en espacios en blanco.")
+
+    # Validador personalizado para años de experiencia
+    def validate_years_experience(self, field):
+        if field.data is not None and field.data < 0:
+            raise ValidationError("Los años de experiencia no pueden ser negativos.")
 
 
 @candidate_bp.route("/")
@@ -142,18 +152,12 @@ def list_candidates():
 @candidate_bp.route("/<string:candidate_id>")
 def candidate_details(candidate_id):
     """Renderiza la página de detalles para un candidato específico."""
-    candidate = CandidateService.get_candidate_by_id(candidate_id)
+    # Usar el nuevo método del servicio para obtener candidato y nombre de segmento
+    candidate, segment_name = CandidateService.get_candidate_details(candidate_id)
 
     if not candidate:
         flash(f"Candidato con ID {candidate_id} no encontrado.", "error")
         return redirect(url_for("candidate.list_candidates"))
-
-    # Obtener nombre del segmento si existe
-    segment_name = None
-    if candidate.segment_id:
-        segment = Segment.query.get(candidate.segment_id)
-        if segment:
-            segment_name = segment.name
 
     return render_template(
         "candidate_detail.html",
@@ -174,14 +178,12 @@ def create_candidate():
     form = CandidateForm()
 
     if form.validate_on_submit():
-        if form.email.data and not form.email.data.strip():
-            raise ErrorValidacion(
-                mensaje="El correo electrónico no puede estar vacío si se proporciona"
-            )
+        # Validaciones de email y años de experiencia ahora en el formulario
+        # if form.email.data and not form.email.data.strip(): ...
+        # if form.years_experience.data is not None and form.years_experience.data < 0: ...
 
-        if form.years_experience.data is not None and form.years_experience.data < 0:
-            raise ErrorValidacion(mensaje="Los años de experiencia no pueden ser negativos")
-
+        # Asumiendo que el servicio espera skills y languages como strings separados por comas
+        # (o si no, procesar aquí como en job_routes_web)
         candidate_data = {
             "name": form.name.data,
             "email": form.email.data,
@@ -194,23 +196,35 @@ def create_candidate():
             "desired_position": form.desired_position.data,
             "summary": form.summary.data,
             "availability": form.availability.data,
-            "skills": form.skills.data,  # El servicio procesará esto como string
-            "languages": form.languages.data,  # El servicio procesará esto como string
+            "skills": form.skills.data,  # Pasar el string directamente
+            "languages": form.languages.data,  # Pasar el string directamente
         }
 
-        candidate, message, status_code = CandidateService.create_candidate(candidate_data)
+        try:
+            candidate, message, status_code = CandidateService.create_candidate(candidate_data)
 
-        if status_code == 201:
-            flash(message, "success")
-            if candidate and hasattr(candidate, "candidate_id"):
-                return redirect(
-                    url_for("candidate.candidate_details", candidate_id=candidate.candidate_id)
-                )
+            if status_code == 201:
+                flash(message, "success")
+                if candidate and hasattr(candidate, "candidate_id"):
+                    return redirect(
+                        url_for("candidate.candidate_details", candidate_id=candidate.candidate_id)
+                    )
+                else:
+                    flash("Candidato creado pero no se pudo obtener su ID", "warning")
+                    return redirect(url_for("candidate.list_candidates"))
             else:
-                flash("Candidato creado pero no se pudo obtener su ID", "warning")
-                return redirect(url_for("candidate.list_candidates"))
-        else:
-            raise AdFluxError(mensaje=message, codigo=status_code)
+                # Mostrar error del servicio
+                flash(f"Error al crear candidato: {message}", "error")
+                # raise AdFluxError(mensaje=message, codigo=status_code)
+
+        except (SQLAlchemyError, ErrorBaseDatos) as e: # Capturar errores de BD
+            db_error_msg = f"Error de base de datos al crear candidato: {str(e)}"
+            current_app.logger.error(db_error_msg, exc_info=True)
+            flash(db_error_msg, "error") # Mostrar error de BD
+        except Exception as e:
+             if not isinstance(e, AdFluxError):
+                 current_app.logger.error(f"Error inesperado al crear candidato: {e}", exc_info=True)
+                 flash("Ocurrió un error inesperado al crear el candidato.", "error")
 
     return render_template(
         "candidate_form.html", title="Crear Candidato", form=form, candidate=None
@@ -233,18 +247,16 @@ def update_candidate(candidate_id):
     form = CandidateForm(obj=candidate)
 
     if request.method == "GET":
-        form.skills.data = ", ".join(candidate.skills) if candidate.skills else ""
-        form.languages.data = ", ".join(candidate.languages) if candidate.languages else ""
+        # Asumiendo que skills/languages en el modelo son listas y las unimos para el form
+        form.skills.data = ", ".join(candidate.skills) if isinstance(candidate.skills, list) else candidate.skills or ""
+        form.languages.data = ", ".join(candidate.languages) if isinstance(candidate.languages, list) else candidate.languages or ""
 
     if form.validate_on_submit():
-        if form.email.data and not form.email.data.strip():
-            raise ErrorValidacion(
-                mensaje="El correo electrónico no puede estar vacío si se proporciona"
-            )
+        # Validaciones ahora en el formulario
+        # if form.email.data and not form.email.data.strip(): ...
+        # if form.years_experience.data is not None and form.years_experience.data < 0: ...
 
-        if form.years_experience.data is not None and form.years_experience.data < 0:
-            raise ErrorValidacion(mensaje="Los años de experiencia no pueden ser negativos")
-
+        # Asumiendo que el servicio espera skills y languages como strings separados por comas
         candidate_data = {
             "name": form.name.data,
             "email": form.email.data,
@@ -257,8 +269,8 @@ def update_candidate(candidate_id):
             "desired_position": form.desired_position.data,
             "summary": form.summary.data,
             "availability": form.availability.data,
-            "skills": form.skills.data,  # El servicio procesará esto como string
-            "languages": form.languages.data,  # El servicio procesará esto como string
+            "skills": form.skills.data, # Pasar string
+            "languages": form.languages.data, # Pasar string
         }
 
         try:
@@ -279,12 +291,18 @@ def update_candidate(candidate_id):
                     flash("Candidato actualizado pero no se pudo obtener su ID", "warning")
                     return redirect(url_for("candidate.list_candidates"))
             else:
-                raise AdFluxError(mensaje=message, codigo=status_code)
+                 # Mostrar error del servicio
+                 flash(f"Error al actualizar candidato: {message}", "error")
+                # raise AdFluxError(mensaje=message, codigo=status_code)
 
-        except SQLAlchemyError as e:
-            raise ErrorBaseDatos(
-                mensaje=f"Error de base de datos al actualizar candidato: {str(e)}"
-            )
+        except (SQLAlchemyError, ErrorBaseDatos) as e:
+            db_error_msg = f"Error de base de datos al actualizar candidato: {str(e)}"
+            current_app.logger.error(db_error_msg, exc_info=True)
+            flash(db_error_msg, "error")
+        except Exception as e:
+            if not isinstance(e, AdFluxError):
+                 current_app.logger.error(f"Error inesperado al actualizar candidato: {e}", exc_info=True)
+                 flash("Ocurrió un error inesperado al actualizar el candidato.", "error")
 
     return render_template(
         "candidate_form.html", title="Editar Candidato", form=form, candidate=candidate

@@ -22,6 +22,7 @@ except ImportError:
 from adflux.api.common.error_handling import handle_google_ads_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.google.client import get_client, GoogleAdsApiClient
+from adflux.api.common.excepciones import AdFluxError
 
 # Configurar logger
 logger = get_logger("GoogleAdsCampaigns")
@@ -53,12 +54,9 @@ class CampaignManager:
             Un diccionario con el resultado de la operación.
         """
         google_client = self.client.get_client()
-        if not google_client:
-            return {
-                "success": False,
-                "message": "No se pudo inicializar el cliente de Google Ads",
-                "campaigns": [],
-            }
+        if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
+            sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
+            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
 
         try:
             # Crear servicio de GoogleAdsService
@@ -109,11 +107,6 @@ class CampaignManager:
         except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
-        except Exception as e:
-            logger.error(
-                f"Error inesperado al obtener campañas para el cliente {customer_id}: {e}", e
-            )
-            return {"success": False, "message": f"Error inesperado: {str(e)}", "campaigns": []}
 
     @handle_google_ads_api_error
     def create_campaign(
@@ -138,12 +131,9 @@ class CampaignManager:
             Un diccionario con el resultado de la operación.
         """
         google_client = self.client.get_client()
-        if not google_client:
-            return {
-                "success": False,
-                "message": "No se pudo inicializar el cliente de Google Ads",
-                "external_ids": None,
-            }
+        if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
+            sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
+            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
 
         try:
             # Añadir un identificador único al nombre de la campaña
@@ -240,13 +230,6 @@ class CampaignManager:
         except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
-        except Exception as e:
-            logger.error(f"Error inesperado al crear la campaña '{name}': {e}", e)
-            return {
-                "success": False,
-                "message": f"Error inesperado: {str(e)}",
-                "external_ids": None,
-            }
 
     @handle_google_ads_api_error
     def publish_campaign(
@@ -266,12 +249,9 @@ class CampaignManager:
             Un diccionario con el resultado de la operación.
         """
         google_client = self.client.get_client()
-        if not google_client:
-            return {
-                "success": False,
-                "message": "No se pudo inicializar el cliente de Google Ads",
-                "external_ids": None,
-            }
+        if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
+            sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
+            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
 
         try:
             # Extraer datos de la campaña
@@ -313,16 +293,6 @@ class CampaignManager:
         except GoogleAdsException:
             # Este error ya será manejado por el decorador handle_google_ads_api_error
             raise
-        except Exception as e:
-            logger.error(
-                f"Error inesperado al publicar la campaña para AdFlux ID {adflux_campaign_id}: {e}",
-                e,
-            )
-            return {
-                "success": False,
-                "message": f"Error inesperado: {str(e)}",
-                "external_ids": None,
-            }
 
 
 # Crear una instancia del gestor por defecto

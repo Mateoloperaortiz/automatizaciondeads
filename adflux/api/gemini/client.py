@@ -19,6 +19,7 @@ except ImportError:
 
 from adflux.api.common.error_handling import handle_gemini_api_error
 from adflux.api.common.logging import get_logger
+from adflux.api.common.excepciones import AdFluxError, ErrorAPI
 
 # Configurar logger
 logger = get_logger("GeminiAPI")
@@ -45,36 +46,40 @@ class GeminiApiClient:
 
         Returns:
             True si la inicialización fue exitosa, False en caso contrario.
+
+        Raises:
+            AdFluxError: Si el SDK no está disponible o falta la clave API.
+            ErrorAPI: Si la configuración falla.
         """
         if not GEMINI_SDK_AVAILABLE:
-            logger.error(
-                "El SDK de Google Generative AI no está disponible. Instálalo con 'pip install google-generativeai'."
-            )
-            return False
+            msg = "El SDK de Google Generative AI no está disponible. Instálalo con 'pip install google-generativeai'."
+            logger.error(msg)
+            raise AdFluxError(msg, codigo=500)
 
+        # Check for API key *before* trying to configure
         if not self.api_key:
+            print(f"DEBUG: self.api_key inside check: {repr(self.api_key)}") # DEBUG
             logger.error("No se proporcionó una clave de API para Google Gemini.")
-            return False
+            raise AdFluxError("No se proporcionó una clave de API para Google Gemini.", codigo=500)
 
+        # Try configuring the API
         try:
             genai.configure(api_key=self.api_key)
             self.initialized = True
             logger.info("API de Google Gemini inicializada correctamente.")
             return True
         except Exception as e:
-            logger.error(f"Error al inicializar la API de Google Gemini: {e}", e)
-            return False
+            msg = f"Error al inicializar la API de Google Gemini: {e}"
+            logger.error(msg, exc_info=True)
+            # Raise ErrorAPI as configuration likely failed due to external API issue
+            raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
 
-    def ensure_initialized(self) -> bool:
+    def ensure_initialized(self):
         """
-        Asegura que la API esté inicializada.
-
-        Returns:
-            True si la API está inicializada, False en caso contrario.
+        Asegura que la API esté inicializada. Lanza excepción si falla.
         """
         if not self.initialized:
-            return self.initialize()
-        return True
+            self.initialize()
 
     @handle_gemini_api_error
     def test_connection(self) -> Tuple[bool, str, Dict[str, Any]]:
@@ -84,8 +89,7 @@ class GeminiApiClient:
         Returns:
             Una tupla con: (éxito, mensaje, datos adicionales).
         """
-        if not self.ensure_initialized():
-            return False, "No se pudo inicializar la API de Google Gemini", {}
+        self.ensure_initialized()
 
         try:
             # Obtener modelos disponibles
@@ -107,7 +111,7 @@ class GeminiApiClient:
 
         except Exception as e:
             logger.error(f"Error al probar la conexión a la API de Google Gemini: {e}", e)
-            return False, f"Error al probar la conexión: {str(e)}", {}
+            raise
 
     @handle_gemini_api_error
     def get_available_models(self) -> Tuple[bool, str, List[Dict[str, Any]]]:
@@ -117,8 +121,7 @@ class GeminiApiClient:
         Returns:
             Una tupla con: (éxito, mensaje, lista de modelos).
         """
-        if not self.ensure_initialized():
-            return False, "No se pudo inicializar la API de Google Gemini", []
+        self.ensure_initialized()
 
         try:
             # Obtener modelos disponibles
@@ -151,7 +154,7 @@ class GeminiApiClient:
 
         except Exception as e:
             logger.error(f"Error al obtener los modelos disponibles: {e}", e)
-            return False, f"Error al obtener los modelos disponibles: {str(e)}", []
+            raise
 
 
 # Crear una instancia del cliente por defecto
