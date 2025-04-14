@@ -6,14 +6,16 @@ from flask import current_app
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import pandas as pd
+from typing import Dict, Any
 
 from ..models import db, Campaign, JobOpening, Candidate, MetaInsight
+from .interfaces import IReportService
 
 
-class ReportService:
+class ReportService(IReportService):
     """Contiene la lógica de negocio para generar informes."""
 
-    def generate_campaign_report(self, start_date, end_date):
+    def generate_campaign_report(self, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
         """Genera los datos para el informe de campañas."""
         report_data = {
             "title": "Informe de Campañas",
@@ -344,4 +346,4 @@ class ReportService:
             current_app.logger.error(f"Error al generar informe de candidatos: {e}", exc_info=True)
             report_data["error"] = f"Error al generar informe: {str(e)}"
 
-        return report_data 
+        return report_data

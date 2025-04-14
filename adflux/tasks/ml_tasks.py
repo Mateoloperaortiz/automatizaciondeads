@@ -84,12 +84,12 @@ def scheduled_train_and_predict():
             logger=logger,
             batch_size=BATCH_SIZE
         )
-        
+
         if update_count > 0:
             logger.info(f"{log_prefix} Segmentos actualizados exitosamente para {update_count} candidatos.")
         elif update_count == 0:
             logger.info(f"{log_prefix} No fue necesario actualizar ningún segmento de candidato.")
-            
+
         if error_count > 0:
             logger.warning(f"{log_prefix} Se encontraron errores al procesar segmentos para {error_count} candidatos.")
 
@@ -127,13 +127,14 @@ def trigger_train_and_predict():
 
 @celery.task(bind=True, name="tasks.run_candidate_segmentation_task",
              autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 30})
-def run_candidate_segmentation_task(self, candidate_ids=None):
+def run_candidate_segmentation_task(self, strategy_name='kmeans', candidate_ids=None):
     """
     Tarea Celery para ejecutar la segmentación de candidatos.
     Si se proporcionan IDs de candidatos, solo se segmentarán esos candidatos.
     De lo contrario, se segmentarán todos los candidatos.
 
     Args:
+        strategy_name: Nombre de la estrategia de segmentación a utilizar ('kmeans' o 'hierarchical')
         candidate_ids: Lista opcional de IDs de candidatos para segmentar.
 
     Returns:
@@ -149,7 +150,27 @@ def run_candidate_segmentation_task(self, candidate_ids=None):
     candidates = [] # Initialize
 
     try:
-        logger.info(f"{log_prefix} Paso 1: Cargando modelo y preprocesador existentes...")
+        logger.info(f"{log_prefix} Paso 1: Configurando estrategia de segmentación '{strategy_name}'...")
+
+        # Importar las clases necesarias para el patrón Strategy
+        from ..ml.segmentation import SegmentationContext, KMeansSegmentation, HierarchicalSegmentation
+
+        # Crear la estrategia adecuada según el parámetro
+        if strategy_name.lower() == 'kmeans':
+            strategy = KMeansSegmentation()
+            logger.info(f"{log_prefix} Usando estrategia K-Means para segmentación")
+        elif strategy_name.lower() == 'hierarchical':
+            strategy = HierarchicalSegmentation()
+            logger.info(f"{log_prefix} Usando estrategia Hierarchical para segmentación")
+        else:
+            logger.warning(f"{log_prefix} Estrategia '{strategy_name}' no reconocida, usando K-Means por defecto")
+            strategy = KMeansSegmentation()
+
+        # Crear el contexto con la estrategia seleccionada
+        segmentation_context = SegmentationContext(strategy=strategy)
+
+        # Intentar cargar modelo existente para la estrategia seleccionada
+        logger.info(f"{log_prefix} Paso 2: Cargando modelo y preprocesador existentes...")
         model, preprocessor = load_segmentation_model()
         if model is None or preprocessor is None:
             msg = "No se pudo cargar el modelo de segmentación. Ejecute primero el entrenamiento."

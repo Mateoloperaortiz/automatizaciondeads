@@ -17,6 +17,12 @@ from .candidate_routes_web import candidate_bp
 from .application_routes_web import application_bp
 from .api_routes import api_bp
 
+# Import MVC routes
+from .candidate_mvc_routes import create_candidate_mvc_routes
+
+# Create MVC blueprints
+candidate_mvc_bp = create_candidate_mvc_routes()
+
 # Create a test namespace for API verification
 from flask_restx import Namespace, Resource, fields
 
@@ -84,4 +90,6 @@ __all__ = [
     "candidate_bp",
     "application_bp",
     "api_bp",
+    # MVC Blueprints
+    "candidate_mvc_bp",
 ]

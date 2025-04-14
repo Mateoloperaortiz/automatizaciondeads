@@ -1,68 +1,68 @@
-# 📱 AdFlux - Documentación
+# Documentación de AdFlux
 
-¡Bienvenido a la documentación de AdFlux! 🚀
+![AdFlux Logo](./assets/images/adflux-logo.png)
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/adflux/adflux/releases)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://docs.adflux.example.com)
+
+Bienvenido a la documentación oficial de AdFlux, la plataforma de automatización de publicación de anuncios de trabajo en múltiples plataformas publicitarias.
 
 ## ¿Qué es AdFlux?
 
-AdFlux es una aplicación web desarrollada para Magneto365, una empresa colombiana de búsqueda de empleo, que automatiza la publicación de anuncios de trabajo en diferentes plataformas de redes sociales como Meta (Facebook/Instagram), X, Google, TikTok y Snapchat.
+AdFlux es una aplicación web basada en Flask que automatiza la publicación de anuncios de trabajo en plataformas como Meta (Facebook/Instagram), Google Ads, TikTok y Snapchat. La plataforma utiliza inteligencia artificial para optimizar el contenido de los anuncios y machine learning para segmentar audiencias, maximizando así la eficacia de las campañas publicitarias de reclutamiento.
 
-La aplicación utiliza tecnologías modernas como Flask, SQLAlchemy, Celery con Redis, y APIs de publicidad como Meta Ads API y Google Ads API para crear y gestionar campañas publicitarias para ofertas de trabajo.
+## Características Principales
 
-## Índice de Documentación
+- **Publicación Multi-plataforma**: Publica anuncios en Meta, Google Ads, TikTok y Snapchat desde una única interfaz.
+- **Generación de Contenido con IA**: Utiliza Gemini AI para crear anuncios persuasivos y optimizados.
+- **Segmentación Inteligente**: Implementa algoritmos de machine learning para identificar las mejores audiencias.
+- **Análisis Unificado**: Proporciona métricas consolidadas de todas las plataformas.
+- **Integración con ATS**: Se integra con sistemas de seguimiento de candidatos para un seguimiento completo.
 
-### 1. [Guía de Inicio Rápido](./guia_inicio_rapido.md)
-   - Instalación y configuración
-   - Primeros pasos
-   - Estructura del proyecto
+## Estructura de la Documentación
 
-### 2. [Arquitectura del Sistema](./arquitectura.md)
-   - Visión general
-   - Componentes principales
-   - Flujo de datos
+La documentación está organizada en las siguientes secciones:
 
-### 3. [Modelos de Datos](./modelos_datos.md)
-   - Estructura de la base de datos
-   - Relaciones entre modelos
-   - Diagrama de entidad-relación
+- **[Arquitectura](./arquitectura/)**: Información sobre la arquitectura del sistema, patrones de diseño y decisiones técnicas.
+- **[APIs](./apis/)**: Documentación detallada de las APIs internas y externas utilizadas por AdFlux.
+- **[Guías de Usuario](./usuario/)**: Manuales y tutoriales para usuarios finales de la plataforma.
+- **[Desarrollo](./desarrollo/)**: Guías para desarrolladores que quieran contribuir al proyecto.
+- **[Machine Learning](./machine-learning/)**: Información sobre los componentes de ML implementados en AdFlux.
+- **[Seguridad](./seguridad/)**: Información sobre las medidas de seguridad implementadas y mejores prácticas.
+- **[Despliegue](./despliegue/)**: Instrucciones para desplegar AdFlux en diferentes entornos.
+- **[Referencia](./referencia/)**: Documentación técnica de referencia sobre los componentes del sistema.
+- **[Pruebas](./tests/)**: Información sobre las pruebas implementadas en AdFlux.
 
-### 4. [APIs y Integraciones](./apis_integraciones.md)
-   - Meta (Facebook/Instagram) API
-   - Google Ads API
-   - Gemini AI API
-   - Otras integraciones
+Para una visión completa de la documentación, consulta el [Índice General](./indice-general.md).
 
-### 5. [Machine Learning](./machine_learning.md)
-   - Segmentación de candidatos
-   - Algoritmos utilizados
-   - Evaluación de modelos
+## Primeros Pasos
 
-### 6. [Simulación de Datos](./simulacion_datos.md)
-   - Generación de datos de prueba
-   - Uso de Gemini AI para simulación
-   - Configuración de entorno de prueba
+Si eres nuevo en AdFlux, te recomendamos comenzar con:
 
-### 7. [Interfaz de Usuario](./interfaz_usuario.md)
-   - Navegación
-   - Funcionalidades principales
-   - Mejores prácticas
+1. [Introducción a AdFlux](./usuario/introduccion.md)
+2. [Guía de Inicio Rápido](./usuario/inicio-rapido.md)
+3. [Conceptos Clave](./usuario/conceptos-clave.md)
 
-### 8. [Tareas en Segundo Plano](./tareas_segundo_plano.md)
-   - Celery y Redis
-   - Tareas programadas
-   - Sincronización de datos
+## Para Desarrolladores
 
-### 9. [Guía de Desarrollo](./guia_desarrollo.md)
-   - Configuración del entorno de desarrollo
-   - Convenciones de código
-   - Pruebas
+Si eres desarrollador y quieres contribuir al proyecto:
 
-### 10. [Solución de Problemas](./solucion_problemas.md)
-    - Problemas comunes
-    - Depuración
-    - Recursos adicionales
+1. [Configuración del Entorno de Desarrollo](./desarrollo/configuracion.md)
+2. [Arquitectura del Sistema](./arquitectura/overview.md)
+3. [Guía de Contribución](./desarrollo/contribucion.md)
 
-## ¿Necesitas ayuda?
+## Recursos Adicionales
 
-Si tienes alguna pregunta o necesitas ayuda adicional, no dudes en contactar al equipo de desarrollo o crear un issue en el repositorio del proyecto.
+- [Glosario](./referencia/glosario.md): Términos y definiciones utilizados en AdFlux.
+- [Preguntas Frecuentes](./usuario/faq.md): Respuestas a preguntas comunes.
+- [Solución de Problemas](./usuario/solucion-problemas.md): Guía para resolver problemas comunes.
 
-¡Gracias por usar AdFlux! 🎉
+## Contacto
+
+Si tienes preguntas o sugerencias sobre la documentación, por favor contacta al equipo de AdFlux a través de [soporte@adflux.example.com](mailto:soporte@adflux.example.com).
+
+## Licencia
+
+AdFlux está licenciado bajo la [Licencia MIT](https://opensource.org/licenses/MIT).

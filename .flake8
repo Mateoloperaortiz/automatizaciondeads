@@ -1,11 +1,21 @@
 [flake8]
 max-line-length = 100
 exclude = .git,__pycache__,build,dist,.venv,migrations
-ignore = E203,W503
+# Seleccionar más comprobaciones para un linting más estricto
+select = C,E,F,W,B,B950,D,N,I
+ignore = E203,W503,E501
 # E203: whitespace before ':' (conflicto con black)
 # W503: line break before binary operator (conflicto con black)
+# E501: line too long (gestionado por black)
 per-file-ignores =
     # Permitir importaciones en __init__.py
     __init__.py:F401
     # Ignorar docstrings en tests
-    tests/*:D100,D101,D102,D103
+    tests/*:D100,D101,D102,D103,D104
+# Configuración adicional para un linting más estricto
+max-complexity = 10  # Complejidad ciclomática máxima
+count = True  # Mostrar número total de errores
+statistics = True  # Mostrar estadísticas de errores
+show-source = True  # Mostrar código fuente con errores
+# Configuración para docstrings
+docstring-convention = google  # Usar convención de Google para docstrings

@@ -1,0 +1,206 @@
+# Configuración de la Documentación de AdFlux
+
+# Información general
+site_name: AdFlux Documentation
+site_description: Documentación oficial de AdFlux - Plataforma de automatización de publicación de anuncios de trabajo
+site_author: Equipo de AdFlux
+site_url: https://docs.adflux.example.com
+
+# Repositorio
+repo_name: adflux/adflux
+repo_url: https://github.com/adflux/adflux
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2023 - 2024 AdFlux
+
+# Configuración de tema
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    logo: material/application
+    repo: fontawesome/brands/github
+
+# Extensiones
+markdown_extensions:
+  - admonition
+  - attr_list
+  - codehilite
+  - def_list
+  - footnotes
+  - meta
+  - pymdownx.arithmatex
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+
+# Plugins
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+  - git-revision-date-localized:
+      type: date
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+  - redirects:
+      redirect_maps:
+        'index.md': 'README.md'
+
+# Estructura de navegación
+nav:
+  - Inicio: README.md
+  - Índice General: indice-general.md
+  - Arquitectura:
+    - Visión General: arquitectura/README.md
+    - Overview: arquitectura/overview.md
+    - Modelos de Datos: arquitectura/modelos-datos.md
+    - Patrones de Diseño: arquitectura/patrones-diseno.md
+    - Servicios: arquitectura/servicios.md
+    - Flujos de Trabajo: arquitectura/flujos-trabajo.md
+    - Integración con APIs: arquitectura/integracion-apis.md
+    - Decisiones de Arquitectura: arquitectura/decisiones/index.md
+  - APIs:
+    - Visión General: apis/README.md
+    - API Interna: apis/interna/index.md
+    - Meta API: apis/meta/overview.md
+    - Google Ads API: apis/google/index.md
+    - TikTok API: apis/tiktok/index.md
+    - Snapchat API: apis/snapchat/index.md
+    - Gemini API: apis/gemini/overview.md
+  - Guías de Usuario:
+    - Introducción: usuario/README.md
+    - Introducción a AdFlux: usuario/introduccion.md
+    - Inicio Rápido: usuario/inicio-rapido.md
+    - Conceptos Clave: usuario/conceptos-clave.md
+    - Tutoriales:
+      - Creación de Campañas: usuario/tutoriales/crear-campana.md
+      - Segmentación de Audiencias: usuario/tutoriales/segmentacion.md
+      - Creación de Anuncios: usuario/tutoriales/crear-anuncios.md
+      - Análisis de Métricas: usuario/tutoriales/analisis-metricas.md
+    - Preguntas Frecuentes: usuario/faq.md
+    - Solución de Problemas: usuario/solucion-problemas.md
+  - Desarrollo:
+    - Visión General: desarrollo/README.md
+    - Configuración del Entorno: desarrollo/configuracion.md
+    - Arquitectura del Código: desarrollo/arquitectura-codigo.md
+    - Guía de Contribución: desarrollo/contribucion.md
+    - Estándares de Código: desarrollo/estandares-codigo.md
+    - Pruebas: desarrollo/pruebas.md
+    - Integración Continua: desarrollo/integracion-continua.md
+    - Extensiones: desarrollo/extensiones/index.md
+  - Machine Learning:
+    - Visión General: machine-learning/README.md
+    - Segmentación de Audiencias: machine-learning/segmentacion-audiencias.md
+    - Optimización de Contenido: machine-learning/optimizacion-contenido.md
+    - Predicción de Rendimiento: machine-learning/prediccion-rendimiento.md
+    - Integración con Gemini AI: machine-learning/integracion-gemini.md
+    - Simulación de Datos: machine-learning/simulacion-datos.md
+  - Seguridad:
+    - Visión General: seguridad/README.md
+    - Autenticación y Autorización: seguridad/autenticacion-autorizacion.md
+    - Protección de Datos: seguridad/proteccion-datos.md
+    - Seguridad de APIs: seguridad/seguridad-apis.md
+    - Auditoría y Cumplimiento: seguridad/auditoria-cumplimiento.md
+    - Respuesta a Incidentes: seguridad/respuesta-incidentes.md
+    - Mejores Prácticas: seguridad/mejores-practicas.md
+  - Despliegue:
+    - Visión General: despliegue/README.md
+    - Requisitos: despliegue/requisitos.md
+    - Despliegue Local: despliegue/local.md
+    - Despliegue en Producción: despliegue/produccion.md
+    - Despliegue con Docker: despliegue/docker.md
+    - Despliegue en la Nube:
+      - AWS: despliegue/nube/aws.md
+      - Azure: despliegue/nube/azure.md
+      - Google Cloud: despliegue/nube/gcp.md
+    - Configuración: despliegue/configuracion.md
+    - Escalabilidad: despliegue/escalabilidad.md
+    - Monitorización: despliegue/monitorizacion.md
+    - Copias de Seguridad: despliegue/copias-seguridad.md
+    - Actualización: despliegue/actualizacion.md
+  - Referencia:
+    - Visión General: referencia/README.md
+    - API: referencia/api/index.md
+    - Modelos de Datos: referencia/modelos/index.md
+    - Servicios: referencia/servicios/index.md
+    - Utilidades: referencia/utilidades/index.md
+    - Configuración: referencia/configuracion.md
+    - Glosario: referencia/glosario.md
+    - Changelog: referencia/changelog.md
+  - Pruebas:
+    - Visión General: tests/README.md
+
+# Configuración extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/adflux/adflux
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/adflux
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/adflux
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+# Configuración de búsqueda
+extra_javascript:
+  - javascripts/extra.js
+
+extra_css:
+  - stylesheets/extra.css

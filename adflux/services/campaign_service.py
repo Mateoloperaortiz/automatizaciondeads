@@ -7,10 +7,12 @@ from sqlalchemy import func
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple, Any, Union
 
 from ..models import db, Campaign, JobOpening, Segment, MetaInsight, MetaAdSet
 from ..tasks import async_publish_adflux_campaign
 from ..constants import CAMPAIGN_STATUS, CAMPAIGN_STATUS_COLORS
+from .interfaces import ICampaignService
 
 
 # Constantes para la subida de archivos (podrían moverse a config o utils)
@@ -47,7 +49,7 @@ def _save_uploaded_image(file_storage):
     return None
 
 
-class CampaignService:
+class CampaignService(ICampaignService):
     """Contiene la lógica de negocio para las campañas."""
 
     def get_campaigns_paginated(
@@ -377,4 +379,4 @@ class CampaignService:
             # Considerar si devolver error parcial o completo
             # Por ahora, devolvemos las estadísticas que se pudieron calcular
 
-        return stats 
+        return stats

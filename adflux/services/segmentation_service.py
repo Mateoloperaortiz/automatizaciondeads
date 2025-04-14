@@ -4,17 +4,21 @@ Servicio para la lógica de negocio relacionada con la segmentación.
 
 from flask import current_app, url_for
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Dict, List, Optional, Tuple, Any, Union
+import pandas as pd
 
 from ..models import db, Candidate, Segment, Campaign
 from ..tasks import run_candidate_segmentation_task
 from ..ml import analyze_segments_from_db
+from ..ml.segmentation import SegmentationContext, KMeansSegmentation, HierarchicalSegmentation
 from ..constants import SEGMENT_MAP, DEFAULT_SEGMENT_NAME
+from .interfaces import ISegmentationService
 
 
-class SegmentationService:
+class SegmentationService(ISegmentationService):
     """Contiene la lógica de negocio para la segmentación de candidatos."""
 
-    def get_segmentation_analysis_data(self):
+    def get_segmentation_analysis_data(self) -> Dict[str, Any]:
         """Recopila y procesa los datos para la página de análisis de segmentación."""
         analysis_data = {
             "chart_data": None,
@@ -140,7 +144,7 @@ class SegmentationService:
                             "education_distribution": {},
                             "associated_campaigns": [],
                             "total_campaign_count": 0,
-                            "charts": {}, 
+                            "charts": {},
                             "edit_url": None,
                     })
             except SQLAlchemyError as e:
@@ -155,16 +159,27 @@ class SegmentationService:
 
         return analysis_data
 
-    def trigger_segmentation_task(self):
+    def trigger_segmentation_task(self) -> Tuple[bool, str]:
         """Dispara la tarea Celery para ejecutar la segmentación."""
+        return self.trigger_segmentation_with_strategy()
+
+    def trigger_segmentation_with_strategy(self, strategy_name: str = 'kmeans') -> Tuple[bool, str]:
+        """Dispara la tarea Celery para ejecutar la segmentación con una estrategia específica."""
         try:
-            task = run_candidate_segmentation_task.delay()
-            return True, f"Tarea iniciada (ID: {task.id})"
+            # Verificar si hay suficientes candidatos para segmentar
+            candidate_count = Candidate.query.count()
+            if candidate_count < 10:
+                return False, f"No hay suficientes candidatos para segmentar. Se requieren al menos 10, pero solo hay {candidate_count}."
+
+            # Lanzar tarea asíncrona con la estrategia seleccionada
+            task = run_candidate_segmentation_task.delay(strategy_name)
+
+            return True, f"Tarea iniciada con estrategia '{strategy_name}' (ID: {task.id})"
         except Exception as e:
             current_app.logger.error(f"Error al disparar la tarea de segmentación: {e}", exc_info=True)
             return False, "Error al iniciar la tarea."
 
-    def get_segment_by_id(self, segment_id):
+    def get_segment_by_id(self, segment_id: int) -> Any:
         """Obtiene un segmento por su ID."""
         # get_or_404 lanzará un error si no se encuentra, lo cual es bueno para la ruta
         return Segment.query.get_or_404(segment_id)
@@ -184,4 +199,4 @@ class SegmentationService:
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error inesperado al actualizar segmento {segment_id}: {e}", exc_info=True)
-            return False, "Error inesperado al actualizar." 
+            return False, "Error inesperado al actualizar."

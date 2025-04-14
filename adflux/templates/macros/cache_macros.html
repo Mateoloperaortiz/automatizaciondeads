@@ -1,0 +1,93 @@
+{% macro cached_fragment(key, timeout=300) %}
+{# 
+    Macro para cachear fragmentos de templates.
+    
+    Args:
+        key: Clave de caché
+        timeout: Tiempo de expiración en segundos
+    
+    Ejemplo de uso:
+    {% from "macros/cache_macros.html" import cached_fragment %}
+    {% call cached_fragment('dashboard_stats_' + user.id|string, 60) %}
+        <!-- Contenido a cachear -->
+        <div class="stats-container">
+            <h3>Estadísticas</h3>
+            <p>Total de campañas: {{ stats.total_campaigns }}</p>
+            <p>Total de impresiones: {{ stats.total_impressions }}</p>
+        </div>
+    {% endcall %}
+#}
+    {% set cache_key = key %}
+    {% set cached_content = g.get('cache_manager').get_fragment_cache(cache_key) %}
+    
+    {% if cached_content %}
+        {{ cached_content|safe }}
+    {% else %}
+        {% set content %}
+            {{ caller() }}
+        {% endset %}
+        
+        {{ content|safe }}
+        
+        {% do g.get('cache_manager').set_fragment_cache(cache_key, content, timeout) %}
+    {% endif %}
+{% endmacro %}
+
+{% macro cached_include(template_name, key, timeout=300, **kwargs) %}
+{# 
+    Macro para cachear la inclusión de templates.
+    
+    Args:
+        template_name: Nombre del template a incluir
+        key: Clave de caché
+        timeout: Tiempo de expiración en segundos
+        **kwargs: Argumentos para el template
+    
+    Ejemplo de uso:
+    {% from "macros/cache_macros.html" import cached_include %}
+    {{ cached_include('components/campaign_stats.html', 'campaign_stats_' + campaign.id|string, 60, campaign=campaign) }}
+#}
+    {% set cache_key = key %}
+    {% set cached_content = g.get('cache_manager').get_fragment_cache(cache_key) %}
+    
+    {% if cached_content %}
+        {{ cached_content|safe }}
+    {% else %}
+        {% set content %}
+            {% include template_name, **kwargs %}
+        {% endset %}
+        
+        {{ content|safe }}
+        
+        {% do g.get('cache_manager').set_fragment_cache(cache_key, content, timeout) %}
+    {% endif %}
+{% endmacro %}
+
+{% macro cached_partial(template_name, key, timeout=300, **kwargs) %}
+{# 
+    Macro para cachear la renderización parcial de templates.
+    Similar a cached_include pero para templates que se renderizan con render_template.
+    
+    Args:
+        template_name: Nombre del template a renderizar
+        key: Clave de caché
+        timeout: Tiempo de expiración en segundos
+        **kwargs: Argumentos para el template
+    
+    Ejemplo de uso:
+    {% from "macros/cache_macros.html" import cached_partial %}
+    {{ cached_partial('components/campaign_chart.html', 'campaign_chart_' + campaign.id|string, 60, campaign=campaign, stats=stats) }}
+#}
+    {% set cache_key = key %}
+    {% set cached_content = g.get('cache_manager').get_fragment_cache(cache_key) %}
+    
+    {% if cached_content %}
+        {{ cached_content|safe }}
+    {% else %}
+        {% set content = render_template(template_name, **kwargs) %}
+        
+        {{ content|safe }}
+        
+        {% do g.get('cache_manager').set_fragment_cache(cache_key, content, timeout) %}
+    {% endif %}
+{% endmacro %}

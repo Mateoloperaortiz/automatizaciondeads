@@ -113,6 +113,7 @@ def create_app(config_class=Config):
         settings_bp,
         report_bp,
         application_bp,
+        candidate_mvc_bp,
     )
     from ..routes.job_routes_web import job_bp
     from ..routes.candidate_routes_web import candidate_bp
@@ -134,6 +135,9 @@ def create_app(config_class=Config):
     app.register_blueprint(notification_bp, url_prefix="/notifications")
     app.register_blueprint(sse_bp, url_prefix="/sse")
     app.register_blueprint(swagger_bp)
+
+    # Registrar blueprints MVC
+    app.register_blueprint(candidate_mvc_bp)
 
     # Registrar blueprint de API
     from ..routes import api_bp
