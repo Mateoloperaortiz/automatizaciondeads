@@ -153,7 +153,7 @@ def run_candidate_segmentation_task(self, strategy_name='kmeans', candidate_ids=
         logger.info(f"{log_prefix} Paso 1: Configurando estrategia de segmentación '{strategy_name}'...")
 
         # Importar las clases necesarias para el patrón Strategy
-        from ..ml.segmentation import SegmentationContext, KMeansSegmentation, HierarchicalSegmentation
+        from ..ml.segmentation import SegmentationContext, KMeansSegmentation, HierarchicalSegmentation, DBSCANSegmentation
 
         # Crear la estrategia adecuada según el parámetro
         if strategy_name.lower() == 'kmeans':
@@ -162,6 +162,9 @@ def run_candidate_segmentation_task(self, strategy_name='kmeans', candidate_ids=
         elif strategy_name.lower() == 'hierarchical':
             strategy = HierarchicalSegmentation()
             logger.info(f"{log_prefix} Usando estrategia Hierarchical para segmentación")
+        elif strategy_name.lower() == 'dbscan':
+            strategy = DBSCANSegmentation()
+            logger.info(f"{log_prefix} Usando estrategia DBSCAN para segmentación")
         else:
             logger.warning(f"{log_prefix} Estrategia '{strategy_name}' no reconocida, usando K-Means por defecto")
             strategy = KMeansSegmentation()

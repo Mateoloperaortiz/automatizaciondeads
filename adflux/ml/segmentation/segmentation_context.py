@@ -14,6 +14,8 @@ from datetime import datetime
 
 from .segmentation_strategy import SegmentationStrategy
 from .kmeans_segmentation import KMeansSegmentation
+from .hierarchical_segmentation import HierarchicalSegmentation
+from .dbscan_segmentation import DBSCANSegmentation
 
 
 class SegmentationContext:

@@ -53,7 +53,9 @@ def segmentation_analysis():
 @segmentation_bp.route("/trigger", methods=["POST"])
 def trigger_segmentation_task():
     """Dispara la tarea de segmentación ML usando SegmentationService."""
-    success, message = segmentation_service.trigger_segmentation_task()
+    from flask import request
+    strategy = request.form.get('strategy', 'kmeans')
+    success, message = segmentation_service.trigger_segmentation_with_strategy(strategy)
     flash(message, "success" if success else "error")
     return redirect(url_for("segmentation.segmentation_analysis"))
 
