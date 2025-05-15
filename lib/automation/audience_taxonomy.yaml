@@ -1,0 +1,70 @@
+# lib/automation/audience_taxonomy.yaml
+# Defines mappings from Python service primitives to standardized intermediate values.
+
+# This is a simplified example. You'll expand this significantly.
+# The idea is to map potentially varied string outputs from the ML service
+# or cluster profiles into a more controlled set of intermediate targeting concepts.
+
+# --- Industry Mappings --- #
+# Maps an industry string (e.g., from cluster profile or zero-shot on ad text)
+# to a standardized internal industry code/category.
+industry_map:
+  "Software Development": TECH_SOFTWARE_DEV
+  "Technology": TECH_GENERAL
+  "Sales": BIZ_SALES
+  "Marketing": BIZ_MARKETING
+  "Customer Support": OPS_CUSTOMER_SUPPORT
+  "Healthcare": HEALTH_GENERAL
+  "Finance": FIN_GENERAL
+  "General": GENERAL_INDUSTRY # Fallback
+
+# --- Skill Keyword Mappings (Illustrative) --- #
+# This might be more complex in reality. You might have categories of skills.
+# For now, we might just pass skill_keywords through, or map some common ones to broader categories.
+skill_categories:
+  PROGRAMMING_LANGUAGE: # Example category
+    - "Python"
+    - "JavaScript"
+    - "Java"
+    - "TypeScript"
+  CLOUD_PLATFORM:
+    - "AWS"
+    - "Azure"
+    - "Google Cloud"
+    - "GCP"
+  DATABASE_TECH:
+    - "SQL"
+    - "PostgreSQL"
+    - "MySQL"
+    - "MongoDB"
+    - "NoSQL"
+
+# --- Location Mappings (Illustrative) --- #
+# Maps common location strings to standardized location codes or types.
+# Platform translators will handle converting these to platform-specific location IDs/geotargeting.
+location_map:
+  "Remote": LOCATION_REMOTE
+  "USA": COUNTRY_US
+  "United States": COUNTRY_US
+  "San Francisco": CITY_SF_CA_US
+  "New York": CITY_NY_NY_US
+  "London": CITY_LONDON_UK
+
+# --- Seniority Mappings --- #
+seniority_map:
+  "Entry-Level": SENIORITY_ENTRY
+  "Junior": SENIORITY_JUNIOR
+  "Mid-Level": SENIORITY_MID
+  "Senior": SENIORITY_SENIOR
+  "Lead": SENIORITY_LEAD
+  "Manager": SENIORITY_MANAGER
+  "Principal": SENIORITY_PRINCIPAL
+  "Staff": SENIORITY_STAFF # Often similar to Principal or Lead
+
+# --- Fallback/Default Audience (if segmentation confidence is low) --- #
+# This could define a default set of broad targeting options.
+# The structure here would be what your platform translators expect as input.
+fallback_audience:
+  industries: [GENERAL_INDUSTRY]
+  locations: [COUNTRY_US] # Example default
+  # No specific skills or seniority for broadest reach 

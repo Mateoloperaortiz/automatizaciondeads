@@ -1,0 +1,15 @@
+{
+  "crons": [
+    {
+      "path": "/api/automation/trigger",
+      "schedule": "0 * * * *" // Runs at minute 0 of every hour (e.g., 1:00, 2:00)
+      // Common Vercel Cron Schedules:
+      // "@hourly"       => "0 * * * *"
+      // "@daily"        => "0 0 * * *" (midnight UTC)
+      // "@weekly"       => "0 0 * * 0" (midnight UTC on Sunday)
+      // "*/15 * * * *"  => Every 15 minutes
+    }
+  ]
+  // You can add other Vercel configurations here if needed, like "rewrites", "headers", etc.
+  // "version": 2 // If you are using other Vercel config, ensure version is appropriate
+} 

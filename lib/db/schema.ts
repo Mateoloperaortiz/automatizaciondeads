@@ -5,6 +5,8 @@ import {
   text,
   timestamp,
   integer,
+  boolean,
+  decimal,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -68,15 +70,70 @@ export const invitations = pgTable('invitations', {
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
 
+export const jobAds = pgTable('job_ads', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id')
+    .notNull()
+    .references(() => teams.id),
+  title: varchar('title', { length: 100 }).notNull(),
+  companyName: varchar('company_name', { length: 100 }),
+  descriptionShort: text('description_short').notNull(),
+  descriptionLong: text('description_long'),
+  targetUrl: varchar('target_url', { length: 2048 }).notNull(),
+  creativeAssetUrl: varchar('creative_asset_url', { length: 2048 }),
+  videoThumbnailUrl: varchar('video_thumbnail_url', { length: 2048 }),
+  platformsMetaEnabled: boolean('platforms_meta_enabled').default(false).notNull(),
+  platformsXEnabled: boolean('platforms_x_enabled').default(false).notNull(),
+  platformsGoogleEnabled: boolean('platforms_google_enabled').default(false).notNull(),
+  budgetDaily: decimal('budget_daily', { precision: 10, scale: 2 }),
+  scheduleStart: timestamp('schedule_start').notNull(),
+  scheduleEnd: timestamp('schedule_end'),
+  status: varchar('status', { length: 20 }).notNull().default('draft'),
+  createdByUserId: integer('created_by_user_id').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const socialPlatformConnections = pgTable(
+  'social_platform_connections',
+  {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id')
+      .notNull()
+      .references(() => teams.id),
+    platformName: varchar('platform_name', { length: 50 }).notNull(),
+    platformUserId: varchar('platform_user_id', { length: 255 }),
+    platformAccountId: varchar('platform_account_id', { length: 255 }),
+    accessToken: text('access_token').notNull(),
+    tokenSecret: text('token_secret'),
+    refreshToken: text('refresh_token'),
+    tokenExpiresAt: timestamp('token_expires_at'),
+    scopes: text('scopes'),
+    status: varchar('status', { length: 20 }).notNull().default('active'),
+    fundingInstrumentId: varchar('funding_instrument_id', { length: 255 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }
+);
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
+  jobAds: many(jobAds),
+  socialPlatformConnections: many(socialPlatformConnections),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   teamMembers: many(teamMembers),
   invitationsSent: many(invitations),
+  jobAdsCreated: many(jobAds, { relationName: 'createdBy' }),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
@@ -112,6 +169,28 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const jobAdsRelations = relations(jobAds, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [jobAds.teamId],
+    references: [teams.id],
+  }),
+  createdByUser: one(users, {
+    fields: [jobAds.createdByUserId],
+    references: [users.id],
+    relationName: 'createdBy',
+  }),
+}));
+
+export const socialPlatformConnectionsRelations = relations(
+  socialPlatformConnections,
+  ({ one }) => ({
+    team: one(teams, {
+      fields: [socialPlatformConnections.teamId],
+      references: [teams.id],
+    }),
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -127,6 +206,13 @@ export type TeamDataWithMembers = Team & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };
+
+export type JobAd = typeof jobAds.$inferSelect;
+export type NewJobAd = typeof jobAds.$inferInsert;
+export type SocialPlatformConnection =
+  typeof socialPlatformConnections.$inferSelect;
+export type NewSocialPlatformConnection =
+  typeof socialPlatformConnections.$inferInsert;
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',

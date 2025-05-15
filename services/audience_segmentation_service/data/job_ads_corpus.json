@@ -1,0 +1,152 @@
+[
+    {
+      "id": "ad1",
+      "title": "Senior Software Engineer - Backend",
+      "text": "We are seeking a highly skilled Senior Software Engineer with a strong background in backend development to join our innovative tech team. You will be responsible for designing, developing, and maintaining robust and scalable server-side applications. Key technologies include Python (Django/Flask), Node.js, Go, and relational/NoSQL databases (PostgreSQL, MongoDB). Experience with microservices architecture, cloud platforms (AWS, Azure, GCP), and CI/CD pipelines is essential. A minimum of 5 years of professional experience and a Bachelor's degree in Computer Science or related field is required. Strong problem-solving skills and a passion for clean code are a must."
+    },
+    {
+      "id": "ad2",
+      "title": "Digital Marketing Manager",
+      "text": "Our dynamic marketing department is looking for an experienced Digital Marketing Manager to lead our online presence and campaigns. You will develop and execute comprehensive digital marketing strategies across SEO/SEM, social media, email marketing, and content creation. Responsibilities include managing digital advertising budgets, analyzing campaign performance using tools like Google Analytics, and identifying new growth opportunities. The ideal candidate has 5+ years of experience in digital marketing, a proven track record of successful campaigns, and excellent communication skills. Familiarity with HubSpot or similar CRM/marketing automation tools is a plus."
+    },
+    {
+      "id": "ad3",
+      "title": "Data Scientist - Machine Learning",
+      "text": "Join our cutting-edge data science team as a Data Scientist specializing in Machine Learning. You will be responsible for developing and deploying ML models to solve complex business problems, working with large datasets, and communicating insights to stakeholders. Proficiency in Python (scikit-learn, TensorFlow, PyTorch), R, SQL, and statistical analysis is crucial. Experience with big data technologies (Spark, Hadoop) and cloud-based ML platforms is highly desirable. A Master's or PhD in Computer Science, Statistics, or a related quantitative field, along with 3+ years of relevant experience, is expected."
+    },
+    {
+      "id": "ad4",
+      "title": "UX/UI Designer",
+      "text": "We are hiring a creative and user-focused UX/UI Designer to craft intuitive and engaging digital experiences for our web and mobile applications. You will be involved in the entire design lifecycle, from user research and wireframing to prototyping and high-fidelity visual design. A strong portfolio showcasing your design process and proficiency in tools like Figma, Sketch, or Adobe XD is required. Excellent understanding of user-centered design principles and usability best practices. 3+ years of experience in UX/UI design and strong collaboration skills are essential."
+    },
+    {
+      "id": "ad5",
+      "title": "Product Manager - SaaS",
+      "text": "Seeking a strategic and customer-obsessed Product Manager to drive the roadmap and vision for our flagship SaaS product. You will work closely with engineering, design, marketing, and sales teams to define product requirements, prioritize features, and launch new capabilities. Responsibilities include market research, competitive analysis, user story creation, and A/B testing. A minimum of 4 years of product management experience, preferably in a B2B SaaS environment, is required. Strong analytical skills and experience with Agile methodologies are key to success in this role."
+    },
+    {
+      "id": "ad6",
+      "title": "DevOps Engineer",
+      "text": "Our growing infrastructure team needs a skilled DevOps Engineer to automate and streamline our operations and processes. You will be responsible for building and maintaining CI/CD pipelines, managing cloud infrastructure (AWS preferred), and implementing monitoring and alerting solutions. Experience with containerization (Docker, Kubernetes), infrastructure-as-code (Terraform, Ansible), and scripting languages (Python, Bash) is critical. A solid understanding of networking and security principles is also important. 3+ years in a DevOps or SRE role."
+    },
+    {
+      "id": "ad7",
+      "title": "Sales Development Representative (SDR)",
+      "text": "Exciting opportunity for a motivated Sales Development Representative to join our high-performing sales team. You will be responsible for generating qualified leads, prospecting new business opportunities, and scheduling meetings for Account Executives. This role requires excellent communication and interpersonal skills, a proactive attitude, and a desire to build a career in sales. Previous experience in a sales or customer-facing role is a plus, but we are open to training ambitious candidates. Familiarity with CRM software like Salesforce is beneficial."
+    },
+    {
+      "id": "ad8",
+      "title": "Content Marketing Specialist",
+      "text": "We are looking for a talented Content Marketing Specialist to create compelling and engaging content that drives brand awareness and lead generation. You will be responsible for writing blog posts, articles, case studies, social media updates, and website copy. Strong writing, editing, and research skills are essential. Experience with SEO best practices and content management systems (e.g., WordPress) is required. A portfolio of your writing samples will be requested. 2+ years of experience in content creation or journalism."
+    },
+    {
+      "id": "ad9",
+      "title": "Human Resources Generalist",
+      "text": "Our company is seeking an experienced HR Generalist to support our employees and contribute to a positive work environment. Responsibilities will span recruitment, onboarding, employee relations, benefits administration, and HR policy implementation. The ideal candidate will have a strong understanding of employment law, excellent interpersonal skills, and the ability to handle confidential information with discretion. Bachelor's degree in Human Resources or a related field and 3-5 years of HR experience are required. SHRM certification is a plus."
+    },
+    {
+      "id": "ad10",
+      "title": "Customer Support Engineer - Tier 2",
+      "text": "Join our dedicated customer support team as a Tier 2 Customer Support Engineer. You will provide technical assistance to customers, troubleshoot complex issues, and escalate problems as needed. This role requires strong problem-solving abilities, excellent communication skills, and a passion for helping customers succeed. Experience with SaaS products, SQL, and API troubleshooting is highly desirable. 2+ years in a technical support or customer service role, preferably in a tech company."
+    },
+    {
+      "id": "ad11",
+      "title": "Junior Full Stack Developer",
+      "text": "Eager to kickstart your career? We're hiring a Junior Full Stack Developer to contribute to both front-end and back-end development of our web applications. You'll work with technologies like JavaScript (React/Vue/Angular), Node.js, Python, and SQL databases. This is a great opportunity to learn from senior engineers and grow your skills. A degree in Computer Science or completion of a coding bootcamp, along with a portfolio of projects, is expected. Enthusiasm for learning and a collaborative spirit are key."
+    },
+    {
+      "id": "ad12",
+      "title": "Financial Analyst",
+      "text": "Our finance department is looking for a detail-oriented Financial Analyst to support financial planning, budgeting, forecasting, and reporting. You will analyze financial data, prepare reports for management, and assist in developing financial models. Strong analytical skills, proficiency in Excel, and experience with financial software (e.g., SAP, Oracle) are required. A Bachelor's degree in Finance, Accounting, or Economics and 2+ years of relevant experience are necessary. CPA or CFA candidacy is a plus."
+    },
+    {
+      "id": "ad13",
+      "title": "QA Automation Engineer",
+      "text": "We are seeking a QA Automation Engineer to design, develop, and execute automated test scripts to ensure the quality of our software products. You will work closely with developers and product managers to understand requirements and create comprehensive test plans. Experience with automation tools like Selenium, Cypress, or Playwright, and programming languages such as Java or Python, is essential. Strong understanding of QA methodologies and software development lifecycle. 3+ years in QA automation."
+    },
+    {
+      "id": "ad14",
+      "title": "Operations Manager - Logistics",
+      "text": "A leading logistics company is hiring an experienced Operations Manager to oversee daily warehouse and transportation activities. You will be responsible for managing staff, optimizing processes, ensuring safety compliance, and meeting performance targets. Strong leadership, problem-solving, and organizational skills are crucial. A minimum of 5 years of experience in logistics or supply chain management, with at least 2 years in a supervisory role, is required. Bachelor's degree in Business Administration or a related field preferred."
+    },
+    {
+      "id": "ad15",
+      "title": "Technical Writer",
+      "text": "We need a clear and concise Technical Writer to create high-quality documentation for our software products, including user manuals, API guides, and knowledge base articles. You will work closely with engineering and product teams to gather information and ensure accuracy. Excellent writing and communication skills, attention to detail, and the ability to explain complex technical concepts to diverse audiences are required. Experience with documentation tools (e.g., MadCap Flare, Confluence) and a portfolio of writing samples are essential. 3+ years of technical writing experience."
+    },
+    {
+      "id": "ad16",
+      "title": "Cloud Architect (AWS/Azure)",
+      "text": "Join our team as a Cloud Architect to design and implement scalable, secure, and cost-effective cloud solutions on AWS and/or Azure. You will provide technical leadership, develop cloud strategy, and guide engineering teams in adopting cloud best practices. Deep expertise in cloud services, networking, security, and infrastructure-as-code is required. Certifications like AWS Certified Solutions Architect Professional or Azure Solutions Architect Expert are highly valued. 7+ years of IT experience with at least 3 years in a cloud architecture role."
+    },
+    {
+      "id": "ad17",
+      "title": "Business Analyst - IT Projects",
+      "text": "We are looking for a Business Analyst to bridge the gap between business stakeholders and technical teams for IT projects. You will gather and document requirements, create process flows, and facilitate communication to ensure successful project delivery. Strong analytical, problem-solving, and communication skills are essential. Experience with Agile/Scrum methodologies and tools like JIRA is preferred. Bachelor's degree and 3+ years of experience as a Business Analyst in a technology environment."
+    },
+    {
+      "id": "ad18",
+      "title": "Mobile Developer (iOS/Android)",
+      "text": "Our mobile development team is expanding and we need a skilled Mobile Developer to build innovative native applications for iOS and/or Android platforms. Proficiency in Swift/Objective-C (for iOS) or Kotlin/Java (for Android), along with experience with mobile SDKs, RESTful APIs, and Git is required. A strong portfolio of published apps is a big plus. Passion for mobile technologies and a commitment to creating excellent user experiences. 3+ years of mobile development experience."
+    },
+    {
+      "id": "ad19",
+      "title": "Cybersecurity Analyst",
+      "text": "Seeking a vigilant Cybersecurity Analyst to protect our organization's systems and data from cyber threats. You will monitor security alerts, investigate incidents, conduct vulnerability assessments, and implement security controls. Knowledge of security frameworks (NIST, ISO 27001), SIEM tools, and incident response procedures is crucial. Relevant certifications like CISSP, CISM, or CompTIA Security+ are desirable. Bachelor's degree in Cybersecurity or IT and 3+ years of experience in a security operations role."
+    },
+    {
+      "id": "ad20",
+      "title": "Project Manager - Construction",
+      "text": "A reputable construction firm is looking for an experienced Project Manager to oversee commercial construction projects from inception to completion. Responsibilities include planning, budgeting, scheduling, contractor management, and ensuring projects are delivered on time and within budget. Strong leadership, negotiation, and communication skills are essential. A degree in Construction Management or Engineering and 5+ years of project management experience in commercial construction are required. PMP certification is a plus."
+    },
+    {
+      "id": "ad21",
+      "title": "Recruiter - Tech Hiring",
+      "text": "Join our talent acquisition team as a Technical Recruiter focused on sourcing and hiring top engineering and product talent. You will manage the full-cycle recruitment process, from sourcing and screening to offer negotiation. Proven experience in technical recruiting, strong sourcing skills (LinkedIn Recruiter, Boolean search), and excellent candidate management abilities are required. Ability to thrive in a fast-paced environment. 3+ years of experience as a technical recruiter, either in-house or agency."
+    },
+    {
+      "id": "ad22",
+      "title": "Social Media Manager",
+      "text": "We are seeking a creative and strategic Social Media Manager to grow our brand's online community and engagement. You will develop and implement social media strategies, create engaging content, manage social media channels (Facebook, Instagram, Twitter, LinkedIn, TikTok), and analyze performance. Experience with social media management tools, content creation, and community management is essential. Strong understanding of current social media trends and analytics. 2-4 years of experience in social media marketing."
+    },
+    {
+      "id": "ad23",
+      "title": "Systems Administrator",
+      "text": "Our IT department needs a reliable Systems Administrator to manage and maintain our server infrastructure, network systems, and user accounts. Responsibilities include system monitoring, troubleshooting, patching, backups, and providing IT support to employees. Experience with Windows Server, Linux, Active Directory, virtualization (VMware/Hyper-V), and networking protocols is required. Strong problem-solving skills and a customer-service orientation. 3+ years of experience in system administration."
+    },
+    {
+      "id": "ad24",
+      "title": "Scrum Master",
+      "text": "We are looking for an experienced Scrum Master to facilitate Agile processes and guide our development teams. You will lead sprint planning, daily stand-ups, sprint reviews, and retrospectives, ensuring adherence to Scrum principles and promoting continuous improvement. Excellent communication, facilitation, and conflict resolution skills are essential. Certified ScrumMaster (CSM) or similar Agile certification is required. 3+ years of experience as a Scrum Master in a software development environment."
+    },
+    {
+      "id": "ad25",
+      "title": "Graphic Designer - Branding & Marketing",
+      "text": "Our creative team is hiring a talented Graphic Designer with a strong eye for branding and marketing materials. You will design logos, brochures, social media graphics, website visuals, and other marketing collateral. Proficiency in Adobe Creative Suite (Photoshop, Illustrator, InDesign) and a strong portfolio demonstrating your design skills are required. Ability to work on multiple projects and meet deadlines. Bachelor's degree in Graphic Design or a related field and 2+ years of professional design experience."
+    },
+    {
+      "id": "ad26",
+      "title": "Account Executive - Enterprise Software",
+      "text": "High-growth enterprise software company seeks a driven Account Executive to close new business with large organizations. You will manage complex sales cycles, build relationships with C-level executives, and consistently exceed sales quotas. Proven track record of success in enterprise software sales (5+ years), strong negotiation skills, and experience with CRM tools (e.g., Salesforce) are essential. Hunter mentality and excellent presentation skills."
+    },
+    {
+      "id": "ad27",
+      "title": "Machine Learning Engineer",
+      "text": "We are looking for a Machine Learning Engineer to design, build, and deploy production-ready machine learning models. You will work on challenging problems in areas like NLP, computer vision, or recommendation systems. Strong programming skills in Python, experience with ML frameworks (TensorFlow, PyTorch, Keras), and knowledge of MLOps practices are required. Experience with deploying models to cloud environments (AWS SageMaker, GCP AI Platform) is a plus. Master's degree or PhD in CS/AI and 3+ years of hands-on ML engineering experience."
+    },
+    {
+      "id": "ad28",
+      "title": "Executive Assistant to CEO",
+      "text": "A dynamic company is seeking a highly organized and proactive Executive Assistant to support the CEO. Responsibilities include managing complex calendars, coordinating travel, preparing reports and presentations, and handling confidential correspondence. Exceptional organizational skills, attention to detail, discretion, and proficiency in MS Office Suite are crucial. 5+ years of experience supporting C-level executives in a fast-paced environment. Bachelor's degree preferred."
+    },
+    {
+      "id": "ad29",
+      "title": "Network Engineer",
+      "text": "Our IT infrastructure team requires a skilled Network Engineer to design, implement, and maintain our enterprise network. You will be responsible for LAN/WAN architecture, network security (firewalls, VPNs), routing, switching, and network monitoring. In-depth knowledge of Cisco technologies, TCP/IP, BGP, OSPF, and network troubleshooting tools is essential. CCNA/CCNP certification is highly desirable. 5+ years of experience in network engineering."
+    },
+    {
+      "id": "ad30",
+      "title": "Legal Counsel - Corporate Law",
+      "text": "Our legal department is seeking an experienced Legal Counsel specializing in corporate law. You will advise on a wide range of legal matters, including contracts, M&A, compliance, and corporate governance. Strong analytical and negotiation skills, attention to detail, and the ability to provide practical legal advice are essential. Juris Doctor (JD) degree from an accredited law school, admission to the state bar, and 5-7 years of relevant experience in a law firm or in-house legal department."
+    }
+  ]

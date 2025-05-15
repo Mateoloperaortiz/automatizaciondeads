@@ -1,0 +1,23 @@
+{
+  "0": {
+    "name": "Profile for Cluster 0 (e.g., Tech Support Roles)",
+    "industry": "Customer Support",
+    "skills": ["troubleshooting", "communication", "CRM"],
+    "seniority": "Entry-Level",
+    "keywords": ["helpdesk", "tier 1", "customer service"]
+  },
+  "1": {
+    "name": "Profile for Cluster 1 (e.g., Backend Dev Roles)",
+    "industry": "Software Development",
+    "skills": ["Python", "API Design", "Databases"],
+    "seniority": "Mid-Level",
+    "keywords": ["REST API", "SQL", "backend developer"]
+  },
+  "2": {
+    "name": "Profile for Cluster 2 (e.g., Sales Roles)",
+    "industry": "Sales",
+    "skills": ["B2B Sales", "negotiation", "lead generation"],
+    "seniority": "Senior",
+    "keywords": ["account executive", "quota", "client relations"]
+  }
+}
