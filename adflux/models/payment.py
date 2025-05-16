@@ -123,7 +123,7 @@ class Transaction(db.Model):
     stripe_receipt_url = db.Column(String(500), nullable=True)
     
     description = db.Column(String(500), nullable=True)
-    metadata = db.Column(JSON, nullable=True)
+    transaction_metadata = db.Column(JSON, nullable=True)  # Renombrado de 'metadata' que es un nombre reservado en SQLAlchemy
     created_at = db.Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(
         DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
