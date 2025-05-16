@@ -21,7 +21,11 @@ from .meta import MetaCampaign, MetaAdSet, MetaAd, MetaInsight
 # Importar modelos de campaña
 from .campaign import Campaign
 
+# Importar modelos de notificación
 from .notification import Notification, NotificationType, NotificationCategory, DeliveryStatus
+
+# Importar modelos de pago
+from .payment import PaymentMethod, BudgetPlan, Transaction, SpendingReport, budget_campaign_association
 
 # Para mantener compatibilidad con el código existente
 __all__ = [
@@ -42,8 +46,15 @@ __all__ = [
     "MetaInsight",
     # Modelos de campaña
     "Campaign",
+    # Modelos de notificación
     "Notification",
     "NotificationType",
     "NotificationCategory",
     "DeliveryStatus",
+    # Modelos de pago
+    "PaymentMethod",
+    "BudgetPlan",
+    "Transaction",
+    "SpendingReport",
+    "budget_campaign_association",
 ]

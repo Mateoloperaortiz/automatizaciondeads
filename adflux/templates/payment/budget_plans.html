@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Planes de Presupuesto | AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Planes de Presupuesto</h1>
+        <a href="{{ url_for('payment.create_budget_plan') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Crear Plan de Presupuesto
+        </a>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    {% if not budget_plans %}
+        <div class="bg-white shadow overflow-hidden rounded-md p-6 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No hay planes de presupuesto</h3>
+            <p class="mt-1 text-sm text-gray-500">Crea un plan de presupuesto para gestionar tus campañas publicitarias.</p>
+        </div>
+    {% else %}
+        <div class="bg-white shadow overflow-hidden rounded-md">
+            <ul class="divide-y divide-gray-200">
+                {% for plan in budget_plans %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="flex items-center">
+                                    <h3 class="text-lg font-medium text-gray-900">{{ plan.name }}</h3>
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 'bg-green-100 text-green-800' if plan.status == 'active' else 'bg-gray-100 text-gray-800' }}">
+                                        {{ plan.status|title }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Presupuesto total: ${{ "%.2f"|format(plan.total_budget/100) }} | 
+                                    Tipo: {{ plan.distribution_type|replace('_', ' ')|title }}
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    {% if plan.start_date and plan.end_date %}
+                                        {{ plan.start_date }} - {{ plan.end_date }}
+                                    {% elif plan.start_date %}
+                                        Desde {{ plan.start_date }}
+                                    {% elif plan.end_date %}
+                                        Hasta {{ plan.end_date }}
+                                    {% endif %}
+                                </p>
+                                <div class="mt-2">
+                                    <div class="flex items-center">
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ plan.spent_percentage }}%"></div>
+                                        </div>
+                                        <span class="ml-2 text-xs text-gray-500">${{ "%.2f"|format(plan.spent_amount/100) }} de ${{ "%.2f"|format(plan.total_budget/100) }} ({{ plan.spent_percentage }}%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('payment.budget_plan_detail', plan_id=plan.id) }}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Ver detalles
+                                </a>
+                                <a href="{{ url_for('payment.edit_budget_plan', plan_id=plan.id) }}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Editar
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

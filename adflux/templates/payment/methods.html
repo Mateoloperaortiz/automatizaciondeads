@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Métodos de Pago | AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Métodos de Pago</h1>
+        <button id="addPaymentMethodBtn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Añadir Método de Pago
+        </button>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    {% if not payment_methods %}
+        <div class="bg-white shadow overflow-hidden rounded-md p-6 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No hay métodos de pago</h3>
+            <p class="mt-1 text-sm text-gray-500">Añade un método de pago para comenzar a crear planes de presupuesto.</p>
+        </div>
+    {% else %}
+        <div class="bg-white shadow overflow-hidden rounded-md">
+            <ul class="divide-y divide-gray-200">
+                {% for method in payment_methods %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                {% if method.brand == 'visa' %}
+                                    <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M23 5H1v14h22V5zm-1 13H2V6h20v12zM4 11.5h2.5v1H4v-1zm4 0h2.5v1H8v-1zm4 0h2.5v1H12v-1z"/>
+                                    </svg>
+                                {% elif method.brand == 'mastercard' %}
+                                    <svg class="h-8 w-8 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                    </svg>
+                                {% elif method.brand == 'amex' %}
+                                    <svg class="h-8 w-8 text-blue-800" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M22 4H2v16h20V4zm-2 14H4V6h16v12z"/>
+                                    </svg>
+                                {% else %}
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                {% endif %}
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ method.brand|title }} **** {{ method.last_four }}
+                                        {% if method.is_default %}
+                                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Predeterminado
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        Expira: {{ method.exp_month }}/{{ method.exp_year }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                {% if not method.is_default %}
+                                    <form action="{{ url_for('payment.set_default_payment_method', payment_method_id=method.id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Establecer como predeterminado
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <form action="{{ url_for('payment.remove_payment_method', payment_method_id=method.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este método de pago?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para añadir método de pago -->
+<div id="addPaymentMethodModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">Añadir Método de Pago</h3>
+            <button id="closeAddPaymentMethodModal" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="px-6 py-4">
+            {% if stripe_enabled %}
+                <!-- Formulario de Stripe Elements -->
+                <div id="payment-element"></div>
+                <div id="payment-message" class="hidden mt-2 text-sm text-red-600"></div>
+            {% else %}
+                <!-- Formulario simulado para entorno de desarrollo -->
+                <form id="mockPaymentForm" action="{{ url_for('payment.add_payment_method') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="payment_method_id" id="mockPaymentMethodId" value="">
+                    <input type="hidden" name="set_default" id="mockSetDefault" value="false">
+                    
+                    <div class="mb-4">
+                        <label for="cardNumber" class="block text-sm font-medium text-gray-700 mb-1">Número de Tarjeta</label>
+                        <input type="text" id="cardNumber" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="4242 4242 4242 4242" maxlength="19">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="expDate" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Expiración</label>
+                            <input type="text" id="expDate" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="MM/AA" maxlength="5">
+                        </div>
+                        <div>
+                            <label for="cvc" class="block text-sm font-medium text-gray-700 mb-1">CVC</label>
+                            <input type="text" id="cvc" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="cardholderName" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Titular</label>
+                        <input type="text" id="cardholderName" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Juan Pérez">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex items-center">
+                            <input id="setDefaultCheckbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="setDefaultCheckbox" class="ml-2 block text-sm text-gray-900">
+                                Establecer como método de pago predeterminado
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+        
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+            <button id="cancelAddPaymentMethodBtn" class="mr-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancelar
+            </button>
+            <button id="submitAddPaymentMethodBtn" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para el modal y formulario de pago -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addPaymentMethodBtn = document.getElementById('addPaymentMethodBtn');
+    const addPaymentMethodModal = document.getElementById('addPaymentMethodModal');
+    const closeAddPaymentMethodModal = document.getElementById('closeAddPaymentMethodModal');
+    const cancelAddPaymentMethodBtn = document.getElementById('cancelAddPaymentMethodBtn');
+    const submitAddPaymentMethodBtn = document.getElementById('submitAddPaymentMethodBtn');
+    
+    // Función para mostrar el modal
+    function showModal() {
+        addPaymentMethodModal.classList.remove('hidden');
+    }
+    
+    // Función para ocultar el modal
+    function hideModal() {
+        addPaymentMethodModal.classList.add('hidden');
+    }
+    
+    // Event listeners para mostrar/ocultar el modal
+    addPaymentMethodBtn.addEventListener('click', showModal);
+    closeAddPaymentMethodModal.addEventListener('click', hideModal);
+    cancelAddPaymentMethodBtn.addEventListener('click', hideModal);
+    
+    {% if not stripe_enabled %}
+        // Código para el formulario simulado
+        const mockPaymentForm = document.getElementById('mockPaymentForm');
+        const mockPaymentMethodId = document.getElementById('mockPaymentMethodId');
+        const mockSetDefault = document.getElementById('mockSetDefault');
+        const setDefaultCheckbox = document.getElementById('setDefaultCheckbox');
+        
+        // Formatear número de tarjeta con espacios cada 4 dígitos
+        const cardNumber = document.getElementById('cardNumber');
+        cardNumber.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = '';
+            
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            
+            e.target.value = formattedValue;
+        });
+        
+        // Formatear fecha de expiración con formato MM/AA
+        const expDate = document.getElementById('expDate');
+        expDate.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Permitir solo números en CVC
+        const cvc = document.getElementById('cvc');
+        cvc.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+        
+        // Manejar envío del formulario simulado
+        submitAddPaymentMethodBtn.addEventListener('click', function() {
+            // Validar campos
+            if (!cardNumber.value || !expDate.value || !cvc.value || !cardholderName.value) {
+                alert('Por favor, complete todos los campos.');
+                return;
+            }
+            
+            // Generar ID de método de pago simulado
+            const timestamp = new Date().getTime();
+            const randomNum = Math.floor(Math.random() * 10000);
+            mockPaymentMethodId.value = `pm_mock_${timestamp}_${randomNum}`;
+            
+            // Establecer valor de checkbox
+            mockSetDefault.value = setDefaultCheckbox.checked ? 'true' : 'false';
+            
+            // Enviar formulario
+            mockPaymentForm.submit();
+        });
+    {% else %}
+        // Código para Stripe Elements (en un entorno real)
+        // Este código se implementaría con la API de Stripe
+    {% endif %}
+});
+</script>
+{% endblock %}

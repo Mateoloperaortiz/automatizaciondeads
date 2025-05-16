@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Crear' if action == 'create' else 'Editar' }} Plan de Presupuesto | AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ 'Crear' if action == 'create' else 'Editar' }} Plan de Presupuesto</h1>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <div class="bg-white shadow overflow-hidden rounded-md p-6">
+        <form method="POST" action="{{ url_for('payment.create_budget_plan') if action == 'create' else url_for('payment.edit_budget_plan', plan_id=plan_id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <!-- Nombre del plan -->
+                <div class="sm:col-span-3">
+                    <label for="name" class="block text-sm font-medium text-gray-700">Nombre del plan</label>
+                    <div class="mt-1">
+                        <input type="text" name="name" id="name" value="{{ form.name.data or '' }}" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" required>
+                    </div>
+                    {% if form.name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.name.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Presupuesto total -->
+                <div class="sm:col-span-3">
+                    <label for="total_budget" class="block text-sm font-medium text-gray-700">Presupuesto total ($)</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" name="total_budget" id="total_budget" value="{{ form.total_budget.data or '' }}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.00" step="0.01" min="1" required>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">USD</span>
+                        </div>
+                    </div>
+                    {% if form.total_budget.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.total_budget.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Descripción -->
+                <div class="sm:col-span-6">
+                    <label for="description" class="block text-sm font-medium text-gray-700">Descripción</label>
+                    <div class="mt-1">
+                        <textarea id="description" name="description" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">{{ form.description.data or '' }}</textarea>
+                    </div>
+                    {% if form.description.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.description.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Tipo de distribución -->
+                <div class="sm:col-span-3">
+                    <label for="distribution_type" class="block text-sm font-medium text-gray-700">Tipo de distribución</label>
+                    <div class="mt-1">
+                        <select id="distribution_type" name="distribution_type" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" required>
+                            {% for value, label in form.distribution_type.choices %}
+                                <option value="{{ value }}" {{ 'selected' if form.distribution_type.data == value else '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if form.distribution_type.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.distribution_type.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Límite de gasto diario -->
+                <div class="sm:col-span-3">
+                    <label for="daily_spend_limit" class="block text-sm font-medium text-gray-700">Límite de gasto diario ($)</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" name="daily_spend_limit" id="daily_spend_limit" value="{{ form.daily_spend_limit.data or '' }}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.00" step="0.01" min="0">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">USD</span>
+                        </div>
+                    </div>
+                    {% if form.daily_spend_limit.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.daily_spend_limit.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Umbral de alerta -->
+                <div class="sm:col-span-3">
+                    <label for="alert_threshold" class="block text-sm font-medium text-gray-700">Umbral de alerta (%)</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <input type="number" name="alert_threshold" id="alert_threshold" value="{{ form.alert_threshold.data or '' }}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="80" min="0" max="100">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">%</span>
+                        </div>
+                    </div>
+                    {% if form.alert_threshold.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.alert_threshold.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Fecha de inicio -->
+                <div class="sm:col-span-3">
+                    <label for="start_date" class="block text-sm font-medium text-gray-700">Fecha de inicio</label>
+                    <div class="mt-1">
+                        <input type="date" name="start_date" id="start_date" value="{{ form.start_date.data.strftime('%Y-%m-%d') if form.start_date.data else '' }}" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    {% if form.start_date.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.start_date.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Fecha de fin -->
+                <div class="sm:col-span-3">
+                    <label for="end_date" class="block text-sm font-medium text-gray-700">Fecha de fin</label>
+                    <div class="mt-1">
+                        <input type="date" name="end_date" id="end_date" value="{{ form.end_date.data.strftime('%Y-%m-%d') if form.end_date.data else '' }}" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    {% if form.end_date.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.end_date.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Método de pago -->
+                <div class="sm:col-span-3">
+                    <label for="payment_method_id" class="block text-sm font-medium text-gray-700">Método de pago</label>
+                    <div class="mt-1">
+                        <select id="payment_method_id" name="payment_method_id" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            {% for value, label in form.payment_method_id.choices %}
+                                <option value="{{ value }}" {{ 'selected' if form.payment_method_id.data == value else '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if form.payment_method_id.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.payment_method_id.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Pago inicial / adicional -->
+                <div class="sm:col-span-3">
+                    <label for="initial_payment" class="block text-sm font-medium text-gray-700">{{ 'Pago inicial' if action == 'create' else 'Pago adicional' }} ($)</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                        <input type="number" name="initial_payment" id="initial_payment" value="{{ form.initial_payment.data or '' }}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.00" step="0.01" min="0">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">USD</span>
+                        </div>
+                    </div>
+                    {% if form.initial_payment.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.initial_payment.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Campañas -->
+                <div class="sm:col-span-6">
+                    <label for="campaign_ids" class="block text-sm font-medium text-gray-700">Campañas</label>
+                    <div class="mt-1">
+                        <select id="campaign_ids" name="campaign_ids" multiple class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" size="5">
+                            {% for value, label in form.campaign_ids.choices %}
+                                <option value="{{ value }}" {{ 'selected' if value in form.campaign_ids.data else '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples campañas.</p>
+                    {% if form.campaign_ids.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.campaign_ids.errors[0] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <a href="{{ url_for('payment.budget_plans') }}" class="mr-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ 'Crear Plan' if action == 'create' else 'Guardar Cambios' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
