@@ -15,12 +15,14 @@ from ..models import JobOpening, Segment
 from ..forms import CampaignForm
 from ..constants import CAMPAIGN_STATUS, CAMPAIGN_STATUS_COLORS
 
-# Importar el servicio
+# Importar los servicios
 from ..services.campaign_service import CampaignService
+from ..services.recommendation_service import RecommendationService
 
 
-# Instanciar el servicio (se podría inyectar dependencia si se usa un framework para ello)
+# Instanciar los servicios (se podría inyectar dependencia si se usa un framework para ello)
 campaign_service = CampaignService()
+recommendation_service = RecommendationService()
 
 # Definir el blueprint
 campaign_bp = Blueprint("campaign", __name__, template_folder="../templates")
@@ -248,6 +250,7 @@ def campaign_details(campaign_id):
             campaign=campaign,
             job=job,
             csrf_token_value=csrf_token_value,
+            recommendation_service=recommendation_service,
         )
     except Exception as e: # Captura el 404 del servicio u otros errores
          current_app.logger.error(f"Error al obtener detalles de campaña {campaign_id}: {e}", exc_info=True)

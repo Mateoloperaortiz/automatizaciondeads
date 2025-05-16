@@ -36,7 +36,7 @@
                             class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                         <option value="">Seleccionar plataforma</option>
                         {% for platform in platforms %}
-                        <option value="{{ platform.id }}" {% if selected_platform == platform.id %}selected{% endif %}>{{ platform.name }}</option>
+                        <option value="{{ platform['id'] }}" {% if selected_platform == platform['id'] %}selected{% endif %}>{{ platform['name'] }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -86,16 +86,16 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {% for platform in platforms %}
-            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow platform-{{ platform.id }}">
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow platform-{{ platform['id'] }}">
                 <div class="flex items-center mb-2">
-                    <i class="{{ platform.icon }} text-2xl mr-2"></i>
-                    <h3 class="text-lg font-medium">{{ platform.name }}</h3>
+                    <i class="{{ platform['icon'] }} text-2xl mr-2"></i>
+                    <h3 class="text-lg font-medium">{{ platform['name'] }}</h3>
                 </div>
-                <p class="text-gray-600 text-sm mb-2">{{ platform.description }}</p>
+                <p class="text-gray-600 text-sm mb-2">{{ platform['description'] }}</p>
                 <div class="mt-2">
                     <span class="text-xs font-medium text-gray-500">Formatos:</span>
                     <div class="flex flex-wrap gap-1 mt-1">
-                        {% for format in platform.formats %}
+                        {% for format in platform['formats'] %}
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 format-tag">
                             {{ format }}
                         </span>

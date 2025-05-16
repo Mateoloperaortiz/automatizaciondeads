@@ -53,9 +53,10 @@
                                 <div class="mt-2">
                                     <div class="flex items-center">
                                         <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ plan.spent_percentage }}%"></div>
+                                            {% set spent_percentage = (plan.used_budget / plan.total_budget * 100)|round if plan.total_budget > 0 else 0 %}
+                                            <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ spent_percentage }}%"></div>
                                         </div>
-                                        <span class="ml-2 text-xs text-gray-500">${{ "%.2f"|format(plan.spent_amount/100) }} de ${{ "%.2f"|format(plan.total_budget/100) }} ({{ plan.spent_percentage }}%)</span>
+                                        <span class="ml-2 text-xs text-gray-500">${{ "%.2f"|format(plan.used_budget) }} de ${{ "%.2f"|format(plan.total_budget) }} ({{ spent_percentage }}%)</span>
                                     </div>
                                 </div>
                             </div>
