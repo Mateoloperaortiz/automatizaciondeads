@@ -139,6 +139,65 @@
         </dl>
     </div>
 </div>
+<!-- Sección de Recomendaciones para la Campaña -->
+<div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+            Recomendaciones para Optimización
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            Sugerencias para mejorar el rendimiento de esta campaña.
+        </p>
+    </div>
+    <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+        <div class="py-3 sm:py-5 px-6">
+            <div id="campaign-optimizations">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% set optimizations = recommendation_service.get_campaign_optimizations(campaign.id) %}
+                    {% if optimizations %}
+                        {% for opt in optimizations %}
+                            <div class="border rounded-lg p-4 {% if opt.impact == 'high' %}bg-red-50 border-red-200{% elif opt.impact == 'medium' %}bg-yellow-50 border-yellow-200{% else %}bg-blue-50 border-blue-200{% endif %}">
+                                <div class="flex items-center mb-2">
+                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full {% if opt.impact == 'high' %}bg-red-100 text-red-600{% elif opt.impact == 'medium' %}bg-yellow-100 text-yellow-600{% else %}bg-blue-100 text-blue-600{% endif %} mr-3">
+                                        {% if opt.type == 'targeting' %}
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                            </svg>
+                                        {% elif opt.type == 'budget' %}
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        {% elif opt.type == 'creative' %}
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        {% else %}
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        {% endif %}
+                                    </span>
+                                    <h4 class="text-md font-medium text-gray-900">{{ opt.type|title }}</h4>
+                                </div>
+                                <p class="ml-11 text-sm text-gray-600">{{ opt.recommendation }}</p>
+                                <div class="mt-2 ml-11">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if opt.impact == 'high' %}bg-red-100 text-red-800{% elif opt.impact == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        Impacto: {{ opt.impact|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-span-2 text-center py-8 text-gray-500">
+                            No hay recomendaciones disponibles para esta campaña en este momento.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 {% endblock %}
 

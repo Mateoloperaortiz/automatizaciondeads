@@ -156,13 +156,15 @@ def run_candidate_segmentation_task(self, strategy_name='kmeans', candidate_ids=
         from ..ml.segmentation import SegmentationContext, KMeansSegmentation, HierarchicalSegmentation, DBSCANSegmentation
 
         # Crear la estrategia adecuada según el parámetro
-        if strategy_name.lower() == 'kmeans':
+        strategy_name_str = str(strategy_name) if not isinstance(strategy_name, str) else strategy_name
+        
+        if strategy_name_str.lower() == 'kmeans':
             strategy = KMeansSegmentation()
             logger.info(f"{log_prefix} Usando estrategia K-Means para segmentación")
-        elif strategy_name.lower() == 'hierarchical':
+        elif strategy_name_str.lower() == 'hierarchical':
             strategy = HierarchicalSegmentation()
             logger.info(f"{log_prefix} Usando estrategia Hierarchical para segmentación")
-        elif strategy_name.lower() == 'dbscan':
+        elif strategy_name_str.lower() == 'dbscan':
             strategy = DBSCANSegmentation()
             logger.info(f"{log_prefix} Usando estrategia DBSCAN para segmentación")
         else:
