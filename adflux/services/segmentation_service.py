@@ -168,8 +168,10 @@ class SegmentationService(ISegmentationService):
         try:
             # Verificar si hay suficientes candidatos para segmentar
             candidate_count = Candidate.query.count()
-            if candidate_count < 10:
-                return False, f"No hay suficientes candidatos para segmentar. Se requieren al menos 10, pero solo hay {candidate_count}."
+            min_candidates = 3 if strategy_name.lower() == 'dbscan' else 5
+            
+            if candidate_count < min_candidates:
+                return False, f"No hay suficientes candidatos para segmentar. Se requieren al menos {min_candidates} para la estrategia {strategy_name}, pero solo hay {candidate_count}."
 
             # Lanzar tarea asíncrona con la estrategia seleccionada
             task = run_candidate_segmentation_task.delay(strategy_name)
