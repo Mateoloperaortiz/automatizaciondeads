@@ -16,6 +16,7 @@ from .candidate_service import CandidateService
 from .settings_service import SettingsService
 from .creative_service import CreativeService
 from .recommendation_service import RecommendationService
+from .payment_service import PaymentService
 
 # Definir __all__ para importaciones con wildcard
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "SettingsService",
     "CreativeService",
     "RecommendationService",
+    "PaymentService",
 ]

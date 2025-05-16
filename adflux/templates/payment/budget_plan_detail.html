@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Plan de Presupuesto | AdFlux{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <div class="flex items-center">
+            <a href="{{ url_for('payment.budget_plans') }}" class="mr-2 text-indigo-600 hover:text-indigo-900">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ budget_plan.name }}</h1>
+            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 'bg-green-100 text-green-800' if budget_plan.status == 'active' else 'bg-gray-100 text-gray-800' }}">
+                {{ budget_plan.status|title }}
+            </span>
+        </div>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Información general -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow overflow-hidden rounded-md">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Información del Plan</h3>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Presupuesto total</dt>
+                            <dd class="mt-1 text-sm text-gray-900">${{ "%.2f"|format(budget_plan.total_budget/100) }}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Gastado hasta ahora</dt>
+                            <dd class="mt-1 text-sm text-gray-900">${{ "%.2f"|format(budget_plan.spent_amount/100) }} ({{ budget_plan.spent_percentage }}%)</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Tipo de distribución</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ budget_plan.distribution_type|replace('_', ' ')|title }}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Límite de gasto diario</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if budget_plan.daily_spend_limit %}
+                                    ${{ "%.2f"|format(budget_plan.daily_spend_limit/100) }}
+                                {% else %}
+                                    No establecido
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Fecha de inicio</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if budget_plan.start_date %}
+                                    {{ budget_plan.start_date }}
+                                {% else %}
+                                    No establecida
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Fecha de fin</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if budget_plan.end_date %}
+                                    {{ budget_plan.end_date }}
+                                {% else %}
+                                    No establecida
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <dt class="text-sm font-medium text-gray-500">Descripción</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if budget_plan.description %}
+                                    {{ budget_plan.description }}
+                                {% else %}
+                                    Sin descripción
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Progreso del presupuesto -->
+            <div class="mt-6 bg-white shadow overflow-hidden rounded-md">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Progreso del Presupuesto</h3>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Presupuesto utilizado</span>
+                            <span class="text-sm font-medium text-gray-700">{{ budget_plan.spent_percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ budget_plan.spent_percentage }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>$0</span>
+                        <span>${{ "%.2f"|format(budget_plan.total_budget/100) }}</span>
+                    </div>
+                    
+                    {% if budget_plan.alert_threshold and budget_plan.spent_percentage >= budget_plan.alert_threshold %}
+                        <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        Alerta: Has alcanzado el {{ budget_plan.alert_threshold }}% de tu presupuesto total.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Campañas asociadas -->
+            <div class="mt-6 bg-white shadow overflow-hidden rounded-md">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Campañas Asociadas</h3>
+                    {% if budget_plan.distribution_type == 'performance_based' %}
+                        <form action="{{ url_for('payment.redistribute_budget', plan_id=budget_plan.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Redistribuir Presupuesto
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    {% if budget_plan.campaigns %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaña</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plataforma</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignación</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presupuesto Diario</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rendimiento</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for campaign in budget_plan.campaigns %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                <a href="{{ url_for('campaign.campaign_detail', campaign_id=campaign.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                    {{ campaign.name }}
+                                                </a>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ campaign.platform|title }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ campaign.allocation_percentage }}%
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                ${{ "%.2f"|format(campaign.daily_budget/100) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {% if campaign.performance_score is defined %}
+                                                    <div class="flex items-center">
+                                                        <div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                                                            <div class="bg-indigo-600 h-1.5 rounded-full" style="width: {{ campaign.performance_score }}%"></div>
+                                                        </div>
+                                                        <span>{{ campaign.performance_score }}%</span>
+                                                    </div>
+                                                {% else %}
+                                                    No disponible
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-sm text-gray-500">No hay campañas asociadas a este plan de presupuesto.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="lg:col-span-1">
+            <!-- Acciones -->
+            <div class="bg-white shadow overflow-hidden rounded-md">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Acciones</h3>
+                </div>
+                <div class="px-4 py-5 sm:p-6 space-y-4">
+                    <a href="{{ url_for('payment.edit_budget_plan', plan_id=budget_plan.id) }}" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Editar Plan
+                    </a>
+                    
+                    {% if budget_plan.status == 'active' %}
+                        <form action="{{ url_for('payment.edit_budget_plan', plan_id=budget_plan.id) }}" method="POST" class="w-full">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="paused">
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Pausar Plan
+                            </button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('payment.edit_budget_plan', plan_id=budget_plan.id) }}" method="POST" class="w-full">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="active">
+                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Activar Plan
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Transacciones recientes -->
+            <div class="mt-6 bg-white shadow overflow-hidden rounded-md">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Transacciones Recientes</h3>
+                    <a href="{{ url_for('payment.transactions', budget_plan_id=budget_plan.id) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                        Ver todas
+                    </a>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    {% if transactions %}
+                        <ul class="divide-y divide-gray-200">
+                            {% for transaction in transactions[:5] %}
+                                <li class="py-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ transaction.transaction_type|replace('_', ' ')|title }}
+                                            </p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                            </p>
+                                        </div>
+                                        <div class="text-sm font-medium {{ 'text-green-600' if transaction.transaction_type == 'charge' else 'text-red-600' }}">
+                                            {{ '+' if transaction.transaction_type == 'charge' else '-' }}${{ "%.2f"|format(transaction.amount/100) }}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-sm text-gray-500">No hay transacciones para este plan.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

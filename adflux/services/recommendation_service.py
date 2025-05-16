@@ -11,7 +11,7 @@ import logging
 import numpy as np
 from collections import Counter
 
-from ..models import db, Campaign, JobOpening, MetaInsight, Segment
+from ..models import db, Campaign, JobOpening, MetaInsight, Segment, BudgetPlan
 from ..api.common.logging import get_logger
 
 logger = get_logger("RecommendationService")
@@ -51,7 +51,7 @@ class RecommendationService:
             return self._generate_recommendations(job)
             
         except Exception as e:
-            logger.error(f"Error al generar recomendaciones para trabajo {job_id}: {str(e)}", exc_info=True)
+            logger.error(f"Error al generar recomendaciones para trabajo {job_id}: {str(e)}")
             return False, f"Error al generar recomendaciones: {str(e)}", {}
     
     def _generate_recommendations(self, job: JobOpening) -> Tuple[bool, str, Dict[str, Any]]:
@@ -410,29 +410,30 @@ class RecommendationService:
         
         if platform in platform_performance and platform_performance[platform]["avg_daily_budget"] > 0:
             avg_budget = platform_performance[platform]["avg_daily_budget"]
+            
+            budget_recommendation["daily_recommended"] = int(avg_budget)
             budget_recommendation["daily_min"] = max(500, int(avg_budget * 0.7))
-            budget_recommendation["daily_recommended"] = max(1000, int(avg_budget))
-            budget_recommendation["daily_max"] = max(5000, int(avg_budget * 1.5))
+            budget_recommendation["daily_max"] = int(avg_budget * 1.5)
             budget_recommendation["is_based_on_data"] = True
         
         return budget_recommendation
     
     def _rank_platforms(self, platform_performance: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Genera un ranking de plataformas basado en rendimiento.
+        Genera un ranking de plataformas basado en rendimiento y enfoque exploratorio.
         
         Args:
-            platform_performance: Datos de rendimiento por plataforma
+            platform_performance: Diccionario con rendimiento por plataforma
             
         Returns:
             Lista de plataformas ordenadas por puntuación
         """
-        platform_ranking = []
+        platform_scores = []
         
-        for platform in self.supported_platforms:
-            if platform in platform_performance:
-                data = platform_performance[platform]
-                
+        for platform, data in platform_performance.items():
+            performance_score = 0
+            
+            if data["campaign_count"] > 0:
                 ctr_score = data["total_ctr"] * self.metric_weights["ctr"] * 5
                 
                 conversion_score = data["conversion_rate"] * self.metric_weights["conversions"] * 5
@@ -444,123 +445,184 @@ class RecommendationService:
                 impression_score = min(100, data["total_impressions"] / 1000) * self.metric_weights["impressions"] * 0.1
                 
                 performance_score = ctr_score + conversion_score + cpc_score + impression_score
-                campaign_factor = min(1, data["campaign_count"] / 5)
                 
-                if "exploratory_score" in data:
-                    normalized_exploratory = data["exploratory_score"] * 2
-                    total_score = (performance_score * campaign_factor * (1 - self.exploratory_factor)) + \
-                                  (normalized_exploratory * self.exploratory_factor)
-                else:
-                    total_score = performance_score * campaign_factor
+                campaign_factor = min(1, data["campaign_count"] / 5)  # Saturar en 5 campañas
+                performance_score = performance_score * campaign_factor
+            
+            if "exploratory_score" in data:
+                normalized_exploratory = data["exploratory_score"] * 2
                 
-                platform_ranking.append({
-                    "platform": platform,
-                    "score": total_score,
-                    "ctr": data["total_ctr"],
-                    "conversion_rate": data["conversion_rate"],
-                    "cpc": data["total_cpc"],
-                    "campaign_count": data["campaign_count"],
-                    "confidence": data["confidence"],
-                    "exploratory_score": data.get("exploratory_score", 0)
-                })
+                final_score = (performance_score * (1 - self.exploratory_factor)) + \
+                              (normalized_exploratory * self.exploratory_factor)
             else:
-                platform_ranking.append({
-                    "platform": platform,
-                    "score": 0,
-                    "ctr": 0,
-                    "conversion_rate": 0,
-                    "cpc": 0,
-                    "campaign_count": 0,
-                    "confidence": 50,  # Confianza media para plataformas sin datos
-                    "exploratory_score": 0
-                })
+                final_score = performance_score
+            
+            reasons = []
+            
+            if data["campaign_count"] > 0:
+                if data["total_ctr"] > 1.5:
+                    reasons.append("Alto CTR")
+                if data["conversion_rate"] > 5:
+                    reasons.append("Alta tasa de conversión")
+                if data["total_cpc"] > 0 and data["total_cpc"] < 10:
+                    reasons.append("Bajo costo por clic")
+            
+            if "exploratory_score" in data and data["exploratory_score"] > 20:
+                reasons.append("Recomendado para este tipo de trabajo")
+            
+            if not reasons:
+                reasons.append("Plataforma estándar para campañas de reclutamiento")
+            
+            platform_scores.append({
+                "platform": platform,
+                "score": final_score,
+                "confidence": data.get("confidence", 50),
+                "reasons": reasons
+            })
         
-        platform_ranking.sort(key=lambda x: x["score"], reverse=True)
+        platform_scores.sort(key=lambda x: x["score"], reverse=True)
         
-        return platform_ranking
+        return platform_scores
     
     def _generate_exploratory_recommendations(self, job: JobOpening) -> Dict[str, Any]:
         """
-        Genera recomendaciones con enfoque exploratorio cuando no hay datos históricos suficientes.
+        Genera recomendaciones exploratorias cuando no hay suficientes datos históricos.
         
         Args:
             job: Objeto JobOpening
             
         Returns:
-            Diccionario con recomendaciones
+            Diccionario con recomendaciones exploratorias
         """
-        mock_performance = {}
-        for platform in self.supported_platforms:
-            mock_performance[platform] = {
-                "campaign_count": 0,
-                "total_spend": 0,
-                "total_clicks": 0,
-                "total_impressions": 0,
-                "total_conversions": 0,
-                "total_ctr": 0,
-                "total_cpc": 0,
-                "conversion_rate": 0,
-                "avg_daily_budget": 1500,  # $15.00 por defecto
-                "config_options": {},
-                "exploratory_score": 0,
-                "confidence": 50  # Confianza media
-            }
+        job_title_lower = job.title.lower() if job.title else ""
         
-        platform_performance = self._apply_exploratory_approach(mock_performance, job)
+        best_platform = "meta"  # Plataforma predeterminada
+        platform_ranking = []
         
-        best_platform, platform_configs = self._get_best_platform_and_config(platform_performance)
+        tech_score = 0
+        creative_score = 0
+        junior_score = 0
+        executive_score = 0
         
-        segments = Segment.query.all()
-        segment_ids = [segment.id for segment in segments]
+        tech_keywords = ["programador", "desarrollador", "software", "ingeniero", "sistemas", "data", "tech"]
+        creative_keywords = ["diseñador", "creativo", "marketing", "comunicación", "social media", "contenido"]
+        junior_keywords = ["junior", "asistente", "practicante", "estudiante", "becario"]
+        executive_keywords = ["gerente", "director", "jefe", "supervisor", "líder", "senior", "manager"]
         
-        for platform in self.supported_platforms:
-            if "target_segment_ids" not in platform_configs[platform]:
-                platform_configs[platform]["target_segment_ids"] = segment_ids[:2] if segment_ids else []
+        for keyword in tech_keywords:
+            if keyword in job_title_lower:
+                tech_score += 10
+                
+        for keyword in creative_keywords:
+            if keyword in job_title_lower:
+                creative_score += 10
+                
+        for keyword in junior_keywords:
+            if keyword in job_title_lower:
+                junior_score += 10
+                
+        for keyword in executive_keywords:
+            if keyword in job_title_lower:
+                executive_score += 10
         
-        if "objective" not in platform_configs.get("meta", {}):
-            platform_configs["meta"]["objective"] = "LEAD_GENERATION"
+        platform_scores = {
+            "meta": 70 + (creative_score * 0.5) + (executive_score * 0.5),
+            "google": 60 + (tech_score * 0.7) + (executive_score * 0.3),
+            "tiktok": 50 + (creative_score * 0.7) + (junior_score * 0.5),
+            "snapchat": 40 + (junior_score * 0.7) + (creative_score * 0.3)
+        }
         
-        platform_ranking = self._rank_platforms(platform_performance)
+        best_platform = max(platform_scores.items(), key=lambda x: x[1])[0]
+        
+        for platform, score in platform_scores.items():
+            reasons = []
+            
+            if platform == "meta":
+                reasons.append("Plataforma versátil para diversos perfiles")
+                if creative_score > 0:
+                    reasons.append("Efectiva para roles creativos")
+                if executive_score > 0:
+                    reasons.append("Buena para perfiles senior")
+            elif platform == "google":
+                reasons.append("Alcance amplio y específico")
+                if tech_score > 0:
+                    reasons.append("Ideal para perfiles técnicos")
+            elif platform == "tiktok":
+                reasons.append("Audiencia joven y dinámica")
+                if junior_score > 0:
+                    reasons.append("Efectiva para perfiles junior")
+                if creative_score > 0:
+                    reasons.append("Buena para roles creativos")
+            elif platform == "snapchat":
+                if junior_score > 0:
+                    reasons.append("Audiencia joven")
+            
+            platform_ranking.append({
+                "platform": platform,
+                "score": score,
+                "confidence": 60,
+                "reasons": reasons
+            })
+        
+        platform_ranking.sort(key=lambda x: x["score"], reverse=True)
+        
+        recommended_config = {
+            "daily_budget": 1500,  # $15.00
+            "target_segment_ids": []
+        }
+        
+        if best_platform == "meta":
+            recommended_config["objective"] = "LEAD_GENERATION"
+        
+        recommended_budget = {
+            "daily_min": 500,  # $5.00
+            "daily_recommended": 1500,  # $15.00
+            "daily_max": 5000,  # $50.00
+            "is_based_on_data": False
+        }
         
         return {
             "best_platform": best_platform,
             "platform_ranking": platform_ranking,
-            "recommended_config": platform_configs.get(best_platform, {}),
-            "recommended_budget": {
-                "daily_min": 500,  # $5.00
-                "daily_recommended": 1500,  # $15.00
-                "daily_max": 5000,  # $50.00
-                "is_based_on_data": False
-            },
+            "recommended_config": recommended_config,
+            "recommended_budget": recommended_budget,
             "targeting_suggestions": self._generate_targeting_suggestions(job),
-            "confidence_score": 70,  # Confianza media-alta para enfoque exploratorio
+            "confidence_score": 60,
             "based_on_historical": False,
             "similar_job_count": 0
         }
     
-    def _generate_targeting_suggestions(self, job: JobOpening) -> Dict[str, Any]:
+    def _generate_targeting_suggestions(self, job: JobOpening) -> Dict[str, List[str]]:
         """
-        Genera sugerencias de targeting basadas en características del trabajo.
+        Genera sugerencias de segmentación basadas en las características del trabajo.
         
         Args:
             job: Objeto JobOpening
             
         Returns:
-            Diccionario con sugerencias de targeting
+            Diccionario con sugerencias de segmentación
         """
         targeting = {
-            "locations": [],
             "interests": [],
-            "demographics": {},
+            "job_titles": [],
             "education_levels": [],
-            "job_titles": []
+            "demographics": {}
         }
         
-        if job.location:
-            targeting["locations"].append(job.location)
-        
         if job.required_skills:
-            targeting["interests"] = job.required_skills[:5]  # Primeras 5 habilidades como intereses
+            for skill in job.required_skills:
+                skill_lower = skill.lower()
+                
+                if "python" in skill_lower or "java" in skill_lower or "javascript" in skill_lower:
+                    targeting["interests"].extend(["Programación", "Desarrollo de software", "Tecnología"])
+                elif "diseño" in skill_lower or "photoshop" in skill_lower or "illustrator" in skill_lower:
+                    targeting["interests"].extend(["Diseño gráfico", "Diseño UX/UI", "Creatividad"])
+                elif "ventas" in skill_lower or "negociación" in skill_lower:
+                    targeting["interests"].extend(["Ventas", "Negocios", "Marketing"])
+                elif "marketing" in skill_lower or "redes sociales" in skill_lower:
+                    targeting["interests"].extend(["Marketing digital", "Redes sociales", "Publicidad"])
+        
+        targeting["interests"] = list(set(targeting["interests"]))
         
         if job.education_level:
             targeting["education_levels"].append(job.education_level)
@@ -593,3 +655,82 @@ class RecommendationService:
             }
         
         return targeting
+        
+    def recommend_budget_allocation(self, budget_plan_id: int) -> List[Dict[str, Any]]:
+        """
+        Recomienda asignación de presupuesto basado en el rendimiento de campañas.
+        
+        Args:
+            budget_plan_id: ID del plan de presupuesto
+            
+        Returns:
+            Lista de recomendaciones con allocaciones sugeridas para cada campaña
+        """
+        recommendations = []
+        
+        try:
+            budget_plan = BudgetPlan.query.get(budget_plan_id)
+            if not budget_plan:
+                return []
+                
+            campaigns = budget_plan.campaigns
+            if not campaigns:
+                return []
+            
+            per_campaign = 100.0 / len(campaigns)
+            
+            for campaign in campaigns:
+                recommendations.append({
+                    "campaign_id": campaign.id,
+                    "campaign_name": campaign.name,
+                    "current_allocation": 0,  # Valor de ejemplo
+                    "recommended_allocation": per_campaign,
+                    "reason": "Distribución equitativa sugerida para evaluación inicial"
+                })
+            
+        except Exception as e:
+            logger.error(f"Error al recomendar asignación de presupuesto: {str(e)}")
+            return []
+            
+        return recommendations
+        
+    def get_campaign_optimizations(self, campaign_id: int) -> List[Dict[str, Any]]:
+        """
+        Genera recomendaciones para optimizar una campaña específica.
+        
+        Args:
+            campaign_id: ID de la campaña
+            
+        Returns:
+            Lista de recomendaciones para optimizar la campaña
+        """
+        try:
+            campaign = Campaign.query.get(campaign_id)
+            if not campaign:
+                return []
+                
+            optimizations = []
+            
+            optimizations.append({
+                "type": "targeting",
+                "recommendation": "Considerar ampliar la segmentación para incrementar alcance",
+                "impact": "medium",
+            })
+            
+            optimizations.append({
+                "type": "budget",
+                "recommendation": "El presupuesto diario actual parece óptimo basado en rendimiento",
+                "impact": "low",
+            })
+            
+            optimizations.append({
+                "type": "creative",
+                "recommendation": "Considerar pruebas A/B de creatividades para mejorar CTR",
+                "impact": "high",
+            })
+            
+            return optimizations
+            
+        except Exception as e:
+            logger.error(f"Error al generar optimizaciones para campaña: {str(e)}")
+            return []

@@ -120,6 +120,7 @@ def create_app(config_class=Config):
     from ..routes.main_routes import main_bp
     from ..routes.swagger_routes import swagger_bp
     from ..routes.notification_routes_web import notification_bp
+    from ..routes.payment_routes import payment_bp
     from ..routes.creative_routes import creative_bp
     from ..sse import sse_bp
 
@@ -136,6 +137,7 @@ def create_app(config_class=Config):
     app.register_blueprint(notification_bp, url_prefix="/notifications")
     app.register_blueprint(sse_bp, url_prefix="/sse")
     app.register_blueprint(swagger_bp)
+    app.register_blueprint(payment_bp, url_prefix="/payment")
     app.register_blueprint(creative_bp, url_prefix="/creative")
 
     # Registrar blueprints MVC

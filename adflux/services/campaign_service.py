@@ -51,6 +51,10 @@ def _save_uploaded_image(file_storage):
 
 class CampaignService(ICampaignService):
     """Contiene la lógica de negocio para las campañas."""
+    
+    def get_campaigns(self):
+        """Obtiene todas las campañas."""
+        return Campaign.query.all()
 
     def get_campaigns_paginated(
         self, page, per_page, platform_filter=None, status_filter=None, sort_by="created_at", sort_order="desc"
@@ -353,8 +357,8 @@ class CampaignService(ICampaignService):
                             ad_set_impressions = int(perf_row.total_impressions or 0)
                             ad_set_clicks = int(perf_row.total_clicks or 0)
 
-                        ad_set_ctr = (ad_set_clicks / ad_set_impressions) * 100 if ad_set_impressions > 0 else 0
-                        ad_set_cpc = ad_set_spend / ad_set_clicks if ad_set_clicks > 0 else 0
+                        ad_set_ctr = (float(ad_set_clicks) / float(ad_set_impressions)) * 100 if ad_set_impressions > 0 else 0
+                        ad_set_cpc = float(ad_set_spend) / float(ad_set_clicks) if ad_set_clicks > 0 else 0
 
                         stats["ad_set_performance"].append({
                                 "name": ad_set_name,
