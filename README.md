@@ -48,6 +48,7 @@ Desarrollado como proyecto universitario inspirado en las necesidades de platafo
 - Agrupa automáticamente candidatos usando clustering K-means
 - Identifica patrones ocultos en los perfiles de candidatos
 - Optimiza tus campañas según características de cada segmento
+- Incorpora algoritmos adicionales como DBSCAN para segmentación avanzada
 
 ### 📱 Publicación Multi-Plataforma
 
@@ -66,6 +67,18 @@ Desarrollado como proyecto universitario inspirado en las necesidades de platafo
 - Tareas en segundo plano con Celery y Redis
 - Sincronización automática de datos con las plataformas
 - Programación de tareas recurrentes sin intervención manual
+
+### 💰 Automatización de Presupuesto con Stripe
+- Gestiona métodos de pago y planes de presupuesto para campañas
+- Redistribuye automáticamente presupuestos basado en rendimiento
+- Monitorea transacciones y generación de informes de gastos
+- Envía alertas cuando se alcanzan umbrales de presupuesto configurados
+
+### 🧠 Recomendaciones Inteligentes
+- Genera recomendaciones personalizadas para optimizar campañas
+- Sugiere distribuciones de presupuesto según rendimiento histórico
+- Analiza patrones de plataformas para recomendar canales efectivos
+- Proporciona insights sobre mejoras de segmentación y creatividades
 
 </div>
 
@@ -102,6 +115,7 @@ Desarrollado como proyecto universitario inspirado en las necesidades de platafo
 - **Meta Ads:** `facebook-python-business-sdk`
 - **Google Ads:** `google-ads-python`
 - **IA Generativa:** ![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)
+- **Pagos:** ![Stripe](https://img.shields.io/badge/Stripe-008CDD?style=flat-square&logo=stripe&logoColor=white)
 
 </div>
 
@@ -136,8 +150,25 @@ AdFlux/
 │   ├── core/                 # Componentes principales de la aplicación
 │   │   ├── __init__.py       # Inicialización del paquete core
 │   │   ├── factory.py        # Fábrica de la aplicación
-│   ├── models.py             # Modelos de datos SQLAlchemy
-│   ├── schemas.py            # Esquemas de serialización Marshmallow
+│   ├── models/               # Modelos de datos
+│   │   ├── __init__.py       # Inicialización del paquete models
+│   │   ├── job.py            # Modelos relacionados con empleos
+│   │   ├── candidate.py      # Modelos relacionados con candidatos
+│   │   ├── campaign.py       # Modelos relacionados con campañas
+│   │   ├── payment.py        # Modelos relacionados con pagos y presupuestos
+│   ├── services/             # Servicios de lógica de negocio
+│   │   ├── campaign_service.py # Servicio de campañas
+│   │   ├── payment_service.py  # Servicio de pagos y presupuestos
+│   │   ├── recommendation_service.py # Servicio de recomendaciones
+│   ├── api/                  # Componentes API externos
+│   │   ├── meta/             # Integración con Meta Ads API
+│   │   ├── google/           # Integración con Google Ads API
+│   │   ├── gemini/           # Integración con API de Gemini
+│   │   │   ├── content_generation.py # Generación de creatividades
+│   ├── ml/                   # Componentes de machine learning
+│   │   ├── segmentation/     # Algoritmos de segmentación
+│   │   │   ├── kmeans_segmentation.py # Segmentación con K-means
+│   │   │   ├── dbscan_segmentation.py # Segmentación con DBSCAN
 │   ├── forms.py              # Definiciones de WTForms
 │   ├── config.py             # Configuraciones
 │   ├── extensions.py         # Inicialización de extensiones Flask
@@ -268,7 +299,12 @@ AdFlux/
      # API Gemini para Simulación de Datos
      GEMINI_API_KEY=tu_gemini_api_key
      GEMINI_MODEL=models/gemini-2.5-pro-exp-03-25
-
+     
+     # Configuración de Stripe
+     STRIPE_API_KEY=tu_stripe_api_key
+     STRIPE_WEBHOOK_SECRET=tu_stripe_webhook_secret
+     STRIPE_PUBLIC_KEY=tu_stripe_public_key
+     
      # Configuración de Celery
      CELERY_BROKER_URL=redis://localhost:6379/0
      CELERY_RESULT_BACKEND=redis://localhost:6379/0
@@ -369,6 +405,11 @@ flask campaigns list  # Listar todas las campañas
 flask campaigns create --job-id JOB-0001 --platform meta  # Crear una campaña
 flask campaigns publish --id 1  # Publicar una campaña en la plataforma especificada
 flask campaigns sync --platform meta  # Sincronizar datos de campaña desde Meta
+
+# Gestión de Pagos y Presupuestos
+flask payments list  # Listar métodos de pago registrados
+flask budgets list   # Listar planes de presupuesto
+flask budgets redistribute --id 1  # Redistribuir presupuesto basado en rendimiento
 
 # Operaciones ML
 flask ml train  # Entrenar el modelo de segmentación
@@ -508,9 +549,35 @@ La suite de pruebas está organizada en las siguientes categorías:
 - **Heroku**: Desplegar usando la CLI de Heroku con add-ons de PostgreSQL y Redis
 - **AWS**: Desplegar usando Elastic Beanstalk con RDS para PostgreSQL y ElastiCache para Redis
 
+## Automatización de Presupuesto con Stripe
+
+AdFlux incorpora una integración completa con Stripe para automatizar la gestión de presupuesto de campañas publicitarias.
+
+### Características Principales
+
+1. **Gestión de Métodos de Pago**:
+   - Registro y gestión de tarjetas y otros métodos de pago
+   - Configuración de método de pago predeterminado
+   - Procesamiento seguro mediante Stripe Elements
+
+2. **Planes de Presupuesto**:
+   - Creación de planes con presupuestos diarios o totales
+   - Asignación de campañas a planes de presupuesto
+   - Configuración de límites y alertas de gasto
+
+3. **Redistribución Inteligente**:
+   - Análisis de rendimiento de campañas (CTR, CPC, conversiones)
+   - Reasignación automática basada en métricas de rendimiento
+   - Optimización continua del gasto publicitario
+
+4. **Informes de Gastos**:
+   - Seguimiento detallado de transacciones
+   - Generación de informes por período, campaña o plataforma
+   - Exportación de datos para análisis externos
+
 ## Componente de Aprendizaje Automático
 
-AdFlux utiliza aprendizaje automático para segmentar candidatos en grupos para publicidad dirigida. La implementación utiliza clustering K-means para agrupar candidatos según sus perfiles.
+AdFlux utiliza aprendizaje automático para segmentar candidatos en grupos para publicidad dirigida. La implementación incluye múltiples algoritmos de clustering para adaptarse a diferentes tipos de datos y casos de uso.
 
 ### Proceso de Segmentación
 
@@ -520,10 +587,11 @@ AdFlux utiliza aprendizaje automático para segmentar candidatos en grupos para 
    - Las características categóricas se codifican mediante one-hot
    - Las características numéricas se estandarizan
 
-2. **Entrenamiento del Modelo**:
-   - Se aplica el algoritmo de clustering K-means a los datos procesados
-   - El número de clústeres (segmentos) es configurable (predeterminado: 5)
-   - El modelo se entrena para minimizar la distancia intra-clúster
+2. **Entrenamiento de Modelos**:
+   - **K-Means**: Se aplica para segmentación general de candidatos (configuración predeterminada: 5 clusters)
+   - **DBSCAN**: Se utiliza para detectar grupos de densidad variable y valores atípicos
+   - El número óptimo de clusters se determina automáticamente mediante métricas de evaluación
+   - Se generan perfiles detallados para cada segmento
 
 3. **Asignación de Segmentos**:
    - Cada candidato es asignado a un segmento según los resultados del clustering
@@ -570,6 +638,14 @@ AdFlux se integra con múltiples plataformas de publicidad en redes sociales a t
 - Utiliza la API Gemini de Google para generar datos realistas de trabajos y candidatos
 - Crea títulos de trabajo, descripciones y requisitos variados
 - Genera perfiles de candidatos diversos con diferentes habilidades y niveles de experiencia
+
+### Generación de Contenido con Gemini
+
+- Utiliza la API Gemini de Google para generar contenido creativo para anuncios
+- Crea títulos principales, subtítulos y descripciones optimizadas para anuncios
+- Genera descripciones completas de trabajo con responsabilidades y requisitos
+- Personaliza el contenido según diferentes plataformas y audiencias objetivo
+- Permite configurar parámetros como temperatura para controlar creatividad
 
 ## Documentación del Proyecto
 
