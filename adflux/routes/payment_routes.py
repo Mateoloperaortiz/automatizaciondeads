@@ -10,9 +10,12 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, TextAreaField, SelectField, BooleanField, DateField, HiddenField
 from wtforms.validators import DataRequired, Optional, NumberRange
 from datetime import datetime, timedelta
+import os
 
 from ..services import PaymentService, CampaignService
 from ..api.common.logging import get_logger
+
+stripe_webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 logger = get_logger("payment_routes")
 
@@ -76,7 +79,7 @@ def add_payment_method():
     if form.validate_on_submit():
         success, message, data = payment_service.add_payment_method(
             user_id=user_id,
-            payment_method_id=form.payment_method_id.data
+            payment_method_id=form.payment_method_id.data if form.payment_method_id.data else ""
         )
         
         if success:
@@ -350,7 +353,8 @@ def create_payment_intent():
             })
             
         except Exception as e:
-            logger.error(f"Error al crear intent de pago: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al crear intent de pago: {str(e)}\n{traceback.format_exc()}")
             return jsonify({"success": False, "message": f"Error al crear intent de pago: {str(e)}"}), 500
     else:
         return jsonify({
@@ -373,12 +377,12 @@ def stripe_webhook():
     
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, payment_service.stripe_webhook_secret
+            payload, sig_header, stripe_webhook_secret
         )
     except ValueError as e:
         logger.error(f"Error en webhook de Stripe (payload inválido): {str(e)}")
         return jsonify({"success": False, "message": "Payload inválido"}), 400
-    except stripe.error.SignatureVerificationError as e:
+    except Exception as e:
         logger.error(f"Error en webhook de Stripe (firma inválida): {str(e)}")
         return jsonify({"success": False, "message": "Firma inválida"}), 400
     

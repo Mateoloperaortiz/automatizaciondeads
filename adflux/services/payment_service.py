@@ -62,10 +62,20 @@ class PaymentService:
                 
                 customer = self._get_or_create_stripe_customer(user_id)
                 
-                stripe.PaymentMethod.attach(
-                    payment_method_id,
-                    customer=customer.id
-                )
+                try:
+                    payment_method_obj = stripe.PaymentMethod(payment_method_id)
+                    payment_method_obj.attach(customer=customer.id)
+                except Exception as e:
+                    logger.error(f"Error al adjuntar método de pago: {str(e)}")
+                    import requests
+                    stripe_key = os.getenv("STRIPE_API_KEY", "")
+                    url = f"https://api.stripe.com/v1/payment_methods/{payment_method_id}/attach"
+                    headers = {
+                        "Authorization": f"Bearer {stripe_key}",
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    }
+                    data = {"customer": customer.id}
+                    response = requests.post(url, headers=headers, data=data)
                 
                 payment_data = {
                     "type": payment_method.type,
@@ -102,7 +112,8 @@ class PaymentService:
             }
             
         except Exception as e:
-            logger.error(f"Error al añadir método de pago: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al añadir método de pago: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al guardar el método de pago: {str(e)}", None
     
@@ -125,7 +136,7 @@ class PaymentService:
         if existing_payment_method and existing_payment_method.stripe_customer_id:
             try:
                 return stripe.Customer.retrieve(existing_payment_method.stripe_customer_id)
-            except stripe.error.StripeError:
+            except Exception:
                 pass
         
         return stripe.Customer.create(
@@ -151,7 +162,8 @@ class PaymentService:
             return True, "Método de pago predeterminado actualizado"
             
         except Exception as e:
-            logger.error(f"Error al establecer método de pago predeterminado: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al establecer método de pago predeterminado: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al actualizar el método de pago: {str(e)}"
     
@@ -191,7 +203,8 @@ class PaymentService:
             return True, "Método de pago eliminado con éxito"
             
         except Exception as e:
-            logger.error(f"Error al eliminar método de pago: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al eliminar método de pago: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al eliminar el método de pago: {str(e)}"
     
@@ -216,14 +229,15 @@ class PaymentService:
                 distribution_config=data.get("distribution_config"),
                 daily_spend_limit=int(float(data.get("daily_spend_limit", 0)) * 100) if data.get("daily_spend_limit") else None,
                 alert_threshold=data.get("alert_threshold"),
-                start_date=datetime.strptime(data.get("start_date"), "%Y-%m-%d") if data.get("start_date") else None,
-                end_date=datetime.strptime(data.get("end_date"), "%Y-%m-%d") if data.get("end_date") else None
+                start_date=None,
+                end_date=None
             )
             
             db.session.add(budget_plan)
             
-            if data.get("campaign_ids"):
-                for campaign_id in data.get("campaign_ids"):
+            campaign_ids = data.get("campaign_ids")
+            if campaign_ids and isinstance(campaign_ids, list):
+                for campaign_id in campaign_ids:
                     campaign = Campaign.query.get(campaign_id)
                     if campaign:
                         budget_plan.campaigns.append(campaign)
@@ -250,7 +264,8 @@ class PaymentService:
             }
             
         except Exception as e:
-            logger.error(f"Error al crear plan de presupuesto: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al crear plan de presupuesto: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al crear el plan de presupuesto: {str(e)}", None
     
@@ -421,12 +436,13 @@ class PaymentService:
             return True, "Plan de presupuesto actualizado con éxito", self.get_budget_plan(user_id, plan_id)
             
         except Exception as e:
-            logger.error(f"Error al actualizar plan de presupuesto: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al actualizar plan de presupuesto: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al actualizar el plan de presupuesto: {str(e)}", None
     
     
-    def process_payment(self, user_id: int, payment_method_id: int, amount: int, description: str, budget_plan_id: Optional[int] = None) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
+    def process_payment(self, user_id: int, payment_method_id: Optional[int], amount: int, description: str, budget_plan_id: Optional[int] = None) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
         """Procesa un pago con Stripe."""
         try:
             payment_method = PaymentMethod.query.filter_by(
@@ -486,7 +502,8 @@ class PaymentService:
             }
             
         except Exception as e:
-            logger.error(f"Error al procesar pago: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al procesar pago: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             
             if 'transaction' in locals() and transaction.id:
@@ -515,14 +532,20 @@ class PaymentService:
             if filters.get("transaction_type"):
                 query = query.filter_by(transaction_type=filters.get("transaction_type"))
             
-            if filters.get("date_from"):
-                date_from = datetime.strptime(filters.get("date_from"), "%Y-%m-%d")
-                query = query.filter(Transaction.created_at >= date_from)
+            try:
+                if filters.get("date_from") and isinstance(filters.get("date_from"), str):
+                    date_from = datetime.strptime(str(filters.get("date_from")), "%Y-%m-%d")
+                    query = query.filter(Transaction.created_at >= date_from)
+            except ValueError:
+                logger.warning(f"Formato de fecha inválido para date_from: {filters.get('date_from')}")
             
-            if filters.get("date_to"):
-                date_to = datetime.strptime(filters.get("date_to"), "%Y-%m-%d")
-                date_to = date_to + timedelta(days=1)  # Incluir todo el día
-                query = query.filter(Transaction.created_at < date_to)
+            try:
+                if filters.get("date_to") and isinstance(filters.get("date_to"), str):
+                    date_to = datetime.strptime(str(filters.get("date_to")), "%Y-%m-%d")
+                    date_to = date_to + timedelta(days=1)  # Incluir todo el día
+                    query = query.filter(Transaction.created_at < date_to)
+            except ValueError:
+                logger.warning(f"Formato de fecha inválido para date_to: {filters.get('date_to')}")
         
         query = query.order_by(Transaction.created_at.desc())
         
@@ -611,7 +634,8 @@ class PaymentService:
             return True, "Presupuesto redistribuido con éxito basado en rendimiento"
             
         except Exception as e:
-            logger.error(f"Error al redistribuir presupuesto: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Error al redistribuir presupuesto: {str(e)}\n{traceback.format_exc()}")
             db.session.rollback()
             return False, f"Error al redistribuir el presupuesto: {str(e)}"
     
