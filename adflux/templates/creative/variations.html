@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">{{ title }}</h1>
+        <div class="flex space-x-2">
+            <a href="{{ url_for('creative.show_creative') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Volver al Anuncio Original
+            </a>
+            <a href="{{ url_for('creative.creative_dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                Inicio
+            </a>
+        </div>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <!-- Anuncio Original -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Anuncio Original</h2>
+        
+        <div class="border rounded-lg p-4 bg-gray-50">
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Título</h3>
+                    <p class="mt-1 text-base font-medium text-gray-900">{{ base_content.title }}</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Descripción</h3>
+                    <p class="mt-1 text-sm text-gray-700">{{ base_content.description }}</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Llamado a la Acción</h3>
+                    <p class="mt-1 text-sm font-medium text-blue-600">{{ base_content.cta }}</p>
+                </div>
+                
+                {% if base_content.hashtags %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Hashtags</h3>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for hashtag in base_content.hashtags %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            #{{ hashtag }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if base_content.keywords %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Palabras Clave</h3>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for keyword in base_content.keywords %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            {{ keyword }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Variaciones -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Variaciones Generadas</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for variation in variations %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Variación {{ loop.index }}</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Título</h4>
+                        <p class="mt-0.5 text-sm font-medium text-gray-900">{{ variation.title }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Descripción</h4>
+                        <p class="mt-0.5 text-xs text-gray-700">{{ variation.description }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Llamado a la Acción</h4>
+                        <p class="mt-0.5 text-xs font-medium text-blue-600">{{ variation.cta }}</p>
+                    </div>
+                    
+                    {% if variation.hashtags %}
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Hashtags</h4>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            {% for hashtag in variation.hashtags %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                #{{ hashtag }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if variation.keywords %}
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Palabras Clave</h4>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            {% for keyword in variation.keywords %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                {{ keyword }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if variation.visual_concept %}
+                    <div>
+                        <h4 class="text-xs font-medium text-gray-500">Concepto Visual</h4>
+                        <p class="mt-0.5 text-xs text-gray-700">{{ variation.visual_concept }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Botones de Acción -->
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button type="button"
+                            class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="-ml-0.5 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                        </svg>
+                        Usar como Base
+                    </button>
+                    <button type="button"
+                            class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="-ml-0.5 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Seleccionar
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

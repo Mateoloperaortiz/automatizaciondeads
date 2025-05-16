@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">{{ title }}</h1>
+        <div class="flex space-x-2">
+            <a href="{{ url_for('creative.creative_dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Volver
+            </a>
+        </div>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información del Anuncio -->
+        <div class="lg:col-span-1">
+            <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Información del Anuncio</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Oferta de Trabajo</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ job.title }}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Empresa</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ job.company_name }}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Plataforma</h3>
+                        <p class="mt-1 text-sm text-gray-900">
+                            <i class="{{ platform_info.icon }} mr-1"></i> {{ platform_info.name }}
+                        </p>
+                    </div>
+                    
+                    {% if segment %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Segmento</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ segment.name }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Formulario para Generar Variaciones -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Generar Variaciones</h2>
+                
+                <form action="{{ url_for('creative.generate_variations') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+                    
+                    <div>
+                        <label for="num_variations" class="block text-sm font-medium text-gray-700">Número de Variaciones</label>
+                        <select id="num_variations" name="num_variations"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="3">3 variaciones</option>
+                            <option value="5">5 variaciones</option>
+                            <option value="7">7 variaciones</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <button type="submit"
+                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                                <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                            </svg>
+                            Generar Variaciones
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Contenido Generado -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Creatividad Generada</h2>
+                
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    {% if platform == "meta" %}
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Título Principal</h3>
+                            <p class="mt-1 text-base font-medium text-gray-900">{{ content.title }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Descripción</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.description }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Llamado a la Acción</h3>
+                            <p class="mt-1 text-sm font-medium text-blue-600">{{ content.cta }}</p>
+                        </div>
+                        
+                        {% if content.hashtags %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Hashtags</h3>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                {% for hashtag in content.hashtags %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    #{{ hashtag }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if content.visual_concept %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Concepto Visual</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.visual_concept }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% elif platform == "google" %}
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Título</h3>
+                            <p class="mt-1 text-base font-medium text-gray-900">{{ content.title }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Descripción</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.description }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Llamado a la Acción</h3>
+                            <p class="mt-1 text-sm font-medium text-blue-600">{{ content.cta }}</p>
+                        </div>
+                        
+                        {% if content.keywords %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Palabras Clave</h3>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                {% for keyword in content.keywords %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    {{ keyword }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% elif platform == "tiktok" %}
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Título</h3>
+                            <p class="mt-1 text-base font-medium text-gray-900">{{ content.title }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Descripción</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.description }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Llamado a la Acción</h3>
+                            <p class="mt-1 text-sm font-medium text-blue-600">{{ content.cta }}</p>
+                        </div>
+                        
+                        {% if content.visual_concept %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Concepto Visual</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.visual_concept }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if content.hashtags %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Hashtags</h3>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                {% for hashtag in content.hashtags %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    #{{ hashtag }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% elif platform == "snapchat" %}
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Título</h3>
+                            <p class="mt-1 text-base font-medium text-gray-900">{{ content.title }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Descripción</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.description }}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Llamado a la Acción</h3>
+                            <p class="mt-1 text-sm font-medium text-blue-600">{{ content.cta }}</p>
+                        </div>
+                        
+                        {% if content.visual_concept %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Concepto Visual</h3>
+                            <p class="mt-1 text-sm text-gray-700">{{ content.visual_concept }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% else %}
+                    <!-- Formato genérico para otras plataformas -->
+                    <div class="space-y-4">
+                        {% for key, value in content.items() %}
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">{{ key|capitalize|replace('_', ' ') }}</h3>
+                            {% if value is string %}
+                            <p class="mt-1 text-sm text-gray-700">{{ value }}</p>
+                            {% elif value is iterable %}
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                {% for item in value %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Vista Previa -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Vista Previa</h3>
+                    
+                    <div class="border rounded-lg p-4 bg-white">
+                        {% if platform == "meta" %}
+                        <!-- Vista previa de Facebook/Instagram -->
+                        <div class="max-w-md mx-auto">
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="bg-gray-100 h-48 flex items-center justify-center">
+                                    <p class="text-gray-500 text-sm">{{ content.visual_concept }}</p>
+                                </div>
+                                <div class="p-4">
+                                    <p class="font-bold text-gray-900">{{ content.title }}</p>
+                                    <p class="text-gray-600 text-sm mt-1">{{ content.description }}</p>
+                                    <button class="mt-2 bg-blue-600 text-white px-4 py-1 rounded text-sm font-medium">
+                                        {{ content.cta }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif platform == "google" %}
+                        <!-- Vista previa de Google Ads -->
+                        <div class="max-w-md mx-auto">
+                            <div class="border rounded-lg p-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                        <span class="text-blue-600 font-bold">Ad</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Anuncio · {{ job.company_name }}</p>
+                                    </div>
+                                </div>
+                                <p class="font-medium text-blue-700 mt-2">{{ content.title }}</p>
+                                <p class="text-gray-800 text-sm mt-1">{{ content.description }}</p>
+                                <button class="mt-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                                    {{ content.cta }}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% elif platform == "tiktok" %}
+                        <!-- Vista previa de TikTok -->
+                        <div class="max-w-xs mx-auto">
+                            <div class="border rounded-lg overflow-hidden bg-black">
+                                <div class="h-80 flex items-center justify-center">
+                                    <p class="text-white text-sm">{{ content.visual_concept }}</p>
+                                </div>
+                                <div class="p-3 bg-gray-900">
+                                    <p class="font-bold text-white">{{ content.title }}</p>
+                                    <p class="text-gray-300 text-xs mt-1">{{ content.description }}</p>
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                        {% for hashtag in content.hashtags %}
+                                        <span class="text-blue-400 text-xs">#{{ hashtag }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="mt-2 bg-red-500 text-white px-4 py-1 rounded text-sm font-medium w-full">
+                                        {{ content.cta }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif platform == "snapchat" %}
+                        <!-- Vista previa de Snapchat -->
+                        <div class="max-w-xs mx-auto">
+                            <div class="border rounded-lg overflow-hidden bg-yellow-400">
+                                <div class="h-80 flex items-center justify-center">
+                                    <p class="text-gray-800 text-sm">{{ content.visual_concept }}</p>
+                                </div>
+                                <div class="p-3 bg-yellow-300">
+                                    <p class="font-bold text-gray-900">{{ content.title }}</p>
+                                    <p class="text-gray-700 text-xs mt-1">{{ content.description }}</p>
+                                    <button class="mt-2 bg-black text-white px-4 py-1 rounded text-sm font-medium w-full">
+                                        {{ content.cta }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% else %}
+                        <!-- Vista previa genérica -->
+                        <div class="max-w-md mx-auto">
+                            <div class="border rounded-lg p-4">
+                                <p class="font-bold text-gray-900">{{ content.title }}</p>
+                                <p class="text-gray-600 text-sm mt-1">{{ content.description }}</p>
+                                <button class="mt-2 bg-blue-600 text-white px-4 py-1 rounded text-sm font-medium">
+                                    {{ content.cta }}
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

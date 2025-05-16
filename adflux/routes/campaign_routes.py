@@ -117,6 +117,16 @@ def create_campaign():
             form.job_opening.data = job_id # Pasar el ID al SelectField
         else:
             flash(f"El ID de puesto '{job_id}' proporcionado en la URL no se encontró.", "warning")
+    
+    # Preseleccionar plataforma si se proporciona en la URL (desde recomendaciones)
+    platform = request.args.get('platform')
+    if platform and platform in ['meta', 'google', 'tiktok', 'snapchat']:
+        form.platform.data = platform
+    
+    # Preseleccionar presupuesto si se proporciona en la URL (desde recomendaciones)
+    budget = request.args.get('budget')
+    if budget and budget.replace('.', '', 1).isdigit():
+        form.daily_budget.data = float(budget)
 
 
     if form.validate_on_submit():

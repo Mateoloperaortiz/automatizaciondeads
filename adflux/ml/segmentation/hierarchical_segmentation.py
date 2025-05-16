@@ -70,10 +70,14 @@ class HierarchicalSegmentation(SegmentationStrategy):
         self.linkage_matrix = linkage(X_scaled, method=self.linkage_method)
         
         # Entrenar modelo de clustering jerárquico
-        self.model = AgglomerativeClustering(
-            n_clusters=n_segments,
-            linkage=self.linkage_method
-        )
+        if self.linkage_method == 'complete':
+            self.model = AgglomerativeClustering(n_clusters=n_segments, linkage='complete')
+        elif self.linkage_method == 'average':
+            self.model = AgglomerativeClustering(n_clusters=n_segments, linkage='average')
+        elif self.linkage_method == 'single':
+            self.model = AgglomerativeClustering(n_clusters=n_segments, linkage='single')
+        else:
+            self.model = AgglomerativeClustering(n_clusters=n_segments, linkage='ward')
         segments = self.model.fit_predict(X_scaled)
         
         # Añadir segmentos al DataFrame original
@@ -135,8 +139,11 @@ class HierarchicalSegmentation(SegmentationStrategy):
         Returns:
             ID del segmento predicho
         """
-        if self.linkage_matrix is None or self.feature_columns is None:
+        if self.feature_columns is None:
             raise ValueError("Debe ejecutar segment_candidates primero")
+        
+        if self.model is None:
+            return 0  # Devolver segmento por defecto si no hay modelo
         
         # Extraer características relevantes
         features = []
@@ -151,37 +158,34 @@ class HierarchicalSegmentation(SegmentationStrategy):
         X = np.array(features).reshape(1, -1)
         X_scaled = self.scaler.transform(X)
         
-        # Para clustering jerárquico, necesitamos usar fcluster para asignar un nuevo punto
-        # Esto es una aproximación, ya que no hay un método directo como en K-Means
-        
-        # Opción 1: Usar el modelo entrenado si es compatible con predict
-        if hasattr(self.model, 'predict'):
-            try:
-                segment = self.model.predict(X_scaled)[0]
-                return int(segment)
-            except:
-                pass
-        
-        # Opción 2: Asignar al segmento más cercano basado en distancia euclidiana
-        # Esta es una aproximación simplificada
+        # Implementación simplificada: asignar al cluster más cercano basado en distancia
         from sklearn.metrics.pairwise import euclidean_distances
         
-        # Obtener centroides de los segmentos
-        segment_centroids = {}
-        for segment_id in range(self.model.n_clusters):
-            mask = self.model.labels_ == segment_id
-            if np.any(mask):
-                segment_centroids[segment_id] = np.mean(X_scaled[mask], axis=0)
+        if not hasattr(self.model, 'labels_'):
+            return 0
+            
+        unique_labels = np.unique(self.model.labels_)
         
-        # Calcular distancias a los centroides
-        distances = {}
-        for segment_id, centroid in segment_centroids.items():
-            distances[segment_id] = euclidean_distances(X_scaled, centroid.reshape(1, -1))[0][0]
+        # Si no hay etiquetas, devolver 0
+        if len(unique_labels) == 0:
+            return 0
+            
+        # Calcular distancias a cada punto y asignar al cluster del punto más cercano
+        all_distances = euclidean_distances(X_scaled, self.scaler.transform(np.array([
+            candidate_data.get(feature, 0) for feature in self.feature_columns
+        ]).reshape(1, -1)))[0]
         
-        # Asignar al segmento más cercano
-        closest_segment = min(distances, key=distances.get)
+        # Encontrar el índice del punto más cercano
+        if len(all_distances) > 0:
+            closest_idx = np.argmin(all_distances)
+            # Devolver el cluster del punto más cercano
+            if closest_idx < len(self.model.labels_):
+                return int(self.model.labels_[closest_idx])
         
-        return int(closest_segment)
+        if len(unique_labels) > 0:
+            return int(unique_labels[0])
+            
+        return 0
     
     def get_strategy_name(self) -> str:
         """

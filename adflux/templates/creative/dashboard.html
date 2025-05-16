@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">{{ title }}</h1>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Generar Creatividad para Anuncio</h2>
+        
+        <form action="{{ url_for('creative.generate_creative') }}" method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Selección de Oferta de Trabajo -->
+                <div>
+                    <label for="job_id" class="block text-sm font-medium text-gray-700 mb-1">Oferta de Trabajo</label>
+                    <select id="job_id" name="job_id" required
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="">Seleccionar oferta de trabajo</option>
+                        {% for job in jobs %}
+                        <option value="{{ job.job_id }}">{{ job.title }} - {{ job.company_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Selección de Plataforma -->
+                <div>
+                    <label for="platform" class="block text-sm font-medium text-gray-700 mb-1">Plataforma</label>
+                    <select id="platform" name="platform" required
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="">Seleccionar plataforma</option>
+                        {% for platform in platforms %}
+                        <option value="{{ platform.id }}" {% if selected_platform == platform.id %}selected{% endif %}>{{ platform.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Selección de Segmento (opcional) -->
+                <div>
+                    <label for="segment_id" class="block text-sm font-medium text-gray-700 mb-1">Segmento (opcional)</label>
+                    <select id="segment_id" name="segment_id"
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="">Sin segmento específico</option>
+                        {% for segment in segments %}
+                        <option value="{{ segment.id }}">{{ segment.name }} ({{ segment.count }} candidatos)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Selección de Formato -->
+                <div>
+                    <label for="format_type" class="block text-sm font-medium text-gray-700 mb-1">Formato</label>
+                    <select id="format_type" name="format_type"
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="">Seleccionar formato</option>
+                        
+                        {% if selected_platform %}
+                            {% for format in selected_formats %}
+                                <option value="{{ format }}">{{ format }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                    </svg>
+                    Generar Creatividad
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Plataformas Soportadas</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for platform in platforms %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow platform-{{ platform.id }}">
+                <div class="flex items-center mb-2">
+                    <i class="{{ platform.icon }} text-2xl mr-2"></i>
+                    <h3 class="text-lg font-medium">{{ platform.name }}</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-2">{{ platform.description }}</p>
+                <div class="mt-2">
+                    <span class="text-xs font-medium text-gray-500">Formatos:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for format in platform.formats %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 format-tag">
+                            {{ format }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded event fired - JavaScript inicializado');
+        
+        // Manejar cambio de plataforma
+        const platformSelect = document.getElementById('platform');
+        const formatSelect = document.getElementById('format_type');
+        
+        console.log('Elementos encontrados:', { 
+            platformSelect: !!platformSelect, 
+            formatSelect: !!formatSelect 
+        });
+        
+        if (platformSelect) {
+            platformSelect.addEventListener('change', function() {
+                const selectedPlatform = this.value;
+                console.log('Plataforma seleccionada:', selectedPlatform);
+                
+                if (selectedPlatform) {
+                    // Limpiar el dropdown de formatos
+                    formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
+                    
+                    // Usar una solución alternativa: definir los formatos directamente en el cliente
+                    // basado en la plataforma seleccionada
+                    const formatosPorPlataforma = {
+                        'meta': ['imagen_única', 'carrusel', 'video'],
+                        'google': ['texto', 'responsive', 'imagen'],
+                        'tiktok': ['video', 'imagen'],
+                        'snapchat': ['video', 'imagen', 'colección']
+                    };
+                    
+                    // Limpiar opciones existentes
+                    formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
+                    
+                    // Obtener formatos para la plataforma seleccionada
+                    const formatos = formatosPorPlataforma[selectedPlatform] || [];
+                    
+                    // Añadir opciones de formato
+                    formatos.forEach(format => {
+                        const option = document.createElement('option');
+                        option.value = format;
+                        option.textContent = format;
+                        formatSelect.appendChild(option);
+                    });
+                    
+                    console.log(`Formatos cargados para ${selectedPlatform}:`, formatos);
+                } else {
+                    // Si no hay plataforma seleccionada, limpiar el dropdown de formatos
+                    formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
