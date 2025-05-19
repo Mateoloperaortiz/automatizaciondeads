@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { updateJobAdAction, UpdateJobAdState } from '../actions'; // Path is ../actions from [jobId]/edit
+import { updateJobAdAction, UpdateJobAdState } from '../../actions';
 import { JobAd } from '@/lib/db/schema';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

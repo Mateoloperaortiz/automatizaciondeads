@@ -13,6 +13,10 @@ This document provides an overview of the InspireAI project structure to help na
     *   **`(dashboard)/`**: Groups routes related to the user dashboard (e.g., `activity/`, `general/`, `security/`, `pricing/`). These are route groups and do not affect the URL path.
     *   **`(login)/`**: Groups routes related to authentication (e.g., `sign-in/`, `sign-up/`). These are route groups and do not affect the URL path.
     *   **`api/`**: Contains backend API endpoints.
+        *   `auth/`: Handles authentication API routes, including OAuth callbacks for Google (`google/callback/`), Meta (`meta/callback/`), and X (`x/callback/`).
+        *   `connections/`: API routes for managing connections with external services like Google (`google/`), Meta (`meta/`), and X (`x/`).
+        *   `automation/`: Contains API routes for automation, such as `trigger/`.
+        *   `jobs/`: API routes related to jobs, including specific job handling via `[jobId]/`.
         *   `stripe/`: Handles Stripe payment integration, including `checkout/` and `webhook/`.
         *   `team/`: API routes related to team management.
         *   `user/`: API routes related to user management.
@@ -22,6 +26,8 @@ This document provides an overview of the InspireAI project structure to help na
     *   **`auth/`**: Handles authentication logic. Refer to `[middleware.ts](mdc:middleware.ts)` for potential auth middleware.
     *   **`db/`**: Contains database-related code, including `migrations/`. Database configuration can be found in `[drizzle.config.ts](mdc:drizzle.config.ts)`.
     *   **`payments/`**: Contains logic related to payment processing, likely interacting with Stripe.
+*   **`services/`**: Contains backend services.
+    *   **`audience_segmentation_service/`**: A service for audience segmentation, likely containing its own `data/` and `models/`.
 
 ## Key Configuration Files
 
@@ -32,6 +38,7 @@ This document provides an overview of the InspireAI project structure to help na
 *   **`[package.json](mdc:package.json)`**: Project dependencies and scripts.
 *   **`[middleware.ts](mdc:middleware.ts)`**: Next.js middleware, often used for authentication and routing.
 *   **`[components.json](mdc:components.json)`**: Potentially configuration for UI components (e.g., shadcn/ui).
+*   **`[vercel.json](mdc:vercel.json)`**: Vercel deployment configuration.
 
 ## Routing
 
