@@ -7,6 +7,7 @@ import {
   integer,
   boolean,
   decimal,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -81,15 +82,23 @@ export const jobAds = pgTable('job_ads', {
   descriptionLong: text('description_long'),
   targetUrl: varchar('target_url', { length: 2048 }).notNull(),
   creativeAssetUrl: varchar('creative_asset_url', { length: 2048 }),
-  videoThumbnailUrl: varchar('video_thumbnail_url', { length: 2048 }),
   platformsMetaEnabled: boolean('platforms_meta_enabled').default(false).notNull(),
   platformsXEnabled: boolean('platforms_x_enabled').default(false).notNull(),
   platformsGoogleEnabled: boolean('platforms_google_enabled').default(false).notNull(),
   budgetDaily: decimal('budget_daily', { precision: 10, scale: 2 }),
   scheduleStart: timestamp('schedule_start').notNull(),
   scheduleEnd: timestamp('schedule_end'),
-  status: varchar('status', { length: 20 }).notNull().default('draft'),
+  status: varchar('status', { length: 50 }).notNull().default('draft'),
   createdByUserId: integer('created_by_user_id').references(() => users.id),
+  metaCampaignId: text('meta_campaign_id'),
+  metaAdSetId: text('meta_ad_set_id'),
+  metaAdId: text('meta_ad_id'),
+  xCampaignId: text('x_campaign_id'),
+  xLineItemId: text('x_line_item_id'),
+  xPromotedTweetId: text('x_promoted_tweet_id'),
+  googleCampaignResourceId: text('google_campaign_resource_name'),
+  googleAdGroupResourceId: text('google_ad_group_resource_name'),
+  googleAdResourceId: text('google_ad_resource_name'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()
@@ -119,6 +128,11 @@ export const socialPlatformConnections = pgTable(
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+  },
+  (table) => {
+    return {
+      teamPlatformUnique: unique('team_platform_unique_idx').on(table.teamId, table.platformName),
+    };
   }
 );
 

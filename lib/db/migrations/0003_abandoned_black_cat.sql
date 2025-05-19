@@ -1,0 +1,1 @@
+ALTER TABLE "social_platform_connections" ADD CONSTRAINT "team_platform_unique_idx" UNIQUE("team_id","platform_name");

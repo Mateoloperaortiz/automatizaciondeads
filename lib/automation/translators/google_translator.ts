@@ -1,213 +1,234 @@
 import { JobAd } from '@/lib/db/schema';
 import { PlatformAgnosticTargeting } from '../taxonomy_mapper';
+// Import enums and resource types from the google-ads-api library
+import { enums, resources, ResourceNames } from 'google-ads-api';
 
-// --- Google Ads API Specific Types (Highly Simplified Placeholders - Consult Google Ads API Docs) ---
-// Google Ads structure: Customer -> Campaign -> AdGroup -> Ad
+// --- Google Ads API Specific Types (Aligned with client library expecting object literals for nested fields) ---
 
-interface GoogleCampaignPayload {
-    // Required: customerId is usually passed at the API call level, not in payload
+// This will be the direct type for creating a CampaignBudget resource
+interface GoogleCampaignBudgetPayload extends Partial<resources.CampaignBudget> {
+    // Required fields for creation are typically name, amount_micros
     name: string;
-    advertising_channel_type: 'SEARCH' | 'DISPLAY' | 'YOUTUBE' | string; // e.g., for job ads, SEARCH or DISPLAY
-    status: 'ENABLED' | 'PAUSED' | 'REMOVED';
-    campaign_budget?: string; // Resource name of a CampaignBudget object
-    bidding_strategy_type?: string; // e.g., 'MAXIMIZE_CLICKS', 'TARGET_CPA'
-    // Network settings, start/end dates etc.
+    amount_micros: number; // jobAd.budgetDaily converted to micros
+    delivery_method?: enums.BudgetDeliveryMethod; // e.g., STANDARD
+    // Other fields like period, explicitly_shared can be added
+}
+
+// For Campaign.network_settings, use an object literal for simplicity and directness
+interface GoogleCampaignNetworkSettingsObject {
+    target_google_search?: boolean;
+    target_search_network?: boolean;
+    target_content_network?: boolean; 
+    target_partner_search_network?: boolean;
+}
+
+// This will be the direct type for creating a Campaign resource
+interface GoogleCampaignResourcePayload extends Partial<resources.Campaign> {
+    // Required fields usually name, advertising_channel_type, status, campaign_budget, bidding_strategy_type
+    name: string;
+    advertising_channel_type: enums.AdvertisingChannelType;
+    status: enums.CampaignStatus;
+    campaign_budget?: string; // Resource name of the CampaignBudget, set after budget creation
+    bidding_strategy_type?: enums.BiddingStrategyType;
+    network_settings?: GoogleCampaignNetworkSettingsObject; 
     start_date?: string; // YYYY-MM-DD
     end_date?: string; // YYYY-MM-DD
+    // Other campaign settings like frequency_caps, geo_target_type_setting etc.
 }
 
-interface GoogleAdGroupCriterion {
-    // For keywords, locations, demographics, audiences etc.
-    // Example for a keyword:
-    // keyword?: { text: string; match_type: 'BROAD' | 'PHRASE' | 'EXACT' };
-    // Example for location (needs location ID from Google's GeoTargetConstantService):
-    // location?: { geo_target_constant: string }; // e.g., "geoTargetConstants/2840" for US
-    [key: string]: any; 
-}
-
-interface GoogleAdGroupPayload {
+// These will be direct types for creating AdGroup, AdGroupCriterion, AdGroupAd resources
+interface GoogleAdGroupResourcePayload extends Partial<resources.AdGroup> {
     name: string;
-    campaign: string; // Resource name of the campaign, e.g., "customers/{customer_id}/campaigns/{campaign_id}"
-    status: 'ENABLED' | 'PAUSED' | 'REMOVED';
-    cpc_bid_micros?: number; // Cost-per-click bid in micros
-    type?: 'SEARCH_STANDARD' | 'DISPLAY_STANDARD' | string; // Ad group type
-    // targeting_setting?: { target_restrictions: GoogleAdGroupCriterion[] }
-    // ad_group_criteria?: GoogleAdGroupCriterion[]; // Criteria are often added separately to the ad group
+    campaign: string; // Resource name of the campaign
+    status: enums.AdGroupStatus;
+    type?: enums.AdGroupType;
+    cpc_bid_micros?: number; // For manual CPC at ad group level
 }
 
-interface GoogleAdPayload { // Represents an AdGroupAd
-    ad_group: string; // Resource name of the ad group
-    status: 'ENABLED' | 'PAUSED' | 'REMOVED';
-    ad: { // The actual ad content
-        name?: string;
-        // Example for a Responsive Search Ad or Expanded Text Ad
-        // responsive_search_ad?: { headlines: Array<{text:string}>; descriptions: Array<{text:string}>; path1?: string; path2?: string; };
-        // expanded_text_ad?: { headline_part1: string; headline_part2: string; description: string; path1?: string; path2?: string; };
-        final_urls: string[];
-        // final_mobile_urls?: string[];
-        // display_url?: string;
-        type?: 'RESPONSIVE_SEARCH_AD' | 'EXPANDED_TEXT_AD' | string;
-        // For display ads, might use image_ad, responsive_display_ad, etc.
-        [key: string]: any;
-    };
+// Shapes for object literals for AdGroupCriterion fields
+interface GoogleKeywordInfoLiteral { text?: string; match_type?: enums.KeywordMatchType }
+interface GoogleLocationInfoLiteral { geo_target_constant?: string }
+
+// AdGroupAd payload will be an instance of resources.AdGroupAd
+// Here we define shapes for its nested ad data.
+interface GoogleAdTextAssetLiteral { text?: string; pinned_field?: enums.ServedAssetFieldType }
+interface GoogleResponsiveSearchAdInfoLiteral {
+    headlines: GoogleAdTextAssetLiteral[];
+    descriptions: GoogleAdTextAssetLiteral[];
+    path1?: string;
+    path2?: string;
+}
+interface GoogleAdLiteral extends Partial<resources.Ad> { // Use Partial for top-level Ad structure
+    name?: string;
+    final_urls: string[];
+    responsive_search_ad?: GoogleResponsiveSearchAdInfoLiteral;
+    type?: enums.AdType;
 }
 
-// Additional payloads might be needed, e.g., for CampaignBudget, AdGroupCriterion
 export interface GoogleFullAdStructure {
-    campaignPayload: GoogleCampaignPayload;
-    // CampaignBudget might be separate or part of campaign
-    adGroupPayload: GoogleAdGroupPayload;
-    adPayload: GoogleAdPayload;
-    adGroupCriteriaPayloads: GoogleAdGroupCriterion[]; // Criteria to be added to the AdGroup
+    campaignBudgetPayload: GoogleCampaignBudgetPayload;
+    campaignPayload: GoogleCampaignResourcePayload;
+    adGroupPayload: GoogleAdGroupResourcePayload;
+    // These will be constructed as resource instances by the translator now
+    adPayload: resources.AdGroupAd; 
+    adGroupCriteriaPayloads: resources.AdGroupCriterion[]; 
 }
 
 /**
  * Translates generic job ad details and platform-agnostic targeting
- * into structures for creating Google Ads.
+ * into structures for creating Google Ads, aligned with the google-ads-api client library.
  */
 export function translateToGoogleAd(
     jobAd: JobAd,
     targetingParams: PlatformAgnosticTargeting,
-    customerId: string // Google Ads Customer ID (without hyphens)
+    // customerId is used by the API caller to build resource names, not directly in these payloads
 ): GoogleFullAdStructure | null {
-    console.log(`Translating ad ID ${jobAd.id} for Google Ads (Customer ID: ${customerId}) with targeting:`, targetingParams);
+    console.log(`Translating ad ID ${jobAd.id} for Google Ads with targeting:`, targetingParams);
 
-    if (!customerId) {
-        console.error('Google Ads: Customer ID is required.');
+    // --- 1. Construct Campaign Budget Payload ---
+    if (!jobAd.budgetDaily) {
+        console.error(`Google Ads: Daily budget is required for ad ID ${jobAd.id}`);
         return null;
     }
-
-    // --- 1. Construct Campaign Budget (often created separately, then linked) ---
-    // For simplicity, we might set budget directly on campaign if API allows or use a shared budget resource name.
-    // Placeholder: Assume budget is part of campaign or handled by API caller.
+    const dailyBudgetMicros = Math.round(parseFloat(jobAd.budgetDaily as string) * 1000000); // 1 USD = 1,000,000 micros
+    
+    const campaignBudgetPayload: GoogleCampaignBudgetPayload = {
+        name: `Budget - ${jobAd.title.substring(0, 100)} - ${jobAd.id} - ${Date.now()}`,
+        amount_micros: dailyBudgetMicros,
+        delivery_method: enums.BudgetDeliveryMethod.STANDARD,
+        // explicitly_shared: false, // If not a shared budget
+    };
 
     // --- 2. Construct Campaign Payload ---
-    const campaignName = `Job Ad: ${jobAd.title} - Google Campaign - ${jobAd.id}`;
-    const campaignPayload: GoogleCampaignPayload = {
+    const campaignName = `Job Ad: ${jobAd.title.substring(0,100)} - Camp - ${jobAd.id}`;
+    const campaignPayload: GoogleCampaignResourcePayload = {
         name: campaignName,
-        advertising_channel_type: 'SEARCH', // Or 'DISPLAY' based on strategy
-        status: 'PAUSED',
+        advertising_channel_type: enums.AdvertisingChannelType.SEARCH,
+        status: enums.CampaignStatus.PAUSED,
+        bidding_strategy_type: enums.BiddingStrategyType.TARGET_SPEND,
+        network_settings: { // Using object literal for network_settings
+            target_google_search: true,
+            target_search_network: true, 
+            target_content_network: false, 
+        },
         start_date: jobAd.scheduleStart ? new Date(jobAd.scheduleStart).toISOString().split('T')[0] : undefined,
         end_date: jobAd.scheduleEnd ? new Date(jobAd.scheduleEnd).toISOString().split('T')[0] : undefined,
-        // campaign_budget: `customers/${customerId}/campaignBudgets/YOUR_BUDGET_ID`, // Needs budget ID
-        bidding_strategy_type: 'MAXIMIZE_CLICKS',
     };
-    if (jobAd.budgetDaily) { // For simplified budget directly on campaign (less common for new API versions)
-        // campaignPayload.amount_micros = Math.round(parseFloat(jobAd.budgetDaily as string) * 1000000); 
-        // More commonly, you create a CampaignBudget with this amount and link it.
-        console.log("Budget specified, but CampaignBudget creation/linking is a separate step not fully implemented in this placeholder.");
-    }
 
     // --- 3. Construct Ad Group Payload ---
-    const adGroupName = `Job Ad: ${jobAd.title} - Google AdGroup - ${jobAd.id}`;
-    const adGroupPayload: GoogleAdGroupPayload = {
+    const adGroupName = `Job Ad: ${jobAd.title.substring(0,100)} - AdGrp - ${jobAd.id}`;
+    const adGroupPayload: GoogleAdGroupResourcePayload = {
         name: adGroupName,
-        campaign: `customers/${customerId}/campaigns/{{GOOGLE_CAMPAIGN_ID}}`, // Placeholder
-        status: 'PAUSED',
-        type: 'SEARCH_STANDARD',
-        // cpc_bid_micros: 1000000, // Example: $1 CPC in micros
+        campaign: '{{GOOGLE_CAMPAIGN_RESOURCE_NAME}}', // Placeholder, filled by API caller
+        status: enums.AdGroupStatus.PAUSED,
+        type: enums.AdGroupType.SEARCH_STANDARD,
+        // cpc_bid_micros: 1000000, // Example: $1 CPC, if using Manual CPC at ad group level
     };
 
     // --- 4. Construct Ad Group Criteria (Targeting) Payloads ---
-    const adGroupCriteriaPayloads: GoogleAdGroupCriterion[] = [];
+    const adGroupCriteriaPayloads: resources.AdGroupCriterion[] = []; // Array of resource instances
     
-    // Location Mapping (Example - requires Google Geo Target Constant IDs)
+    // Location Mapping - creating resources.AdGroupCriterion with LocationInfo
     if (targetingParams.locations && targetingParams.locations.length > 0) {
         targetingParams.locations.forEach(locCode => {
-            let geoTargetConstant: string | undefined;
-            if (locCode === 'COUNTRY_US') geoTargetConstant = 'geoTargetConstants/2840'; // 2840 is US
-            else if (locCode === 'COUNTRY_CA') geoTargetConstant = 'geoTargetConstants/2124'; // Canada example
-            // else if (locCode === 'CITY_SF_CA_US') geoTargetConstant = 'geoTargetConstants/1014044'; // Example for SF
-            // For "Remote", you might target broadly (e.g., entire countries) or use keywords.
-            if (geoTargetConstant) {
-                adGroupCriteriaPayloads.push({ location: { geo_target_constant: geoTargetConstant } });
+            let geoTargetConstantResourceName: string | undefined;
+            if (locCode === 'COUNTRY_US') geoTargetConstantResourceName = ResourceNames.geoTargetConstant(2840);
+            else if (locCode === 'COUNTRY_CA') geoTargetConstantResourceName = ResourceNames.geoTargetConstant(2124);
+            // TODO: Add a lookup for city/region codes to geoTargetConstant resource names
+            // Example: else if (locCode === 'CITY_SF_CA_US') geoTargetConstantResourceName = 'geoTargetConstants/1014044'; 
+            
+            if (geoTargetConstantResourceName) {
+                adGroupCriteriaPayloads.push(
+                    new resources.AdGroupCriterion({
+                        ad_group: '{{GOOGLE_ADGROUP_RESOURCE_NAME}}', // Will be replaced by caller
+                        status: enums.AdGroupCriterionStatus.ENABLED,
+                        location: { // Object literal for LocationInfo shape
+                            geo_target_constant: geoTargetConstantResourceName,   
+                        },
+                    })
+                );
             }
         });
-        if (targetingParams.locations.length > 0 && adGroupCriteriaPayloads.filter(c => c.location).length === 0) {
-             console.warn('Google Translator: Location codes provided but none mapped to known Geo IDs. Defaulting or skipping might occur.');
-        }
     }
 
-    // Keyword Mapping (from skillKeywords, industries, job title elements)
+    // Keyword Mapping - creating resources.AdGroupCriterion with KeywordInfo
     const keywordsToTarget: string[] = [];
-    if (targetingParams.skillKeywords && targetingParams.skillKeywords.length > 0) {
-        keywordsToTarget.push(...targetingParams.skillKeywords);
-    }
-    if (targetingParams.industries && targetingParams.industries.length > 0) {
-        // Convert industry codes to relevant keywords, e.g., "TECH_SOFTWARE_DEV" -> "software engineer jobs"
-        targetingParams.industries.forEach(industryCode => {
-            if (industryCode === 'TECH_SOFTWARE_DEV') keywordsToTarget.push('software engineer roles', 'developer jobs');
-            if (industryCode === 'BIZ_SALES') keywordsToTarget.push('sales positions', 'account manager jobs');
-            // Add more mappings
+    if (jobAd.title) keywordsToTarget.push(jobAd.title); // Add job title
+    if (targetingParams.skillKeywords) keywordsToTarget.push(...targetingParams.skillKeywords);
+    if (targetingParams.industries) {
+        targetingParams.industries.forEach(ind => {
+            if (ind === 'TECH_SOFTWARE_DEV') keywordsToTarget.push('software engineer jobs', 'developer roles');
+            if (ind === 'BIZ_SALES') keywordsToTarget.push('sales jobs', 'account executive positions');
         });
     }
-    if (targetingParams.seniority && targetingParams.seniority.length > 0) {
-        targetingParams.seniority.forEach(seniorityCode => {
-            if (seniorityCode === 'SENIORITY_SENIOR') keywordsToTarget.push('senior level');
-            if (seniorityCode === 'SENIORITY_ENTRY') keywordsToTarget.push('entry level', 'junior roles');
-            // Add more mappings
+    if (targetingParams.seniority) {
+        targetingParams.seniority.forEach(sen => {
+            if (sen === 'SENIORITY_SENIOR') keywordsToTarget.push('senior software engineer', 'senior developer');
+            if (sen === 'SENIORITY_ENTRY') keywordsToTarget.push('entry level software jobs', 'junior developer roles');
         });
     }
-
-    // Add job title from the ad itself as a keyword
-    if (jobAd.title) {
-        keywordsToTarget.push(jobAd.title); // Add the job title itself as a keyword
-    }
-
     const uniqueKeywords = [...new Set(keywordsToTarget)];
     uniqueKeywords.forEach(keywordText => {
-        adGroupCriteriaPayloads.push({ 
-            keyword: { 
-                text: keywordText, 
-                match_type: 'BROAD' // Or 'PHRASE', 'EXACT' - BROAD is often a safe start
-            } 
-        });
+        if (keywordText.trim() !== '') {
+            adGroupCriteriaPayloads.push(
+                new resources.AdGroupCriterion({
+                    ad_group: '{{GOOGLE_ADGROUP_RESOURCE_NAME}}', // Will be replaced by caller
+                    status: enums.AdGroupCriterionStatus.ENABLED,
+                    keyword: { // Object literal for KeywordInfo shape                   
+                        text: keywordText,
+                        match_type: enums.KeywordMatchType.BROAD,
+                    },
+                })
+            );
+        }
     });
-
-    if (uniqueKeywords.length > 0) {
-        console.log(`Google Translator: Prepared ${uniqueKeywords.length} keywords for targeting.`);
-    } else {
-        console.warn('Google Translator: No keywords derived for targeting. Ad group might be too broad.');
-    }
-    // TODO: Map to Google Ads Audience Segments (In-Market, Affinity, Custom Audiences, Detailed Demographics)
-    // This is more complex and involves finding resource names for these audience segments.
-    // Example: adGroupCriteriaPayloads.push({ user_list: { user_list: 'customers/CID/userLists/USER_LIST_ID' } });
+    // TODO: Audience Segment mapping (User Lists, In-Market, Affinity etc.)
 
     // --- 5. Construct Ad (AdGroupAd) Payload ---
-    const adName = `Job Ad: ${jobAd.title} - Google Ad - ${jobAd.id}`;
-    // Example for a Responsive Search Ad (RSA) - preferred for Search campaigns
-    const adPayload: GoogleAdPayload = {
-        ad_group: `customers/${customerId}/adGroups/{{GOOGLE_ADGROUP_ID}}`, // Placeholder
-        status: 'PAUSED',
-        ad: {
-            name: adName,
-            type: 'RESPONSIVE_SEARCH_AD',
+    const adName = `Job Ad RSA: ${jobAd.title.substring(0,50)} - ${jobAd.id}`;
+    let headlines: GoogleAdTextAssetLiteral[] = [
+        { text: jobAd.title.slice(0, 30) },
+        { text: `Apply: ${(jobAd.companyName ?? jobAd.title).slice(0, 22)}` },
+        { text: (jobAd.companyName ?? 'Top Company').slice(0, 30) },
+    ];
+    if (jobAd.companyName) {
+        headlines.push({ text: jobAd.companyName.slice(0,30) }); // Add a 4th if companyName exists
+    }
+    headlines = headlines.slice(0,15); // Max 15 headlines
+
+    let descriptions: GoogleAdTextAssetLiteral[] = [
+        { text: jobAd.descriptionShort.slice(0, 90) },
+        { text: `Join ${(jobAd.companyName ?? 'us')} as a ${jobAd.title.slice(0, 30)}. Apply today!`.slice(0, 90) },
+    ];
+    if (jobAd.descriptionLong && jobAd.descriptionLong.length > 10) { // Add a 3rd if long desc exists
+        descriptions.push({ text: jobAd.descriptionLong.slice(0,90) });
+    }
+    descriptions = descriptions.slice(0,4); // Max 4 descriptions
+
+    const adPayload = new resources.AdGroupAd({
+        ad_group: '{{GOOGLE_ADGROUP_RESOURCE_NAME}}', 
+        status: enums.AdGroupAdStatus.PAUSED,
+        ad: new resources.Ad({
+            name: adName, 
+            type: enums.AdType.RESPONSIVE_SEARCH_AD,
             final_urls: [jobAd.targetUrl],
-            responsive_search_ad: {
-                headlines: [
-                    { text: jobAd.title.substring(0,30) }, 
-                    { text: `Apply: ${(jobAd.companyName || jobAd.title).substring(0,22)}` }, 
-                    { text: (jobAd.companyName || 'Great Opportunity').substring(0,30)}
-                ],
-                descriptions: [
-                    { text: jobAd.descriptionShort.substring(0,90) },
-                    { text: `Apply for ${jobAd.title} at ${jobAd.companyName || 'our company'}. Visit today!`.substring(0,90)}
-                ],
-            }
-            // For Display Ads, you would structure `image_ad` or `responsive_display_ad` here,
-            // potentially using uploaded asset IDs from Google Ads Asset Library.
-        }
-    };
-    // Handle creativeAssetUrl for Display Ads (upload to Asset Library, get resource name)
-    if (jobAd.creativeAssetUrl && campaignPayload.advertising_channel_type === 'DISPLAY') {
-        console.warn('Google Translator: Creative asset handling for Display Ads is a placeholder. Needs AssetService integration.');
-        // Example: adPayload.ad.responsive_display_ad = { marketing_images: [{ asset: 'customers/CID/assets/ASSET_ID'}] ... };
+            responsive_search_ad: { // Object literal for ResponsiveSearchAdInfo shape
+                headlines: headlines,
+                descriptions: descriptions,
+            },
+        }),
+    });
+    // Handle creativeAssetUrl for Display Ads (upload to AssetService, get resource name, link here)
+    if (jobAd.creativeAssetUrl && campaignPayload.advertising_channel_type === enums.AdvertisingChannelType.DISPLAY) {
+        console.warn('Google Translator: Creative asset handling for Display Ads needs AssetService integration.');
+        // Example: adPayload.ad.responsive_display_ad = new resources.ResponsiveDisplayAdInfo({...})
     }
 
     return {
+        campaignBudgetPayload,
         campaignPayload,
         adGroupPayload,
-        adPayload,
-        adGroupCriteriaPayloads,
+        adPayload, 
+        adGroupCriteriaPayloads, 
     };
 } 

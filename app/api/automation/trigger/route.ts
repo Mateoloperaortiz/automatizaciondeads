@@ -1,23 +1,44 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { processScheduledAds } from '@/lib/automation/engine';
 
 // This is the endpoint that Vercel Cron Jobs will call.
 // It should be protected by a secret.
-export async function GET(request: Request) {
-  // Secure this endpoint: Vercel Cron Jobs can send a secret in the Authorization header.
-  // Example: Bearer YOUR_CRON_SECRET
-  // You would store YOUR_CRON_SECRET in your environment variables.
-  const authorization = request.headers.get('Authorization');
-  const cronSecret = process.env.CRON_JOB_SECRET;
+export async function GET(request: NextRequest) {
+  const vercelCronSecretHeader = request.headers.get('x-vercel-cron-secret');
+  const authorizationHeader = request.headers.get('Authorization');
+  const configuredSecret = process.env.CRON_JOB_SECRET;
 
-  if (!cronSecret) {
-    console.error('CRON_JOB_SECRET is not set. Endpoint is not secure.');
-    // In production, you might want to return 500 or not run if secret isn't set.
-    // For now, we'll proceed but log a critical warning.
+  let authorized = false;
+
+  if (!configuredSecret) {
+    console.warn(
+      'CRON_JOB_SECRET not set in environment variables. Allowing cron trigger for local development/testing, but THIS IS INSECURE FOR PRODUCTION.'
+    );
+    authorized = true; // Allow for local dev if no secret is configured server-side
+  } else {
+    // Check Vercel's native header first
+    if (vercelCronSecretHeader && vercelCronSecretHeader === configuredSecret) {
+      authorized = true;
+      console.log("Authorized via x-vercel-cron-secret header.");
+    } 
+    // Fallback to Bearer token for local curl testing if Vercel header isn't present or didn't match
+    else if (authorizationHeader && authorizationHeader === `Bearer ${configuredSecret}`) {
+      console.log("Authorized via Bearer token (local testing).");
+      authorized = true;
+    } else if (vercelCronSecretHeader && vercelCronSecretHeader !== configuredSecret) {
+        // Log if Vercel secret was present but didn't match
+        console.warn('Unauthorized: x-vercel-cron-secret did not match configured CRON_JOB_SECRET.');
+    } else if (authorizationHeader && authorizationHeader !== `Bearer ${configuredSecret}` ) {
+        // Log if Authorization bearer was present but didn't match
+        console.warn('Unauthorized: Authorization Bearer token did not match configured CRON_JOB_SECRET.');
+    } else if (!vercelCronSecretHeader && !authorizationHeader) {
+        // Log if no auth method was provided but a secret is configured
+        console.warn('Unauthorized: No secret provided in x-vercel-cron-secret or Authorization header, but CRON_JOB_SECRET is configured.');
+    }
   }
 
-  if (cronSecret && authorization !== `Bearer ${cronSecret}`) {
-    console.warn('Unauthorized attempt to trigger cron job.');
+  if (!authorized) {
+    console.warn('Unauthorized attempt to trigger cron job. Secrets did not match or were not provided correctly when a secret is configured.');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

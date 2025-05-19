@@ -34,7 +34,6 @@ interface JobAdFormDefaults {
     descriptionLong?: string | null;
     targetUrl?: string;
     creativeAssetUrl?: string | null;
-    videoThumbnailUrl?: string | null;
     platformMeta?: boolean;
     platformX?: boolean;
     platformGoogle?: boolean;
@@ -72,16 +71,13 @@ export default function EditJobAdPage() {
   useEffect(() => {
     if (jobAdData) {
       setDefaultValues({
-        // Spread jobAdData first, then explicitly set formatted/typed values
-        // This ensures all JobAd fields are potentially available if needed by other parts of defaultValues type
-        ...(jobAdData as any), // Cast to any to allow spreading, then override specific fields
+        ...(jobAdData as any), 
         title: jobAdData.title || '',
         companyName: jobAdData.companyName,
         descriptionShort: jobAdData.descriptionShort || '',
         descriptionLong: jobAdData.descriptionLong,
         targetUrl: jobAdData.targetUrl || '',
         creativeAssetUrl: jobAdData.creativeAssetUrl,
-        videoThumbnailUrl: (jobAdData as any).videoThumbnailUrl, // Keep cast for now
         platformMeta: jobAdData.platformsMetaEnabled,
         platformX: jobAdData.platformsXEnabled,
         platformGoogle: jobAdData.platformsGoogleEnabled,
@@ -193,33 +189,12 @@ export default function EditJobAdPage() {
            <p className="text-xs text-gray-500 mt-1">Landing page for applicants (must be HTTPS).</p>
         </div>
 
-        {/* Creative Asset URL (Optional) */}
+        {/* Creative Asset URL (Optional Image) */}
         <div>
-          <Label htmlFor="creativeAssetUrl" className="block text-sm font-medium text-gray-700 mb-1">Creative Asset URL (Optional)</Label>
-          <Input
-            id="creativeAssetUrl"
-            name="creativeAssetUrl"
-            type="url"
-            placeholder="https://yourcdn.com/path/to/image-or-video.jpg"
-            className="w-full"
-            defaultValue={defaultValues.creativeAssetUrl || ''}
-          />
+          <Label htmlFor="creativeAssetUrl">Creative Asset URL (Optional Image)</Label>
+          <Input id="creativeAssetUrl" name="creativeAssetUrl" type="url" defaultValue={defaultValues.creativeAssetUrl || ''} />
           {state.fieldErrors?.creativeAssetUrl && <p className="text-xs text-red-500 mt-1">{state.fieldErrors.creativeAssetUrl.join(', ')}</p>}
-          <p className="text-xs text-gray-500 mt-1">URL for one image or vertical video. Optional.</p>
-        </div>
-
-        {/* Video Thumbnail URL */}
-        <div>
-          <Label htmlFor="videoThumbnailUrl" className="block text-sm font-medium text-gray-700 mb-1">Video Thumbnail URL (Optional)</Label>
-          <Input
-            id="videoThumbnailUrl"
-            name="videoThumbnailUrl"
-            type="url"
-            placeholder="https://yourcdn.com/path/to/video-thumbnail.jpg"
-            className="w-full"
-            defaultValue={(defaultValues as any).videoThumbnailUrl || ''} // Cast if not yet in type
-          />
-          {state.fieldErrors?.videoThumbnailUrl && <p className="text-xs text-red-500 mt-1">{state.fieldErrors.videoThumbnailUrl.join(', ')}</p>}
+           <p className="text-xs text-gray-500 mt-1">URL for one image. Used by platform integrations.</p>
         </div>
 
         {/* Target Platforms */}

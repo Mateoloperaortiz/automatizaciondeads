@@ -14,6 +14,7 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const GOOGLE_REDIRECT_URI_PATH = '/api/auth/google/callback';
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
+const GOOGLE_ADS_CUSTOMER_ID_FOR_APP = process.env.GOOGLE_CUSTOMER_ID_FOR_AUTOMATION;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -47,6 +48,11 @@ export async function GET(request: NextRequest) {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     console.error('Google client credentials not configured.');
     return NextResponse.redirect(`${baseRedirectUrl}?error_google=Google%20integration%20misconfigured`);
+  }
+
+  if (!GOOGLE_ADS_CUSTOMER_ID_FOR_APP) {
+    console.error('GOOGLE_CUSTOMER_ID_FOR_AUTOMATION is not set in .env for the app to use.');
+    return NextResponse.redirect(`${baseRedirectUrl}?error_google=Target%20Google%20Ads%20account%20misconfigured`);
   }
 
   try {
@@ -103,7 +109,7 @@ export async function GET(request: NextRequest) {
       tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
       scopes: scopes || null,
       platformUserId: platformUserId, // Will be Google User ID (sub) if fetched
-      // platformAccountId here would be the Google Ads Customer ID (CID), needs to be set/updated later.
+      platformAccountId: GOOGLE_ADS_CUSTOMER_ID_FOR_APP.replace(/-/g, ''),
       status: 'active',
     };
 
@@ -111,7 +117,16 @@ export async function GET(request: NextRequest) {
       .values(connectionData)
       .onConflictDoUpdate({
         target: [socialPlatformConnections.teamId, socialPlatformConnections.platformName],
-        set: { ...connectionData, updatedAt: new Date() }, 
+        set: { 
+            accessToken: encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
+            tokenExpiresAt: connectionData.tokenExpiresAt,
+            scopes: connectionData.scopes,
+            platformUserId: platformUserId,
+            platformAccountId: GOOGLE_ADS_CUSTOMER_ID_FOR_APP.replace(/-/g, ''),
+            status: 'active',
+            updatedAt: new Date() 
+        }, 
       });
 
     return NextResponse.redirect(`${baseRedirectUrl}?success=google_connected`);

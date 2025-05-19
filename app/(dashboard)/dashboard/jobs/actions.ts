@@ -16,7 +16,6 @@ const JobAdFormSchema = z.object({
   descriptionLong: z.string().optional(),
   targetUrl: z.string().url('Invalid URL format').min(1, 'Target URL is required'),
   creativeAssetUrl: z.string().url('Invalid URL format').optional().or(z.literal('')),
-  videoThumbnailUrl: z.string().url('Invalid URL format for thumbnail').optional().or(z.literal('')),
   platformMeta: z.string().optional(), // Checkbox value is 'on' or undefined
   platformX: z.string().optional(),
   platformGoogle: z.string().optional(),
@@ -86,7 +85,6 @@ export async function createJobAdAction(
       descriptionLong: data.descriptionLong || null,
       targetUrl: data.targetUrl,
       creativeAssetUrl: data.creativeAssetUrl || null,
-      videoThumbnailUrl: data.videoThumbnailUrl || null,
       platformsMetaEnabled: data.platformMeta === 'on',
       platformsXEnabled: data.platformX === 'on',
       platformsGoogleEnabled: data.platformGoogle === 'on',
@@ -186,7 +184,6 @@ export async function updateJobAdAction(
       descriptionLong: data.descriptionLong || null,
       targetUrl: data.targetUrl,
       creativeAssetUrl: data.creativeAssetUrl || null,
-      videoThumbnailUrl: data.videoThumbnailUrl || null,
       platformsMetaEnabled: data.platformMeta === 'on',
       platformsXEnabled: data.platformX === 'on',
       platformsGoogleEnabled: data.platformGoogle === 'on',

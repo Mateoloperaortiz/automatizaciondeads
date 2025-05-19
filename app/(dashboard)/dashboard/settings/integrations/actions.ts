@@ -35,7 +35,8 @@ export async function getMetaOAuthURL(): Promise<{ error?: string; url?: string 
     // Generate a random state for CSRF protection
     const state = crypto.randomBytes(16).toString('hex');
     // Store the state in a short-lived HttpOnly cookie
-    cookies().set('meta_oauth_state', state, {
+    const cookieStore = cookies();
+    cookieStore.set('meta_oauth_state', state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 15, // 15 minutes
@@ -158,10 +159,10 @@ export async function finalizeMetaConnectionAction(
     return { error: 'No ad account was selected.', platform: 'meta' };
   }
 
-  const tempCookie = cookies().get('meta_temp_connection')?.value;
-  // Clear cookies regardless of outcome now that we attempt to process them
-  cookies().delete('meta_temp_connection');
-  cookies().delete('meta_ad_accounts_list');
+  const cookieStore = cookies();
+  const tempCookie = cookieStore.get('meta_temp_connection')?.value;
+  cookieStore.delete('meta_temp_connection');
+  cookieStore.delete('meta_ad_accounts_list');
 
   if (!tempCookie) {
     return { error: 'Connection session expired or data missing. Please try again.', platform: 'meta' };
@@ -331,8 +332,8 @@ export async function redirectToGoogleConnect() {
     const redirectUri = `${NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}${GOOGLE_REDIRECT_URI_PATH}`;
     const state = crypto.randomBytes(16).toString('hex');
 
-    // @ts-ignore // Linter might complain about cookies().set()
-    cookies().set('google_oauth_state', state, {
+    const cookieStore = cookies();
+    cookieStore.set('google_oauth_state', state, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 15, // 15 minutes

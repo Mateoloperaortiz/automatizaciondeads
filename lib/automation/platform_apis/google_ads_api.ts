@@ -1,191 +1,234 @@
-import { GoogleFullAdStructure, GoogleCampaignPayload, GoogleAdGroupPayload, GoogleAdPayload, GoogleAdGroupCriterion } from '../translators/google_translator';
+import { GoogleFullAdStructure } from '../translators/google_translator';
+import { 
+    GoogleAdsApi, 
+    // GoogleAdsClient, // Remove explicit import if not directly exported or causing issues
+    enums, 
+    resources, 
+    ResourceNames, 
+    toMicros,
+    // Import MutateOperationResponse if it's an exported type, otherwise use any for now
+    // types, // Example if it was under a 'types' namespace
+} from 'google-ads-api';
+import { SocialPlatformConnection } from '@/lib/db/schema'; // To type connection details
 
-// Base URL for Google Ads API REST interface (v[X] - check latest version)
-// Using Google's client library is STRONGLY recommended over direct REST for Google Ads API.
-const GOOGLE_ADS_API_BASE_URL = 'https://googleads.googleapis.com/v16'; // Example version
-
-interface GoogleApiErrorDetail {
-    errorCode: { [key: string]: string };
-    message: string;
-    trigger?: { stringValue: string };
-    location?: { fieldPathElements: Array<{ fieldName: string }> };
-}
-
-interface GoogleApiResponse {
-    results?: any[]; // For mutate operations, often an array of results
-    partialFailureError?: { code: number; message: string; details: GoogleApiErrorDetail[] };
-    // For GET operations, the response structure varies widely.
-    [key: string]: any;
-}
+// --- Google Ads API Client Initialization --- 
 
 /**
- * Helper function to make API calls to Google Ads API (Simplified for REST).
- * NOTE: Google strongly recommends using their official client libraries which handle auth, gRPC, etc.
+ * Initializes and returns a Google Ads API client instance for a specific customer.
+ *
+ * @param refreshToken The OAuth refresh token for the user/account authorizing the app.
+ * @param targetCustomerId The Google Ads Customer ID (CID) to operate on (without hyphens).
+ * @returns Initialized GoogleAdsClient for the target customer.
+ * @throws Error if required credentials are not configured.
  */
-async function callGoogleAdsApi<T = GoogleApiResponse>(
-    customerId: string, // Customer ID without hyphens
-    endpoint: string, // e.g., '/googleAds:searchStream', '/campaigns:mutate'
-    accessToken: string, // OAuth 2.0 access token
-    developerToken: string, // Your Google Ads API Developer Token
-    loginCustomerId: string | undefined, // MCC login customer ID if applicable
-    method: 'GET' | 'POST' = 'POST', 
-    body: Record<string, any> | null = null
-): Promise<T> {
-    const headers: Record<string, string> = {
-        'Authorization': `Bearer ${accessToken}`,
-        'developer-token': developerToken,
-        'Content-Type': 'application/json',
-    };
-    if (loginCustomerId) {
-        headers['login-customer-id'] = loginCustomerId;
+function getGoogleAdsClient(
+    refreshToken: string,
+    targetCustomerId: string
+) { // Let TypeScript infer the return type, or use the correct one you find
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const developerToken = process.env.GOOGLE_DEVELOPER_TOKEN;
+    const loginCustomerId = process.env.GOOGLE_LOGIN_CUSTOMER_ID; // Optional MCC ID
+
+    if (!clientId || !clientSecret || !developerToken) {
+        console.error('Google Ads API client credentials (ID, Secret, Dev Token) not configured in .env');
+        throw new Error('Google Ads API credentials missing.');
+    }
+    if (!refreshToken) {
+        throw new Error('Google Ads: Refresh token is required to initialize client.');
+    }
+    if (!targetCustomerId) {
+        throw new Error('Google Ads: Target Customer ID is required.');
     }
 
-    const url = `${GOOGLE_ADS_API_BASE_URL}/customers/${customerId}${endpoint}`;
-    console.log(`Calling Google Ads API: ${method} ${url}`);
-    if (body) console.log('Google Ads Request body:', JSON.stringify(body, null, 2));
+    const apiClient = new GoogleAdsApi({
+        client_id: clientId,
+        client_secret: clientSecret,
+        developer_token: developerToken,
+    });
 
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: headers,
-            body: body ? JSON.stringify(body) : undefined,
-        });
-
-        const responseData = await response.json();
-        console.log('Google Ads API Response:', JSON.stringify(responseData, null, 2));
-
-        if (!response.ok || responseData.partialFailureError || responseData.error) {
-            const errorInfo = responseData.partialFailureError || responseData.error || { message: `HTTP error! status: ${response.status}` };
-            console.error('Google Ads API Error:', errorInfo);
-            const errorMessage = typeof errorInfo === 'string' ? errorInfo : errorInfo.message || 'Unknown Google Ads API error';
-            throw new Error(`Google Ads API Error: ${errorMessage}`);
-        }
-        return responseData as T;
-    } catch (error: any) {
-        console.error(`Network or parsing error calling Google Ads API ${method} ${url}:`, error);
-        throw new Error(`Failed to call Google Ads API: ${error.message}`);
-    }
+    return apiClient.Customer({
+        customer_id: targetCustomerId, 
+        login_customer_id: loginCustomerId, // Can be undefined if not using MCC
+        refresh_token: refreshToken,
+    });
 }
 
-// --- Google Ads API Placeholder Functions ---
-// These would be much more complex using the actual client library.
-
-// Example: Create CampaignBudget (often a prerequisite)
-async function createGoogleCampaignBudget(
-    customerId: string, accessToken: string, developerToken: string, loginCustomerId: string | undefined,
-    budgetAmountMicros: number, name: string
-): Promise<string | null> { // Returns budget resource name
-    console.warn("createGoogleCampaignBudget is a placeholder.");
-    // const operation = { create: { name: name, amount_micros: budgetAmountMicros, delivery_method: 'STANDARD' } };
-    // const response = await callGoogleAdsApi(customerId, '/campaignBudgets:mutate', accessToken, developerToken, loginCustomerId, 'POST', { operations: [operation] });
-    // return response.results?.[0]?.resourceName || null;
-    return `customers/${customerId}/campaignBudgets/dummyBudget${new Date().getTime()}`;
+// Helper to extract resource name from a MutateOperationResponse
+// The exact type for opResp would be MutateOperationResponse from the library if exported and known.
+// Using 'any' for now to match the dynamic result field access.
+function getResourceNameFromOperationResponse(opResp: any): string | undefined {
+    if (!opResp) return undefined;
+    if (opResp.campaign_budget_result) return opResp.campaign_budget_result.resource_name;
+    if (opResp.campaign_result) return opResp.campaign_result.resource_name;
+    if (opResp.ad_group_result) return opResp.ad_group_result.resource_name;
+    if (opResp.ad_group_criterion_result) return opResp.ad_group_criterion_result.resource_name;
+    if (opResp.ad_group_ad_result) return opResp.ad_group_ad_result.resource_name;
+    // Add other _result types as needed
+    return undefined;
 }
+
+// --- Main Ad Posting Orchestration --- 
 
 /**
- * Main function to orchestrate posting an ad to Google Ads.
- * @param customerId Google Ads Customer ID (e.g., '1234567890').
- * @param developerToken Your Google Ads API Developer Token.
- * @param loginCustomerId MCC login customer ID if managing via MCC.
- * @param googleAdStructure Payloads from the google_translator.
- * @param accessToken Valid Google Ads API access token.
- * @returns An object with IDs/resource names of created entities, or null if any step fails.
+ * Main function to orchestrate posting an ad to Google Ads using the client library.
+ *
+ * @param googleConnection Details of the stored Google connection (includes refreshToken, platformAccountId as target CID).
+ * @param googleAdStructure Payloads from the google_translator (needs to be adapted for client library objects).
+ * @param jobAdBudgetDaily The daily budget for the ad in the format of a string, number, or null.
+ * @returns An object with resource names of created entities, or null if any step fails.
  */
 export async function postAdToGoogle(
-    customerId: string, 
-    developerToken: string,
-    loginCustomerId: string | undefined, // For MCC accounts
+    googleConnection: Pick<SocialPlatformConnection, 'refreshToken' | 'platformAccountId'>, 
     googleAdStructure: GoogleFullAdStructure,
-    accessToken: string
-): Promise<{ campaignResourceName?: string; adGroupResourceName?: string; adResourceName?: string; } | null> {
-    console.log(`Posting to Google Ads Customer ID: ${customerId}`);
-    if (!developerToken) {
-        console.error("Google Ads Developer Token is required.");
+    jobAdBudgetDaily: string | number | null
+): Promise<{ 
+    campaignResourceName?: string; 
+    campaignBudgetResourceName?: string;
+    adGroupResourceName?: string; // Will be undefined in this test
+    adResourceName?: string;    // Will be undefined in this test
+    criteriaResourceNames?: string[]; // Will be empty in this test
+} | null> {
+    if (!googleConnection.refreshToken) {
+        console.error('Google Ads: Refresh token missing from connection details.');
+        return null;
+    }
+    if (!googleConnection.platformAccountId) {
+        console.error('Google Ads: Target Customer ID (platformAccountId) missing from connection details.');
+        return null;
+    }
+    if (!jobAdBudgetDaily) {
+        console.error('Google Ads: Job ad daily budget missing.');
         return null;
     }
 
+    const targetCustomerId = googleConnection.platformAccountId!.replace(/-/g, '');
+    console.log(`Posting to Google Ads Customer ID: ${targetCustomerId} (Campaign & Budget ONLY TEST)`);
+
     try {
-        // 0. (Optional but common) Create/ensure Campaign Budget
-        // For simplicity, assume budget is handled by campaign or a pre-existing shared budget.
-        // If jobAd.budgetDaily is available, you'd create a CampaignBudget here.
-        // const budgetResourceName = await createGoogleCampaignBudget(customerId, accessToken, developerToken, loginCustomerId, ...);
-        // if (!budgetResourceName) return null;
-        // googleAdStructure.campaignPayload.campaign_budget = budgetResourceName;
+        const client = getGoogleAdsClient(googleConnection.refreshToken, targetCustomerId);
+
+        const tempBudgetResourceName = ResourceNames.campaignBudget(targetCustomerId, "-1");
+        const tempCampaignResourceName = ResourceNames.campaign(targetCustomerId, "-2");
+        // const tempAdGroupResourceName = ResourceNames.adGroup(targetCustomerId, "-3"); // Not used in this test
+
+        const operations: any[] = [];
         
-        // 1. Create Campaign
-        const campaignOp = { create: googleAdStructure.campaignPayload };
-        const campaignResponse = await callGoogleAdsApi(
-            customerId, '/campaigns:mutate', accessToken, developerToken, loginCustomerId, 'POST', 
-            { operations: [campaignOp], partialFailure: false, responseContentType: 'RESOURCE_NAME_ONLY' }
-        );
-        const campaignResourceName = campaignResponse.results?.[0]?.resourceName;
-        if (!campaignResourceName) {
-            console.error("Google Ads: Failed to create campaign.", campaignResponse.partialFailureError);
+        const budgetAmountMicros = toMicros(parseFloat(jobAdBudgetDaily as string));
+        if (isNaN(budgetAmountMicros)) {
+            console.error("Google Ads: Invalid budget amount after conversion to micros.");
             return null;
         }
-        console.log(`Google Campaign created with resource name: ${campaignResourceName}`);
-
-        // 2. Create Ad Group
-        googleAdStructure.adGroupPayload.campaign = campaignResourceName; // Link to created campaign
-        const adGroupOp = { create: googleAdStructure.adGroupPayload };
-        const adGroupResponse = await callGoogleAdsApi(
-            customerId, '/adGroups:mutate', accessToken, developerToken, loginCustomerId, 'POST', 
-            { operations: [adGroupOp], partialFailure: false, responseContentType: 'RESOURCE_NAME_ONLY' }
-        );
-        const adGroupResourceName = adGroupResponse.results?.[0]?.resourceName;
-        if (!adGroupResourceName) {
-            console.error("Google Ads: Failed to create ad group.", adGroupResponse.partialFailureError);
-            return null;
-        }
-        console.log(`Google Ad Group created with resource name: ${adGroupResourceName}`);
-
-        // 3. Create Ad Group Criteria (Keywords, Locations, etc.)
-        if (googleAdStructure.adGroupCriteriaPayloads && googleAdStructure.adGroupCriteriaPayloads.length > 0) {
-            const criteriaOps = googleAdStructure.adGroupCriteriaPayloads.map(criterion => (
-                { create: { ...criterion, adGroup: adGroupResourceName } }
-            ));
-            const criteriaResponse = await callGoogleAdsApi(
-                customerId, '/adGroupCriteria:mutate', accessToken, developerToken, loginCustomerId, 'POST', 
-                { operations: criteriaOps, partialFailure: true, responseContentType: 'RESOURCE_NAME_ONLY' }
-            );
-            // Check for partial failures if important
-            if (criteriaResponse.partialFailureError) {
-                console.warn("Google Ads: Partial failure creating ad group criteria:", criteriaResponse.partialFailureError);
+        // 1. Campaign Budget Operation
+        operations.push({
+            entity: 'campaign_budget', operation: 'create', 
+            resource: { 
+                resource_name: tempBudgetResourceName, 
+                name: googleAdStructure.campaignBudgetPayload.name,
+                amount_micros: budgetAmountMicros,
+                delivery_method: googleAdStructure.campaignBudgetPayload.delivery_method || enums.BudgetDeliveryMethod.STANDARD,
             }
-            console.log(`Google Ad Group Criteria results (count): ${criteriaResponse.results?.length || 0}`);
-        }
+        });
 
-        // 4. Create Ad (AdGroupAd)
-        googleAdStructure.adPayload.ad_group = adGroupResourceName; // Link to created ad group
-        const adOp = { create: googleAdStructure.adPayload };
-        const adResponse = await callGoogleAdsApi(
-            customerId, '/adGroupAds:mutate', accessToken, developerToken, loginCustomerId, 'POST', 
-            { operations: [adOp], partialFailure: false, responseContentType: 'RESOURCE_NAME_ONLY' }
-        );
-        const adResourceName = adResponse.results?.[0]?.resourceName;
-        if (!adResourceName) {
-            console.error("Google Ads: Failed to create ad.", adResponse.partialFailureError);
-            return null;
-        }
-        console.log(`Google Ad created with resource name: ${adResourceName}`);
+        // 2. Campaign Operation
+        operations.push({
+            entity: 'campaign', operation: 'create', 
+            resource: { 
+                resource_name: tempCampaignResourceName, 
+                ...googleAdStructure.campaignPayload,
+                campaign_budget: tempBudgetResourceName, 
+            }
+        });
 
-        return {
-            campaignResourceName,
-            adGroupResourceName,
-            adResourceName,
+        // --- Temporarily comment out AdGroup, Criteria, and Ad operations for initial testing ---
+        /*
+        operations.push({
+            entity: 'ad_group', operation: 'create', 
+            resource: { 
+                resource_name: tempAdGroupResourceName, 
+                ...googleAdStructure.adGroupPayload,
+                campaign: tempCampaignResourceName, 
+            }
+        });
+        if (googleAdStructure.adGroupCriteriaPayloads && googleAdStructure.adGroupCriteriaPayloads.length > 0) {
+            googleAdStructure.adGroupCriteriaPayloads.forEach(criterionInstanceFromTranslator => {
+                const criterionResourceLiteral = {
+                    ...criterionInstanceFromTranslator, 
+                    ad_group: tempAdGroupResourceName, 
+                };
+                delete (criterionResourceLiteral as any).resource_name; 
+                operations.push({
+                    entity: 'ad_group_criterion',
+                    operation: 'create',
+                    resource: criterionResourceLiteral 
+                });
+            });
+        }
+        const adGroupAdInstanceFromTranslator = googleAdStructure.adPayload;
+        const adGroupAdResourceLiteral = {
+            ...adGroupAdInstanceFromTranslator,
+            ad_group: tempAdGroupResourceName,
+        };
+        delete (adGroupAdResourceLiteral as any).resource_name; 
+        operations.push({
+            entity: 'ad_group_ad', 
+            operation: 'create', 
+            resource: adGroupAdResourceLiteral
+        });
+        */
+
+        console.log(`Submitting ${operations.length} operations to Google Ads API (Campaign & Budget ONLY TEST)...`);
+        const mutateResponse = await client.mutateResources(operations, { partial_failure: true, validate_only: false });
+
+        if (mutateResponse.partial_failure_error && mutateResponse.partial_failure_error.details) {
+            console.warn("Google Ads: Partial failure occurred during mutate operation.");
+            mutateResponse.partial_failure_error.details.forEach((detail: any) => {
+                const opIndex = detail.path?.index || 0;
+                const entityType = operations[opIndex]?.entity || 'unknown_entity';
+                const fieldPath = detail.path?.field_name ? `${detail.path.field_name}` : 'N/A';
+                console.error(`  Error for operation ${opIndex} (${entityType}) at path ${fieldPath}: ${detail.message}`);
+            });
+        }
+        
+        const responses = mutateResponse.mutate_operation_responses || [];
+        const finalResults = {
+            campaignBudgetResourceName: getResourceNameFromOperationResponse(responses[0]),
+            campaignResourceName: getResourceNameFromOperationResponse(responses[1]),
+            adGroupResourceName: undefined, // Not created in this test
+            adResourceName: undefined,    // Not created in this test
+            criteriaResourceNames: [],    // Not created in this test
         };
 
-    } catch (error) {
-        console.error("Error in postAdToGoogle orchestration:", error);
+        console.log("Google Ads entities created/attempted (Campaign & Budget ONLY TEST):", finalResults);
+
+        if (!finalResults.campaignBudgetResourceName || !finalResults.campaignResourceName) {
+             console.error("Google Ads: Failed to create Campaign Budget or Campaign.");
+             responses.forEach((opResponse: any, index: number) => {
+                if (operations[index] && !getResourceNameFromOperationResponse(opResponse)) {
+                    const entityType = operations[index].entity;
+                    let specificError = 'Unknown error in operation response';
+                    if (opResponse[`${entityType}_result`]?.partial_failure_error) {
+                        specificError = opResponse[`${entityType}_result`].partial_failure_error.message;
+                    } else if (opResponse.partial_failure_error) { // General partial failure for this op
+                        specificError = opResponse.partial_failure_error.message;
+                    }
+                    console.error(`Operation ${index} (${entityType}) failed. Error:`, specificError, opResponse);
+                }
+             });
+             return null;
+        }
+        return finalResults;
+
+    } catch (error: any) {
+        console.error("Error in postAdToGoogle (Campaign & Budget ONLY TEST) orchestration:", error.message);
+        if (error.errors) console.error("Google Ads API Specific Errors:", JSON.stringify(error.errors, null, 2));
         return null;
     }
 }
 
-// TODO:
-// - STRONGLY recommend using the official Google Ads API Node.js client library.
-// - Implement proper OAuth 2.0 flow for Google Ads (requires user consent for offline access usually).
-// - Verify all endpoint paths, payload structures, and resource name formats.
-// - Implement detailed targeting translation (GeoTargetConstants, Audience Segments, Keywords).
-// - Implement asset uploading for Display/Video ads via Google Ads Asset Library.
-// - Handle Google Ads API specific error codes and rate limits.
-// - Manage CampaignBudgets properly (creation and linking). 
+// TODOs from previous version are still highly relevant, especially:
+// - Implement proper OAuth 2.0 flow for Google Ads (callback needs to store refresh_token & target Customer ID).
+// - Refine google_translator.ts to produce objects matching google-ads-api library's resource structures.
+// - Implement detailed targeting translation (GeoTargetConstants, Audience Segments).
+// - Implement asset uploading for Display/Video ads via Google Ads AssetService.
+// - Handle Google Ads API specific error codes and rate limits more gracefully. 

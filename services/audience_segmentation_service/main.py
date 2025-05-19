@@ -150,55 +150,72 @@ async def segment_audience(job_ad_data: JobAdInput):
     # Stage 4: Clustering/Assignment (K-Means)
     assigned_cluster_label: Optional[str] = None
     cluster_assignment_confidence: Optional[float] = None
+    actual_distance_to_centroid: Optional[float] = None # For logging/info
 
     if fitted_kmeans and reduced_embedding_for_kmeans is not None:
         print("Assigning to pre-fitted K-Means cluster...")
         try:
-            # Ensure the input to predict has the same number of features K-Means was trained on.
-            # This depends on whether K-Means was trained on UMAP output or SBERT output.
-            # Assuming for now K-Means was trained on dimensions of reduced_embedding_for_kmeans
             cluster_prediction = fitted_kmeans.predict(reduced_embedding_for_kmeans)
             assigned_cluster_label = str(cluster_prediction[0])
             print(f"Assigned to K-Means cluster: {assigned_cluster_label}")
 
-            # Calculate distance to centroid for confidence (Stage 8 revised)
             if hasattr(fitted_kmeans, 'cluster_centers_'):
                 centroid = fitted_kmeans.cluster_centers_[cluster_prediction[0]]
                 distance = euclidean_distances(reduced_embedding_for_kmeans, centroid.reshape(1, -1))[0,0]
-                # Normalize distance (very crude normalization example: 1 / (1 + distance))
-                # A proper normalization would depend on typical distances within clusters from offline analysis.
-                cluster_assignment_confidence = 1.0 / (1.0 + float(distance))
-                print(f"Distance to centroid: {distance:.4f}, Confidence proxy: {cluster_assignment_confidence:.4f}")
+                actual_distance_to_centroid = float(distance)
+                print(f"Distance to centroid: {actual_distance_to_centroid:.4f}")
                 
-                # Stage 8: Confidence Fallback (Placeholder logic)
-                if cluster_assignment_confidence < 0.25: # Example threshold
-                    print(f"Low assignment confidence ({cluster_assignment_confidence:.2f}), may need fallback.")
-                    # Here you might flag for using a broad template or adjust primitives
-            else:
-                print("K-Means model does not have cluster_centers_. Cannot calculate distance.")
+                # Revised Confidence Calculation (using characteristic_distance from profile)
+                if cluster_profiles and assigned_cluster_label in cluster_profiles:
+                    cluster_profile_data = cluster_profiles[assigned_cluster_label]
+                    char_dist = cluster_profile_data.get('characteristic_distance')
+                    if isinstance(char_dist, (int, float)) and char_dist > 0:
+                        # Normalize confidence: 1 if at centroid, 0 if at characteristic_distance, negative if beyond
+                        # Cap at 0 and 1.
+                        confidence_raw = 1.0 - (actual_distance_to_centroid / char_dist)
+                        cluster_assignment_confidence = max(0.0, min(1.0, confidence_raw))
+                        print(f"Characteristic distance for cluster {assigned_cluster_label}: {char_dist:.2f}, Confidence: {cluster_assignment_confidence:.4f}")
+                    else:
+                        print(f"WARN: Characteristic distance not found or invalid for cluster {assigned_cluster_label}. Using fallback confidence.")
+                        # Fallback to simpler confidence if characteristic_distance is missing
+                        cluster_assignment_confidence = 1.0 / (1.0 + actual_distance_to_centroid) 
+                else:
+                    # Fallback if profile or label is somehow missing after assignment
+                    cluster_assignment_confidence = 1.0 / (1.0 + actual_distance_to_centroid)
+                    print(f"WARN: Cluster profile not found for assigned label {assigned_cluster_label}. Using basic confidence.")
 
+                if cluster_assignment_confidence is not None and cluster_assignment_confidence < 0.25: # Example threshold
+                    print(f"Low assignment confidence ({cluster_assignment_confidence:.2f}), may need fallback in calling service.")
+            else:
+                print("K-Means model does not have cluster_centers_. Cannot calculate distance-based confidence.")
         except Exception as e:
-            print(f"Error during K-Means prediction: {e}")
-            # assigned_cluster_label remains None
+            print(f"Error during K-Means prediction or confidence calculation: {e}")
     else:
         print("WARN: No pre-fitted K-Means model or input embedding missing. Clustering stage skipped.")
 
     # Stage 5 & 6: Cluster Profiling (using assigned_cluster_label) & Taxonomy Mapping
-    # This is where you'd use assigned_cluster_label to look up pre-computed profiles (from cluster_profiles)
-    # and combine with n-grams/zero-shot on current ad_text to apply YAML taxonomy rules.
-    
-    # For now, returning placeholder primitives based on a dummy logic or global default.
     derived_primitives: List[AudiencePrimitive] = []
     if assigned_cluster_label and cluster_profiles and assigned_cluster_label in cluster_profiles:
         print(f"Using profile for cluster {assigned_cluster_label}: {cluster_profiles[assigned_cluster_label]}")
-        # Example: if cluster_profiles[assigned_cluster_label] = {"industry": "Tech", "skills": ["Python"]}
-        # This is highly dependent on the structure of your cluster_profiles.json
         profile = cluster_profiles[assigned_cluster_label]
+        
         if profile.get('industry'):
             derived_primitives.append(AudiencePrimitive(category='industry', value=profile['industry']))
+        
         for skill in profile.get('skills', []):
              derived_primitives.append(AudiencePrimitive(category='skill_keyword', value=skill))
-        # Add more based on your profile structure
+        
+        if profile.get('seniority'): # Added seniority
+            derived_primitives.append(AudiencePrimitive(category='seniority', value=profile['seniority']))
+
+        for keyword in profile.get('keywords', []): # Added keywords
+            derived_primitives.append(AudiencePrimitive(category='generic_keyword', value=keyword))
+        
+        # You can add more logic here to extract other fields from your cluster_profiles.json if needed
+        # For example, if your profiles had a "target_audience_description_text":
+        # if profile.get('target_audience_description_text'):
+        #     derived_primitives.append(AudiencePrimitive(category='audience_description', value=profile['target_audience_description_text']))
+
     else:
         print("No specific cluster profile found or clustering skipped, using default primitives.")
         derived_primitives = [
@@ -206,10 +223,8 @@ async def segment_audience(job_ad_data: JobAdInput):
             AudiencePrimitive(category="skill_keyword", value="Communication", confidence=0.5),
         ]
     
-    # Ensure some primitives are always returned for valid structure
     if not derived_primitives:
          derived_primitives = [AudiencePrimitive(category="status", value="Segmentation incomplete")]
-
 
     return SegmentationOutput(
         job_ad_input=job_ad_data,

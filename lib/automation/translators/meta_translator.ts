@@ -96,24 +96,22 @@ export interface MetaFullAdStructure {
 
 const DEFAULT_META_PAGE_ID = process.env.META_DEFAULT_PAGE_ID || 'YOUR_FACEBOOK_PAGE_ID';
 
-// --- REPLACE THESE WITH ACTUAL IDs FROM YOUR META TARGETING RESEARCH --- 
-// Updated with your research findings (using the higher ID from ranges if provided)
+// --- UPDATED WITH YOUR LATEST RESEARCH (and keeping some placeholders) --- 
 const META_TARGETING_IDS = {
-    // Industries (mapped to interests or fields_of_study for example)
-    INTEREST_SOFTWARE_ENGINEERING: '60028850', // Path: Interests / Additional interests / Software engineering
-    INTEREST_COMPUTER_PROGRAMMING: '85267820', // Path: Interests / Additional interests / Computer programming
-    INTEREST_CASE_TOOLS: '8020',           // Path: Interests / Additional interests / Computer-aided software engineering
+    // Verified from your search for "Software Engineering":
+    INTEREST_SOFTWARE_ENGINEERING_IT: '6003380970205', // "Ingeniería de software (tecnología de la información)"
+    INTEREST_SOFTWARE_DEVELOPMENT_SW: '6003409558536', // "Desarrollo de software (software)"
+    INTEREST_CASE_TOOLS: '6003477759544', // "Herramienta CASE" (matches your earlier 8020 in concept)
+    INTEREST_DOCKER_SOFTWARE: '6019214301359', // Added Docker interest ID
+
+    // Broader interest you found previously, still relevant:
+    INTEREST_COMPUTER_PROGRAMMING: '85267820', 
     
-    INDUSTRY_SALES: '6003080000002', // FAKE ID - Placeholder
-    FIELD_OF_STUDY_CS: '105968496099872', // FAKE ID - Placeholder
-
-    // Skills (mapped to interests)
-    SKILL_PYTHON: '6003080748048', // FAKE ID - Placeholder (keep for other examples)
-    SKILL_JAVASCRIPT: '6003080748049', // FAKE ID - Placeholder
-    SKILL_SALES_TECHNIQUES: '6003080111222', // FAKE ID - Placeholder
-
-    // Seniority (mapped to interests, behaviors, or job titles - complex)
-    INTEREST_SENIOR_PROFESSIONALS: '6003080987654', // FAKE ID - Placeholder
+    // Placeholders for other categories - NEED YOUR RESEARCH
+    INDUSTRY_SALES: 'FAKE_SALES_INTEREST_ID', 
+    SKILL_PYTHON: 'FAKE_PYTHON_INTEREST_ID', 
+    SKILL_JAVASCRIPT: 'FAKE_JS_INTEREST_ID', 
+    INTEREST_SENIOR_PROFESSIONALS: 'FAKE_SENIOR_INTEREST_ID',
 };
 // --- END OF IDs TO BE REPLACED/VERIFIED --- 
 
@@ -180,18 +178,18 @@ export function translateToMetaAd(
     // Detailed Targeting with flexible_spec
     const flexibleSpecGroups: MetaFlexibleSpecGroup[] = [];
     let currentGroup: MetaFlexibleSpecGroup = {};
-    currentGroup.interests = currentGroup.interests || []; // Initialize interests array
+    currentGroup.interests = currentGroup.interests || [];
 
     // Map Industries to Meta Interests 
     if (targetingParams.industries && targetingParams.industries.length > 0) {
         targetingParams.industries.forEach(industryCode => {
             if (industryCode === 'TECH_SOFTWARE_DEV') {
-                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_SOFTWARE_ENGINEERING, name: 'Software Engineering' });
+                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_SOFTWARE_ENGINEERING_IT, name: 'Software engineering (information technology)' });
+                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_SOFTWARE_DEVELOPMENT_SW, name: 'Software development (software)' });
                 currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_COMPUTER_PROGRAMMING, name: 'Computer Programming' });
-                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_CASE_TOOLS, name: 'Computer-aided Software Engineering' });
             }
             if (industryCode === 'BIZ_SALES') {
-                 currentGroup.interests?.push({ id: META_TARGETING_IDS.INDUSTRY_SALES, name: 'Sales Interest Placeholder' }); // Placeholder name
+                 currentGroup.interests?.push({ id: META_TARGETING_IDS.INDUSTRY_SALES, name: 'Sales Interest Placeholder' });
             }
         });
     }
@@ -200,20 +198,21 @@ export function translateToMetaAd(
     if (targetingParams.skillKeywords && targetingParams.skillKeywords.length > 0) {
         targetingParams.skillKeywords.forEach(skill => {
             const skillLower = skill.toLowerCase();
-            if (skillLower === 'python') {
-                currentGroup.interests?.push({ id: META_TARGETING_IDS.SKILL_PYTHON, name: 'Python (Programming Language)' }); // Placeholder name
-            } else if (skillLower === 'javascript') {
-                 currentGroup.interests?.push({ id: META_TARGETING_IDS.SKILL_JAVASCRIPT, name: 'JavaScript' }); // Placeholder name
+            if (skillLower === 'python' && META_TARGETING_IDS.SKILL_PYTHON !== 'FAKE_PYTHON_INTEREST_ID') {
+                currentGroup.interests?.push({ id: META_TARGETING_IDS.SKILL_PYTHON, name: 'Python (Programming Language)' });
+            } else if (skillLower === 'javascript' && META_TARGETING_IDS.SKILL_JAVASCRIPT !== 'FAKE_JS_INTEREST_ID') {
+                 currentGroup.interests?.push({ id: META_TARGETING_IDS.SKILL_JAVASCRIPT, name: 'JavaScript' });
+            } else if (skillLower === 'docker' && META_TARGETING_IDS.INTEREST_DOCKER_SOFTWARE) {
+                 currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_DOCKER_SOFTWARE, name: 'Docker (software)'});
             }
-            // Add more specific skill mappings to interest IDs you find
         });
     }
     
-    // Map Seniority (Example using a general interest group)
+    // Map Seniority 
     if (targetingParams.seniority && targetingParams.seniority.length > 0) {
         targetingParams.seniority.forEach(seniorityCode => {
-            if (seniorityCode === 'SENIORITY_SENIOR') {
-                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_SENIOR_PROFESSIONALS, name: 'Senior Professionals Interest' }); // Placeholder name
+            if (seniorityCode === 'SENIORITY_SENIOR' && META_TARGETING_IDS.INTEREST_SENIOR_PROFESSIONALS !== 'FAKE_SENIOR_INTEREST_ID') {
+                currentGroup.interests?.push({ id: META_TARGETING_IDS.INTEREST_SENIOR_PROFESSIONALS, name: 'Senior Professionals Interest' }); 
             }
         });
     }

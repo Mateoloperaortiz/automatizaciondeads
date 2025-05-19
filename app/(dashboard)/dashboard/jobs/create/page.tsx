@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { createJobAdAction, CreateJobAdState } from './actions';
+import { createJobAdAction, CreateJobAdState } from '../actions';
 
 const initialState: CreateJobAdState = {
   message: null,
@@ -121,32 +121,18 @@ export default function CreateJobAdPage() {
            <p className="text-xs text-gray-500 mt-1">Landing page for applicants (must be HTTPS).</p>
         </div>
 
-        {/* Creative Asset URL (Optional) */}
+        {/* Creative Asset URL (Optional Image) */}
         <div>
-          <Label htmlFor="creativeAssetUrl" className="block text-sm font-medium text-gray-700 mb-1">Creative Asset URL (Optional Image/Video)</Label>
+          <Label htmlFor="creativeAssetUrl" className="block text-sm font-medium text-gray-700 mb-1">Creative Asset URL (Optional Image)</Label>
           <Input
             id="creativeAssetUrl"
             name="creativeAssetUrl"
             type="url"
-            placeholder="https://yourcdn.com/path/to/image-or-video.jpg_or.mp4"
+            placeholder="https://yourcdn.com/path/to/image.jpg"
             className="w-full"
           />
           {state.fieldErrors?.creativeAssetUrl && <p className="text-xs text-red-500 mt-1">{state.fieldErrors.creativeAssetUrl.join(', ')}</p>}
-          <p className="text-xs text-gray-500 mt-1">URL for one image or video. Used by platform integrations.</p>
-        </div>
-
-        {/* Video Thumbnail URL (New - Conditional) */}
-        <div>
-          <Label htmlFor="videoThumbnailUrl" className="block text-sm font-medium text-gray-700 mb-1">Video Thumbnail URL (Optional - if Creative Asset is a video)</Label>
-          <Input
-            id="videoThumbnailUrl"
-            name="videoThumbnailUrl"
-            type="url"
-            placeholder="https://yourcdn.com/path/to/video-thumbnail.jpg"
-            className="w-full"
-          />
-          {state.fieldErrors?.videoThumbnailUrl && <p className="text-xs text-red-500 mt-1">{state.fieldErrors.videoThumbnailUrl.join(', ')}</p>}
-          <p className="text-xs text-gray-500 mt-1">Required by some platforms (like Meta) if creative asset is a video and auto-thumbnail isn't used.</p>
+          <p className="text-xs text-gray-500 mt-1">URL for one image. Used by platform integrations.</p>
         </div>
 
         {/* Target Platforms */}

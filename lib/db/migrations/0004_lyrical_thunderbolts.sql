@@ -1,0 +1,1 @@
+ALTER TABLE "job_ads" DROP COLUMN "video_thumbnail_url";

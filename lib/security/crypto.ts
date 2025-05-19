@@ -83,3 +83,4 @@ export function decrypt(encryptedText: string): string {
     throw new Error('Decryption process failed. Invalid key, IV, auth tag, or ciphertext.');
   }
 }
+ 
