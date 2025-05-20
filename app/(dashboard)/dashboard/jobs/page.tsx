@@ -26,7 +26,7 @@ function JobAdTableRow({ ad, onAction }: { ad: JobAd, onAction: () => void }) {
     initialDeleteState
   );
 
-  const initialPublishState: PublishJobAdState = { jobId: ad.id, success: false, error: null };
+  const initialPublishState: PublishJobAdState = { jobAdId: ad.id, success: false, error: null };
   const [publishState, submitPublishAction, isPublishing] = useActionState<PublishJobAdState, FormData>(
       publishJobAdNowAction,
       initialPublishState
@@ -70,9 +70,9 @@ function JobAdTableRow({ ad, onAction }: { ad: JobAd, onAction: () => void }) {
       </TableCell>
       <TableCell>
         <div className="flex space-x-1.5">
-          {ad.platformsMetaEnabled && <Facebook className="h-4 w-4 text-blue-600" title="Meta" />}
-          {ad.platformsXEnabled && <Twitter className="h-4 w-4 text-sky-500" title="X" />}
-          {ad.platformsGoogleEnabled && <Youtube className="h-4 w-4 text-red-600" title="Google" />}
+          {ad.platformsMetaEnabled && <Facebook className="h-4 w-4 text-blue-600" />}
+          {ad.platformsXEnabled && <Twitter className="h-4 w-4 text-sky-500" />}
+          {ad.platformsGoogleEnabled && <Youtube className="h-4 w-4 text-red-600" />}
         </div>
       </TableCell>
       <TableCell>{ad.budgetDaily ? `$${parseFloat(ad.budgetDaily as string).toFixed(2)}` : 'N/A'}</TableCell>
@@ -82,14 +82,14 @@ function JobAdTableRow({ ad, onAction }: { ad: JobAd, onAction: () => void }) {
       </TableCell>
       <TableCell className="text-right space-x-1 py-3">
         {canPublishNow && (
-            <Button variant="outline" size="icon_sm" onClick={handlePublishNow} disabled={isPublishing} title="Publish Now">
+            <Button variant="outline" size="icon" onClick={handlePublishNow} disabled={isPublishing} title="Publish Now">
                 {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4 text-green-600" />}
             </Button>
         )}
-        <Button variant="outline" size="icon_sm" asChild title="Edit">
+        <Button variant="outline" size="icon" asChild title="Edit">
           <Link href={`/dashboard/jobs/${ad.id}/edit`}><Edit3 className="h-4 w-4" /></Link>
         </Button>
-        <Button variant="destructive" size="icon_sm" onClick={handleDelete} disabled={isDeleting} title="Delete">
+        <Button variant="destructive" size="icon" onClick={handleDelete} disabled={isDeleting} title="Delete">
           {(isDeleting) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} 
         </Button>
       </TableCell>

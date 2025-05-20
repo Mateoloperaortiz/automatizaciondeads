@@ -10,6 +10,7 @@ import {
     // types, // Example if it was under a 'types' namespace
 } from 'google-ads-api';
 import { SocialPlatformConnection } from '@/lib/db/schema'; // To type connection details
+import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
 
 // --- Google Ads API Client Initialization --- 
 
@@ -104,6 +105,17 @@ export async function postAdToGoogle(
 
     const targetCustomerId = googleConnection.platformAccountId!.replace(/-/g, '');
     console.log(`Posting to Google Ads Customer ID: ${targetCustomerId} (Campaign & Budget ONLY TEST)`);
+
+    if (TEST_ACCOUNTS_ONLY) {
+        console.log('TEST_ACCOUNTS_ONLY is enabled - skipping Google Ads API calls.');
+        return {
+            campaignResourceName: 'customers/TEST/campaigns/1',
+            campaignBudgetResourceName: 'customers/TEST/campaignBudgets/1',
+            adGroupResourceName: undefined,
+            adResourceName: undefined,
+            criteriaResourceNames: [],
+        };
+    }
 
     try {
         const client = getGoogleAdsClient(googleConnection.refreshToken, targetCustomerId);

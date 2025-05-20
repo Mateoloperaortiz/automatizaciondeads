@@ -2,7 +2,7 @@ import { JobAd } from '@/lib/db/schema'; // Assuming JobAd type from your DB sch
 import { PlatformAgnosticTargeting } from '../taxonomy_mapper';
 
 // --- Meta API Specific Types (More detailed based on research) --- 
-interface MetaCampaignPayload {
+export interface MetaCampaignPayload {
     name: string;
     objective: 'LINK_CLICKS' | 'CONVERSIONS' | 'REACH' | 'LEAD_GENERATION' | 'OUTCOME_LEADS' | string;
     status: 'ACTIVE' | 'PAUSED';
@@ -40,7 +40,7 @@ interface MetaTargetingSpec {
     // exclusions?: MetaFlexibleSpecGroup[]; // To exclude audiences
 }
 
-interface MetaAdSetPayload {
+export interface MetaAdSetPayload {
     name: string;
     campaign_id: string; 
     status: 'ACTIVE' | 'PAUSED';
@@ -71,7 +71,7 @@ interface MetaVideoData {
     call_to_action: { type: string; value?: { link: string } };
 }
 
-interface MetaAdCreativePayload {
+export interface MetaAdCreativePayload {
     name: string;
     page_id?: string; // Required if object_story_spec is used, taken from DEFAULT_META_PAGE_ID
     object_story_spec?: {

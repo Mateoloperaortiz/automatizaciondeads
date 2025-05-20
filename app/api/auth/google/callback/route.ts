@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const errorDescription = searchParams.get('error_description'); // Google might use this
 
   // @ts-ignore : Linter issue with Next.js Server Action cookies
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const storedState = cookieStore.get('google_oauth_state')?.value;
   cookieStore.delete('google_oauth_state');
 

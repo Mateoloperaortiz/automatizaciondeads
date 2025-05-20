@@ -6,6 +6,7 @@ import { translateToMetaAd } from './translators/meta_translator';
 import { postAdToMeta, uploadMetaAdImageByUrl } from './platform_apis/meta_ads_api';
 import { decrypt } from '@/lib/security/crypto';
 import { getTeamForUser } from '@/lib/db/queries';
+import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
 
 // X (Twitter) Imports
 import { translateToXAd } from './translators/x_translator';
@@ -121,11 +122,11 @@ export async function processScheduledAds() {
                                 let imageHashForTranslator: string | undefined = undefined;
                                 if (ad.creativeAssetUrl) {
                                     console.log(`Ad ID: ${ad.id} - Creative asset URL provided, attempting image upload: ${ad.creativeAssetUrl}`);
-                                    imageHashForTranslator = await uploadMetaAdImageByUrl(
-                                        metaConnection.platformAccountId, 
-                                        ad.creativeAssetUrl, 
+                                    imageHashForTranslator = (await uploadMetaAdImageByUrl(
+                                        metaConnection.platformAccountId,
+                                        ad.creativeAssetUrl,
                                         decryptedAccessToken
-                                    );
+                                    )) || undefined;
                                     if (imageHashForTranslator) {
                                         console.log(`Ad ID: ${ad.id} - Image uploaded to Meta, hash: ${imageHashForTranslator}`);
                                     } else {

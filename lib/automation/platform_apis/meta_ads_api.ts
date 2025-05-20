@@ -1,6 +1,7 @@
 import { MetaCampaignPayload, MetaAdSetPayload, MetaAdCreativePayload, MetaFullAdStructure } from '../translators/meta_translator';
 import { JobAd } from '@/lib/db/schema';
 import { PlatformAgnosticTargeting } from '../taxonomy_mapper';
+import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
 
 const META_GRAPH_API_VERSION = 'v19.0'; // Or your desired API version
 const META_GRAPH_API_BASE_URL = `https://graph.facebook.com/${META_GRAPH_API_VERSION}`;
@@ -216,16 +217,27 @@ export async function uploadMetaAdImageByUrl(
  * @returns An object with IDs of created entities, or null if any step fails.
  */
 export async function postAdToMeta(
-    adAccountId: string, 
+    adAccountId: string,
     fullAdStructure: MetaFullAdStructure, // Expects the fully translated structure
     accessToken: string
     // No longer needs jobAdCreativeAssetUrl or jobAd object directly, as translator handled it with imageHash
 ): Promise<{ campaignId: string; adSetId: string; creativeId: string; adId: string; imageHash?: string; } | null> {
     console.log(`Posting to Meta Ad Account: ${adAccountId} using pre-translated structure.`);
-    
+
     // The imageHash should already be incorporated into fullAdStructure.adCreativePayload by the translator
     // If an image was uploaded, its hash would have been passed to translateToMetaAd, which then puts it in the payload.
     const imageHashFromPayload = fullAdStructure.adCreativePayload.object_story_spec?.link_data?.image_hash;
+
+    if (TEST_ACCOUNTS_ONLY) {
+        console.log('TEST_ACCOUNTS_ONLY is enabled - skipping Meta API calls.');
+        return {
+            campaignId: 'test_campaign',
+            adSetId: 'test_adset',
+            creativeId: 'test_creative',
+            adId: 'test_ad',
+            imageHash: imageHashFromPayload,
+        };
+    }
     
     const campaignId = await createMetaCampaign(adAccountId, fullAdStructure.campaignPayload, accessToken);
     if (!campaignId) { console.error("Meta ad posting failed at campaign creation."); return null; }

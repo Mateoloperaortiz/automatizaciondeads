@@ -35,7 +35,7 @@ export async function getMetaOAuthURL(): Promise<{ error?: string; url?: string 
     // Generate a random state for CSRF protection
     const state = crypto.randomBytes(16).toString('hex');
     // Store the state in a short-lived HttpOnly cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('meta_oauth_state', state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -159,7 +159,7 @@ export async function finalizeMetaConnectionAction(
     return { error: 'No ad account was selected.', platform: 'meta' };
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const tempCookie = cookieStore.get('meta_temp_connection')?.value;
   cookieStore.delete('meta_temp_connection');
   cookieStore.delete('meta_ad_accounts_list');
@@ -332,7 +332,7 @@ export async function redirectToGoogleConnect() {
     const redirectUri = `${NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}${GOOGLE_REDIRECT_URI_PATH}`;
     const state = crypto.randomBytes(16).toString('hex');
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('google_oauth_state', state, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

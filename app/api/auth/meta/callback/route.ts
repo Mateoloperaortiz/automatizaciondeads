@@ -22,9 +22,10 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
-  const storedState = cookies().get('meta_oauth_state')?.value;
+  const cookieStore = await cookies();
+  const storedState = cookieStore.get('meta_oauth_state')?.value;
   // Clear the state cookie once used
-  cookies().delete('meta_oauth_state');
+  cookieStore.delete('meta_oauth_state');
 
   const integrationsPageUrl = '/dashboard/settings/integrations';
   const selectAccountPageUrl = '/dashboard/settings/integrations/meta/select-account';
@@ -162,7 +163,7 @@ export async function GET(request: NextRequest) {
         adAccounts: adAccountsData.data.map((acc: {account_id: string, name: string}) => ({ id: acc.account_id, name: acc.name }))
     };
 
-    cookies().set('meta_temp_connection', JSON.stringify(temporaryConnectionData), {
+    cookieStore.set('meta_temp_connection', JSON.stringify(temporaryConnectionData), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 15, // 15 minutes to complete selection
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
 
     // Set a separate, client-readable cookie for just the ad accounts list for the selection UI
     const adAccountsListForClient = temporaryConnectionData.adAccounts;
-    cookies().set('meta_ad_accounts_list', JSON.stringify(adAccountsListForClient), {
+    cookieStore.set('meta_ad_accounts_list', JSON.stringify(adAccountsListForClient), {
         httpOnly: false, // Client-readable
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 15, // Same expiry
