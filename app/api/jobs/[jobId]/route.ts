@@ -17,7 +17,7 @@ export async function GET(
       );
     }
 
-    const jobIdParam = await params.jobId;
+    const jobIdParam = params.jobId;
     const jobId = parseInt(jobIdParam, 10);
     if (isNaN(jobId)) {
       return NextResponse.json({ error: 'Invalid Job ID' }, { status: 400 });
@@ -33,7 +33,7 @@ export async function GET(
 
     return NextResponse.json(ad);
   } catch (error) {
-    console.error('Error fetching job ad:', error);
+    console.error(`Error fetching job ad ${params.jobId}:`, error);
     return NextResponse.json(
       { error: 'Failed to fetch job ad' },
       { status: 500 }

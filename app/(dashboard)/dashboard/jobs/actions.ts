@@ -260,4 +260,110 @@ export async function deleteJobAdAction(
   revalidatePath('/dashboard/jobs');
   // No need to revalidate edit page for a deleted item
   return { ...prevState, jobId, success: true }; // Can add a success message if needed
+}
+
+export type PublishJobAdState = {
+    error?: string | null;
+    success?: boolean;
+    message?: string | null;
+    jobAdId?: number;
+};
+
+export async function publishJobAdNowAction(
+    prevState: PublishJobAdState,
+    formData: FormData // formData will contain jobAdId
+): Promise<PublishJobAdState> {
+    const jobAdIdString = formData.get('jobAdId');
+    if (!jobAdIdString || typeof jobAdIdString !== 'string') {
+        return { error: 'Job Ad ID is missing or invalid.' };
+    }
+    const jobAdId = parseInt(jobAdIdString, 10);
+    if (isNaN(jobAdId)) {
+        return { error: 'Invalid Job Ad ID format.' };
+    }
+
+    const team = await getTeamForUser(); // For permission check
+    if (!team) {
+        return { error: 'User not authenticated or no team found.', jobAdId };
+    }
+
+    try {
+        const adToPublish = await db.query.jobAds.findFirst({
+            where: and(eq(jobAds.id, jobAdId), eq(jobAds.teamId, team.id))
+        });
+
+        if (!adToPublish) {
+            return { error: 'Job Ad not found or you do not have permission.', jobAdId };
+        }
+
+        // Only allow publishing if it's in a draft or perhaps a failed state, not already live/processing/scheduled with future date
+        // More complex status transition logic could be added here.
+        if (adToPublish.status === 'draft' || adToPublish.status === 'error_processing' || adToPublish.status === 'segmentation_failed' || adToPublish.status === 'post_failed_meta' || adToPublish.status === 'post_failed_x' || adToPublish.status === 'post_failed_google' || adToPublish.status === 'post_failed_all') {
+            await db.update(jobAds).set({
+                status: 'scheduled',
+                scheduleStart: new Date(), // Set scheduleStart to now to make it eligible immediately
+                updatedAt: new Date()
+            }).where(eq(jobAds.id, jobAdId));
+            
+            revalidatePath('/dashboard/jobs');
+            // Note: This action itself doesn't trigger the AutomationEngine directly.
+            // The AutomationEngine (via cron or manual trigger) will pick it up.
+            return { success: true, message: `Job Ad #${jobAdId} has been scheduled for immediate processing.`, jobAdId };
+        } else {
+            return { error: `Job Ad #${jobAdId} is already ${adToPublish.status} and cannot be published now.`, jobAdId };
+        }
+
+    } catch (err: any) {
+        console.error('Error in publishJobAdNowAction:', err);
+        return { error: err.message || 'Failed to schedule job ad for publishing.', jobAdId };
+    }
+}
+
+export type TriggerEngineState = {
+    error?: string | null;
+    success?: boolean;
+    message?: string | null;
+    processedCount?: number;
+};
+
+export async function triggerAutomationEngineAction(
+    prevState: TriggerEngineState
+): Promise<TriggerEngineState> {
+    console.log("Attempting to trigger automation engine manually...");
+
+    const triggerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/automation/trigger`;
+    const cronSecret = process.env.CRON_JOB_SECRET;
+
+    if (!cronSecret) {
+        return { error: "CRON_JOB_SECRET is not configured. Cannot trigger engine securely." };
+    }
+
+    try {
+        const response = await fetch(triggerUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${cronSecret}`,
+            },
+            cache: 'no-store', // Ensure it hits the endpoint fresh
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error triggering automation engine: ${response.status}`, errorText);
+            return { error: `Failed to trigger engine: ${response.status} ${errorText}` };
+        }
+
+        const result = await response.json();
+        console.log("Automation engine triggered successfully via action:", result);
+        return { 
+            success: result.success,
+            message: result.message || 'Automation engine run complete.',
+            processedCount: result.processedCount,
+            error: result.error
+        };
+
+    } catch (err: any) {
+        console.error('Error in triggerAutomationEngineAction:', err);
+        return { error: err.message || 'Failed to trigger automation engine.' };
+    }
 } 
