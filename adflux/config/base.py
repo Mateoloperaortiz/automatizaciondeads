@@ -5,13 +5,13 @@ Este módulo contiene la configuración base común a todos los entornos.
 """
 
 import os
-from dotenv import load_dotenv
+from adflux.utils.env_loader import load_env_files
 
 # Obtener la ruta base del proyecto
 basedir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-# Cargar variables de entorno desde el archivo .env
-load_dotenv(os.path.join(basedir, ".env"))
+# Cargar variables de entorno desde los archivos .env y .envrc
+load_env_files(basedir)
 
 
 class BaseConfig:
