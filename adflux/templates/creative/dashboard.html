@@ -132,20 +132,42 @@
                     // Limpiar el dropdown de formatos
                     formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
                     
-                    // Usar una solución alternativa: definir los formatos directamente en el cliente
-                    // basado en la plataforma seleccionada
-                    const formatosPorPlataforma = {
-                        'meta': ['imagen_única', 'carrusel', 'video'],
-                        'google': ['texto', 'responsive', 'imagen'],
-                        'tiktok': ['video', 'imagen'],
-                        'snapchat': ['video', 'imagen', 'colección']
-                    };
-                    
-                    // Limpiar opciones existentes
-                    formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
-                    
-                    // Obtener formatos para la plataforma seleccionada
-                    const formatos = formatosPorPlataforma[selectedPlatform] || [];
+                    // Obtener formatos desde la API
+                    fetch(`/creative/api/formats/${selectedPlatform}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error al obtener formatos');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Respuesta de API:', data);
+                            
+                            // Limpiar opciones existentes
+                            formatSelect.innerHTML = '<option value="">Seleccionar formato</option>';
+                            
+                            // Obtener formatos para la plataforma seleccionada
+                            const formatos = data.success ? data.formats : [];
+                            
+                            // Si no hay formatos disponibles, mostrar mensaje en consola
+                            if (formatos.length === 0) {
+                                console.warn(`No hay formatos disponibles para ${selectedPlatform}`);
+                            }
+                            
+                            // Añadir opciones de formato
+                            formatos.forEach(format => {
+                                const option = document.createElement('option');
+                                option.value = format;
+                                option.textContent = format;
+                                formatSelect.appendChild(option);
+                            });
+                            
+                            console.log(`Formatos cargados para ${selectedPlatform} desde API:`, formatos);
+                        })
+                        .catch(error => {
+                            console.error('Error al obtener formatos:', error);
+                            formatSelect.innerHTML = '<option value="">Error al cargar formatos</option>';
+                        });
                     
                     // Añadir opciones de formato
                     formatos.forEach(format => {
