@@ -12,9 +12,144 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 
 from .utils import generate_with_gemini, setup_gemini_client
+from faker import Faker  # Ensure faker is in requirements
+fake = Faker("es_CO")
 
 # Configurar logging
 log = logging.getLogger(__name__)
+
+SAMPLE_TITLES = [
+    "Analista de Datos",
+    "Desarrollador Backend",
+    "Diseñador UX/UI",
+    "Gerente de Proyecto",
+    "Especialista en Marketing",
+    "Ingeniero de Software",
+    "Administrador de Sistemas",
+    "Asesor Comercial",
+    "Contador Público",
+]
+
+SAMPLE_COMPANIES = [
+    "Bancolombia",
+    "Ecopetrol",
+    "Grupo Nutresa",
+    "Rappi",
+    "Falabella",
+    "Grupo Éxito",
+    "Avianca",
+    "Davivienda",
+]
+
+SAMPLE_LOCATIONS = [
+    "Bogotá",
+    "Medellín",
+    "Cali",
+    "Barranquilla",
+    "Cartagena",
+    "Bucaramanga",
+    "Pereira",
+]
+
+SAMPLE_DEPARTMENTS = [
+    "Tecnología",
+    "Finanzas",
+    "Recursos Humanos",
+    "Marketing",
+    "Ventas",
+    "Operaciones",
+]
+
+SAMPLE_SKILLS = [
+    "Python",
+    "SQL",
+    "Excel Avanzado",
+    "Comunicación",
+    "Gestión de Proyectos",
+    "JavaScript",
+    "AWS",
+    "Diseño Gráfico",
+    "Negociación",
+]
+
+SAMPLE_BENEFITS = [
+    "Seguro médico",
+    "Bono de alimentación",
+    "Trabajo remoto",
+    "Programa de bienestar",
+    "Capacitación",
+]
+
+SAMPLE_SALARY_RANGES = [
+    "$3.000.000 - $4.500.000",
+    "$4.500.000 - $6.000.000",
+    "$6.000.000 - $8.000.000",
+    "$8.000.000 - $10.000.000",
+]
+
+VALID_STATUSES = ["open", "closed", "draft"]
+EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Temporary", "Internship"]
+EXPERIENCE_LEVELS = ["Entry-level", "Mid-level", "Senior", "Executive"]
+EDUCATION_LEVELS = ["High School", "Technical", "Bachelor's", "Master's", "PhD"]
+
+
+def _create_unique_job_title_for_company(original_title: str, company_name: str, existing_title_company_keys: set) -> str:
+    """
+    Ensures a unique title for a given company by appending a counter if needed.
+    Args:
+        original_title: The initial job title.
+        company_name: The company name.
+        existing_title_company_keys: A set of 'title|company' keys already in use.
+    Returns:
+        A title string that is unique for the given company in the context of existing keys.
+    """
+    if not original_title or not company_name:
+        # Should not happen if LLM provides data, but handle defensively
+        return original_title or "Default Job Title"
+
+    current_title = original_title
+    title_company_key = f"{current_title}|{company_name}".lower()
+    counter = 1
+    while title_company_key in existing_title_company_keys:
+        current_title = f"{original_title} ({counter})"
+        title_company_key = f"{current_title}|{company_name}".lower()
+        counter += 1
+    return current_title
+
+
+def _generate_local_job(job_id: int) -> Dict[str, Any]:
+    """Generate a fallback job dictionary using local random data."""
+    title = random.choice(SAMPLE_TITLES)
+    company = random.choice(SAMPLE_COMPANIES)
+    location = random.choice(SAMPLE_LOCATIONS)
+    posting_date = datetime.now() - timedelta(days=random.randint(0, 30))
+    closing_date = posting_date + timedelta(days=random.randint(15, 60))
+
+    skills_sample = random.sample(SAMPLE_SKILLS, k=min(5, len(SAMPLE_SKILLS)))
+
+    job_data = {
+        "job_id": job_id,
+        "title": title,
+        "company_name": company,
+        "location": location,
+        "description": f"Estamos buscando un {title} para unirse a nuestro equipo en {company}.",
+        "requirements": skills_sample,
+        "salary_range": random.choice(SAMPLE_SALARY_RANGES),
+        "employment_type": random.choice(EMPLOYMENT_TYPES),
+        "experience_level": random.choice(EXPERIENCE_LEVELS),
+        "education_level": random.choice(EDUCATION_LEVELS),
+        "application_url": f"https://example.com/jobs/{job_id}",
+        "posting_date": posting_date.isoformat(),
+        "closing_date": closing_date.isoformat(),
+        "status": random.choice(VALID_STATUSES),
+        "department": random.choice(SAMPLE_DEPARTMENTS),
+        "remote": random.choice([True, False]),
+        "skills": skills_sample,
+        "benefits": random.sample(SAMPLE_BENEFITS, k=min(3, len(SAMPLE_BENEFITS))),
+        "short_description": f"{title} en {company} ({location}).",
+    }
+    log.info(f"Datos de trabajo locales generados para job_id {job_id}")
+    return job_data
 
 
 def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
@@ -134,11 +269,11 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
             return generated_data
         else:
             missing_keys = [key for key in required_keys if key not in generated_data]
-            log.error(f"Datos de trabajo generados faltan claves requeridas: {missing_keys}")
-            return None
+            log.error(f"Datos de trabajo generados faltan claves requeridas: {missing_keys}. Usando datos locales de respaldo.")
+            return _generate_local_job(job_id)
     else:
-        log.error(f"Fallo al generar datos de trabajo para job_id {job_id} usando Gemini.")
-        return None
+        log.error(f"Fallo al generar datos de trabajo para job_id {job_id} usando Gemini. Usando datos locales de respaldo.")
+        return _generate_local_job(job_id)
 
 
 def generate_multiple_jobs(count: int = 10) -> List[Dict[str, Any]]:
@@ -172,28 +307,28 @@ def generate_multiple_jobs(count: int = 10) -> List[Dict[str, Any]]:
         job_data = generate_job_opening(job_id)
 
         if job_data:
-            title = job_data.get("title")
-            company = job_data.get("company_name")
+            original_title = job_data.get("title")
+            company_name = job_data.get("company_name")
 
-            # Verificar unicidad del título y compañía combinados
-            title_company_key = f"{title}|{company}".lower() if title and company else None
-
-            if title_company_key and title_company_key not in generated_titles:
+            if original_title and company_name:
+                # Ensure the title is unique for the company
+                unique_title = _create_unique_job_title_for_company(original_title, company_name, generated_titles)
+                
+                # Update job_data with the potentially modified unique title
+                job_data["title"] = unique_title
+                
+                title_company_key = f"{unique_title}|{company_name}".lower()
+                
                 generated_titles.add(title_company_key)
                 generated_job_ids.add(job_id)
                 jobs.append(job_data)
-                log.debug(f"Trabajo único añadido: {title} en {company} ({len(jobs)}/{count})")
-                consecutive_failures = 0  # Reiniciar contador de fallos
-            elif title_company_key:
-                log.warning(
-                    f"Combinación de título y compañía duplicada generada y descartada: '{title}' en '{company}'"
-                )
-                consecutive_failures += 1
+                log.info(f"Trabajo único ('{unique_title}' en '{company_name}') añadido. ID: {job_id}. Total: {len(jobs)}/{count}")
+                consecutive_failures = 0  # Reset on success
             else:
-                log.warning("Datos de trabajo generados sin título o compañía, descartados.")
+                log.warning(f"Datos de trabajo generados sin título o compañía para job_id {job_id}. Descartando.")
                 consecutive_failures += 1
         else:
-            log.warning(f"Fallo la generación de trabajo en el intento {attempts}.")
+            log.warning(f"Fallo al generar datos de trabajo para job_id {job_id}. Intento {attempts}/{max_total_attempts}")
             consecutive_failures += 1
 
         # Pausa si hay demasiados fallos consecutivos (posible límite de API)

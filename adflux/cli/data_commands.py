@@ -5,8 +5,11 @@ Este módulo contiene comandos para crear, sembrar y gestionar datos en la base 
 """
 
 import click
+import os
+from dotenv import load_dotenv
 import json
 import datetime
+import re
 from flask import current_app
 from flask.cli import with_appcontext
 
@@ -42,6 +45,13 @@ def db_create():
 @with_appcontext
 def db_seed(jobs, candidates):
     """Siembra la base de datos con datos simulados de trabajos y candidatos."""
+    # Explicitly load .env here to ensure GEMINI_API_KEY is available for simulation
+    dotenv_path = os.path.join(current_app.root_path, '..', '.env') # Assuming .env is in project root, one level up from adflux dir
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path, override=True) # Override to ensure it re-reads if already loaded
+    else:
+        click.echo(f"Warning: .env file not found at {dotenv_path} for db_seed command.", err=True)
+
     click.echo(f"Sembrando base de datos con {jobs} trabajos y {candidates} candidatos...")
 
     # Asegurar que las operaciones estén dentro del contexto de la app Flask para gestión de sesión
@@ -70,6 +80,30 @@ def db_seed(jobs, candidates):
                     job_data["closing_date"] = datetime.datetime.fromisoformat(
                         job_data["closing_date"].replace("Z", "+00:00")
                     ).date()
+
+                # Mapear 'requirements' a 'required_skills' para el modelo
+                if "requirements" in job_data:
+                    job_data["required_skills"] = job_data.pop("requirements")
+
+                # Convertir salary_range "$3.000.000 - $4.500.000" a enteros salary_min/salary_max
+                if "salary_range" in job_data and job_data["salary_range"]:
+                    range_text = job_data.pop("salary_range")
+                    try:
+                        # Remover símbolos y separar por '-'
+                        parts = range_text.split("-")
+                        if len(parts) == 2:
+                            salary_min_raw = re.sub(r"[^0-9]", "", parts[0])
+                            salary_max_raw = re.sub(r"[^0-9]", "", parts[1])
+                            if salary_min_raw:
+                                job_data["salary_min"] = int(salary_min_raw)
+                            if salary_max_raw:
+                                job_data["salary_max"] = int(salary_max_raw)
+                    except Exception:
+                        pass  # Si falla, ignorar y continuar
+
+                # Asegurar que job_id es cadena
+                if "job_id" in job_data:
+                    job_data["job_id"] = str(job_data["job_id"])
 
                 # Crear objeto JobOpening
                 job = JobOpening(**job_data)

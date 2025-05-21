@@ -8,12 +8,90 @@ utilizando la API de Gemini.
 import logging
 import random
 import time
+import re # Added for email generation
 from typing import Dict, Any, Optional, List
-
+from faker import Faker  # Local fallback data
+fake = Faker("es_CO")
 from .utils import generate_with_gemini, setup_gemini_client
 
 # Configurar logging
 log = logging.getLogger(__name__)
+
+# Sample data for fallback
+SAMPLE_EDUCATION = ["High School", "Technical", "Bachelor's", "Master's", "PhD"]
+SAMPLE_AVAILABILITY = ["Immediate", "2 weeks", "1 month", "Negotiable"]
+SAMPLE_SKILLS = [
+    "Python",
+    "SQL",
+    "Excel",
+    "Comunicación",
+    "Trabajo en Equipo",
+    "Java",
+    "AWS",
+    "Marketing",
+    "Diseño Gráfico",
+    "Project Management",
+]
+
+def _create_unique_email(full_name: str, existing_emails: set) -> str:
+    """
+    Generates a unique email address based on the full name.
+    Args:
+        full_name: The full name of the candidate.
+        existing_emails: A set of email addresses already in use.
+    Returns:
+        A unique email address.
+    """
+    if not full_name:
+        base_name = "candidate"
+    else:
+        # Normalize name: lowercase, replace spaces with dots, keep only alphanumeric and dots
+        normalized_name = full_name.lower().replace(" ", ".")
+        base_name = re.sub(r'[^a-z0-9.]', '', normalized_name)
+        # Remove leading/trailing dots and multiple consecutive dots
+        base_name = re.sub(r'\.+', '.', base_name).strip('.')
+        if not base_name: # Handle cases where name results in empty string after normalization
+            base_name = "candidate"
+
+    email_candidate = f"{base_name}@example.com"
+    counter = 1
+    while email_candidate in existing_emails:
+        email_candidate = f"{base_name}{counter}@example.com"
+        counter += 1
+    return email_candidate
+
+
+
+def _generate_local_candidate(candidate_id: int) -> Dict[str, Any]:
+    """Generate a candidate profile locally when Gemini fails."""
+    name = fake.name()
+    location = fake.city()
+    years_exp = random.randint(0, 25)
+    education_level = random.choice(SAMPLE_EDUCATION)
+    skills = random.sample(SAMPLE_SKILLS, k=5)
+    primary_skill = random.choice(skills)
+    desired_salary = random.randint(1_000_000, 15_000_000)
+    desired_position = f"{primary_skill} Specialist"
+    summary = f"Profesional con experiencia en {primary_skill} y otras áreas relacionadas."
+    availability = random.choice(SAMPLE_AVAILABILITY)
+    languages = ["Spanish (Native)", "English (Intermediate)"]
+
+    return {
+        "candidate_id": candidate_id,
+        "name": name,
+        "location": location,
+        "years_experience": years_exp,
+        "education_level": education_level,
+        "skills": skills,
+        "primary_skill": primary_skill,
+        "desired_salary": desired_salary,
+        "desired_position": desired_position,
+        "summary": summary,
+        "availability": availability,
+        "languages": languages,
+        "phone": fake.phone_number(),
+        "job_id": None,
+    }
 
 
 def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
@@ -38,7 +116,7 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
     Genera un objeto JSON con los siguientes campos:
     - candidate_id: {candidate_id} (entero)
     - name: nombre completo colombiano realista (string)
-    - email: email ficticio basado en el nombre (string)
+    # - email: email ficticio basado en el nombre (string) # Email will be generated locally
     - phone: número de teléfono colombiano ficticio (string)
     - location: ciudad en Colombia (string)
     - years_experience: años de experiencia laboral (entero entre 0 y 25)
@@ -63,7 +141,7 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
         required_keys = [
             "candidate_id",
             "name",
-            "email",
+            # "email", # Email will be generated and added by the calling function
             "location",
             "years_experience",
             "education_level",
@@ -150,13 +228,13 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
             return generated_data
         else:
             missing_keys = [key for key in required_keys if key not in generated_data]
-            log.error(f"Datos de candidato generados faltan claves requeridas: {missing_keys}")
-            return None
+            log.error(f"Datos de candidato generados faltan claves requeridas: {missing_keys}. Usando datos locales de respaldo.")
+            return _generate_local_candidate(candidate_id)
     else:
         log.error(
-            f"Fallo al generar datos de candidato para candidate_id {candidate_id} usando Gemini."
+            f"Fallo al generar datos de candidato para candidate_id {candidate_id} usando Gemini. Usando datos locales de respaldo."
         )
-        return None
+        return _generate_local_candidate(candidate_id)
 
 
 def generate_multiple_candidates(count: int = 20) -> List[Dict[str, Any]]:
@@ -194,36 +272,30 @@ def generate_multiple_candidates(count: int = 20) -> List[Dict[str, Any]]:
         candidate_data = generate_candidate_profile(candidate_id)
 
         if candidate_data:
-            email = candidate_data.get("email")
-            name = candidate_data.get("name")
-
-            if email and email not in generated_emails:
-                generated_emails.add(email)
-                generated_candidate_ids.add(candidate_id)
-                candidates.append(candidate_data)
-                log.debug(f"Candidato único añadido: {name} ({email}) ({len(candidates)}/{count})")
-                consecutive_failures = 0  # Reiniciar contador de fallos
-            elif email:
-                log.warning(
-                    f"Email de candidato duplicado generado y descartado: '{email}' para {name}"
-                )
-                consecutive_failures += 1
-            else:
-                log.warning("Datos de candidato generados sin email, descartados.")
-                consecutive_failures += 1
+            name = candidate_data.get("name", f"Candidato Anónimo {candidate_id}")
+            
+            # Generate a unique email locally
+            unique_email = _create_unique_email(name, generated_emails)
+            candidate_data["email"] = unique_email
+            
+            generated_emails.add(unique_email)
+            generated_candidate_ids.add(candidate_id)
+            candidates.append(candidate_data)
+            consecutive_failures = 0  # Reset on success
+            log.info(f"Candidato único {candidate_id} ('{name}', email: {unique_email}) añadido. Total: {len(candidates)}/{count}")
         else:
-            log.warning(f"Fallo la generación de candidato en el intento {attempts}.")
+            log.warning(f"Fallo al generar perfil para candidato_id {candidate_id}. Intento {attempts}/{max_total_attempts}")
             consecutive_failures += 1
 
-        # Pausa si hay demasiados fallos consecutivos (posible límite de API)
+        # Pausar si hay demasiados fallos consecutivos (ahora solo por fallos de generacion de perfil, no de email)
         if consecutive_failures >= max_consecutive_failures:
-            log.warning(
-                f"Detectados {consecutive_failures} fallos consecutivos. Pausando por 5 segundos..."
-            )
+            log.warning(f"Detectados {consecutive_failures} fallos consecutivos en la generación de perfiles. Pausando por 5 segundos...")
             time.sleep(5)
-            consecutive_failures = 0
+            consecutive_failures = 0 # Reset after pause
 
-    log.info(
-        f"Generación de candidatos completada: {len(candidates)}/{count} candidatos generados en {attempts} intentos."
-    )
+    if len(candidates) < count:
+        log.warning(
+            f"No se pudieron generar suficientes candidatos únicos. Generados: {len(candidates)} de {count} solicitados."
+        )
+
     return candidates
