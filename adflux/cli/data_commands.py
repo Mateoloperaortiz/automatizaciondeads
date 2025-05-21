@@ -45,12 +45,11 @@ def db_create():
 @with_appcontext
 def db_seed(jobs, candidates):
     """Siembra la base de datos con datos simulados de trabajos y candidatos."""
-    # Explicitly load .env here to ensure GEMINI_API_KEY is available for simulation
-    dotenv_path = os.path.join(current_app.root_path, '..', '.env') # Assuming .env is in project root, one level up from adflux dir
-    if os.path.exists(dotenv_path):
-        load_dotenv(dotenv_path, override=True) # Override to ensure it re-reads if already loaded
-    else:
-        click.echo(f"Warning: .env file not found at {dotenv_path} for db_seed command.", err=True)
+    from adflux.utils.env_loader import load_env_files
+    # Obtener la ruta base del proyecto (2 niveles arriba de adflux/cli)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    if not load_env_files(base_dir, override=True):
+        click.echo(f"Warning: No se encontraron archivos .env o .envrc en {base_dir} para el comando db_seed.", err=True)
 
     click.echo(f"Sembrando base de datos con {jobs} trabajos y {candidates} candidatos...")
 

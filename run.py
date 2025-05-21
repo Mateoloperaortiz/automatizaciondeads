@@ -7,12 +7,10 @@ y ejecuta el servidor de desarrollo.
 
 import os
 import logging
-from dotenv import load_dotenv
+from adflux.utils.env_loader import load_env_files
 
 # Cargar variables de entorno primero
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
+load_env_files(os.path.dirname(__file__))
 
 from adflux.core import create_app, run_meta_sync_for_all_accounts
 # Import celery instance from extensions
