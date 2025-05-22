@@ -183,6 +183,11 @@
 
 <script>
         // Script para manejar los mensajes flash y notificaciones
+        // Cerrar conexión SSE al navegar a otra página
+        window.addEventListener('beforeunload', function() {
+            closeSSE();
+        });
+        
         document.addEventListener('DOMContentLoaded', function() {
             const flashContainer = document.getElementById('flash-messages-container');
             if (flashContainer && flashContainer.children.length > 0) {
@@ -208,15 +213,26 @@
         
         // Función para configurar las notificaciones en tiempo real
         function setupNotifications() {
-            // Obtener el elemento de notificaciones
-            const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
-            if (!notificationElement) return;
-            
-            // Inicializar contador de notificaciones no leídas
-            fetchUnreadCount();
-            
-            // Configurar SSE para notificaciones en tiempo real
-            setupSSE();
+            try {
+                // Esperar a que Alpine.js esté completamente inicializado
+                if (typeof Alpine === 'undefined' || !Alpine.version) {
+                    console.log("Alpine.js no está inicializado aún, reintentando en 100ms");
+                    setTimeout(setupNotifications, 100);
+                    return;
+                }
+                
+                // Obtener el elemento de notificaciones
+                const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
+                if (!notificationElement) return;
+                
+                // Inicializar contador de notificaciones no leídas
+                fetchUnreadCount();
+                
+                // Configurar SSE para notificaciones en tiempo real
+                setupSSE();
+            } catch (error) {
+                console.error("Error al configurar notificaciones:", error);
+            }
         }
         
         // Función para obtener el contador de notificaciones no leídas
@@ -231,33 +247,69 @@
         
         // Función para actualizar el contador de notificaciones
         function updateNotificationCount(count, increment = true) {
-            const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
-            if (notificationElement && notificationElement.__x) {
+            try {
+                const notificationElement = document.querySelector('[x-data*="notificationsOpen"]');
+                if (!notificationElement || !notificationElement.__x) return;
+                
+                // Verificar que existan los métodos necesarios
+                if (typeof notificationElement.__x.getUnobservedData !== 'function' || 
+                    typeof notificationElement.__x.updateUnobservedData !== 'function') {
+                    return;
+                }
+                
                 if (increment) {
                     const currentCount = notificationElement.__x.getUnobservedData().unreadCount || 0;
                     notificationElement.__x.updateUnobservedData('unreadCount', currentCount + count);
                 } else {
                     notificationElement.__x.updateUnobservedData('unreadCount', count);
                 }
+            } catch (error) {
+                console.error("Error al actualizar contador de notificaciones:", error);
+            }
+        }
+        
+        // Variable global para la conexión SSE
+        let evtSource = null;
+        
+        // Función para cerrar la conexión SSE existente
+        function closeSSE() {
+            if (evtSource) {
+                evtSource.close();
+                evtSource = null;
+                console.log("SSE Desconectado");
             }
         }
         
         // Función para configurar SSE
         function setupSSE() {
             try {
-                const evtSource = new EventSource("/sse/stream");
+                // Cerrar conexión existente si hay alguna
+                closeSSE();
+                
+                evtSource = new EventSource("/sse/stream");
                 
                 evtSource.addEventListener("notification", function(event) {
-                    const data = JSON.parse(event.data);
-                    updateNotificationCount(1);
-                    showNotificationToast(data);
-                    updateNotificationPanel(data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        updateNotificationCount(1);
+                        showNotificationToast(data);
+                        updateNotificationPanel(data);
+                    } catch (error) {
+                        console.error("Error al procesar notificación:", error);
+                    }
                 });
                 
                 evtSource.addEventListener("error", function(event) {
                     console.error("SSE Error:", event);
-                    // Reconectar después de un tiempo si hay error
-                    setTimeout(setupSSE, 5000);
+                    // Limitar reintentos para evitar bucles
+                    if (evtSource) {
+                        evtSource.close();
+                        evtSource = null;
+                        // Reconectar solo una vez después de un tiempo si hay error
+                        setTimeout(function() {
+                            if (!evtSource) setupSSE();
+                        }, 5000);
+                    }
                 });
                 
                 evtSource.addEventListener("connected", function(event) {
