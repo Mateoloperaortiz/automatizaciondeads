@@ -3,32 +3,19 @@ Definiciones de excepciones personalizadas para AdFlux.
 
 Este módulo contiene las clases de excepción personalizadas utilizadas
 en toda la aplicación para proporcionar un manejo de errores consistente.
+
+NOTA: Este módulo ahora importa AdFluxError desde adflux.exceptions.base
+y APIError desde adflux.exceptions.api cuando es posible, y proporciona
+las demás excepciones para mantener compatibilidad con el código existente.
 """
 
 from typing import Dict, Any, Optional, List, Union
 
+from ...exceptions.base import AdFluxError
+from ...exceptions.api import APIError
 
-class AdFluxError(Exception):
-    """Clase base para todas las excepciones de AdFlux."""
 
-    def __init__(
-        self, 
-        mensaje: str, 
-        codigo: Optional[int] = None,
-        detalles: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Inicializa una nueva excepción de AdFlux.
-
-        Args:
-            mensaje: Mensaje descriptivo del error.
-            codigo: Código de error opcional (por ejemplo, código HTTP).
-            detalles: Información adicional sobre el error.
-        """
-        self.mensaje = mensaje
-        self.codigo = codigo
-        self.detalles = detalles or {}
-        super().__init__(mensaje)
+ErrorAPI = APIError
 
 
 class ErrorBaseDatos(AdFluxError):
@@ -53,7 +40,17 @@ class ErrorBaseDatos(AdFluxError):
         detalles = detalles or {}
         if excepcion_original:
             detalles["excepcion_original"] = str(excepcion_original)
-        super().__init__(mensaje, codigo, detalles)
+        
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles,
+            cause=excepcion_original
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
         self.excepcion_original = excepcion_original
 
 
@@ -79,7 +76,16 @@ class ErrorValidacion(AdFluxError):
         detalles = detalles or {}
         if errores:
             detalles["errores"] = errores
-        super().__init__(mensaje, codigo, detalles)
+        
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
         self.errores = errores
 
 
@@ -100,7 +106,15 @@ class ErrorAutenticacion(AdFluxError):
             codigo: Código de error HTTP (por defecto 401).
             detalles: Información adicional sobre el error.
         """
-        super().__init__(mensaje, codigo, detalles)
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
 
 
 class ErrorAutorizacion(AdFluxError):
@@ -120,7 +134,15 @@ class ErrorAutorizacion(AdFluxError):
             codigo: Código de error HTTP (por defecto 403).
             detalles: Información adicional sobre el error.
         """
-        super().__init__(mensaje, codigo, detalles)
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
 
 
 class ErrorRecursoNoEncontrado(AdFluxError):
@@ -151,39 +173,18 @@ class ErrorRecursoNoEncontrado(AdFluxError):
             detalles["identificador"] = identificador
             if not mensaje or mensaje == "Recurso no encontrado":
                 mensaje = f"{recurso or 'Recurso'} con ID {identificador} no encontrado"
-        super().__init__(mensaje, codigo, detalles)
+        
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
         self.recurso = recurso
         self.identificador = identificador
-
-
-class ErrorAPI(AdFluxError):
-    """Excepción para errores en llamadas a APIs externas."""
-
-    def __init__(
-        self, 
-        mensaje: str, 
-        api: str,
-        excepcion_original: Optional[Exception] = None,
-        codigo: int = 500,
-        detalles: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Inicializa una nueva excepción de API externa.
-
-        Args:
-            mensaje: Mensaje descriptivo del error.
-            api: Nombre de la API que generó el error.
-            excepcion_original: Excepción original que causó el error.
-            codigo: Código de error HTTP (por defecto 500).
-            detalles: Información adicional sobre el error.
-        """
-        detalles = detalles or {}
-        detalles["api"] = api
-        if excepcion_original:
-            detalles["excepcion_original"] = str(excepcion_original)
-        super().__init__(mensaje, codigo, detalles)
-        self.api = api
-        self.excepcion_original = excepcion_original
 
 
 class ErrorTarea(AdFluxError):
@@ -212,6 +213,16 @@ class ErrorTarea(AdFluxError):
             detalles["tarea_id"] = tarea_id
         if excepcion_original:
             detalles["excepcion_original"] = str(excepcion_original)
-        super().__init__(mensaje, codigo, detalles)
+        
+        super().__init__(
+            message=mensaje,
+            code=str(codigo) if codigo else None,
+            status_code=codigo,
+            details=detalles,
+            cause=excepcion_original
+        )
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.detalles = detalles
         self.tarea_id = tarea_id
         self.excepcion_original = excepcion_original
