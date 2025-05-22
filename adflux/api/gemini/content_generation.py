@@ -21,7 +21,8 @@ from adflux.api.common.logging import get_logger
 from adflux.api.gemini.client import get_client, GeminiApiClient
 
 # Import exceptions
-from adflux.api.common.excepciones import AdFluxError, ErrorAPI
+from adflux.exceptions.base import AdFluxError
+from adflux.exceptions.api import APIError
 
 # Configurar logger
 logger = get_logger("GeminiContent")
@@ -141,7 +142,7 @@ class ContentGenerator:
                     except json.JSONDecodeError as e:
                         msg = f"No se pudo decodificar la respuesta de Gemini como JSON: {e}. Texto: '{response_text[:100]}...'"
                         logger.warning(msg)
-                        raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
+                        raise APIError(message=msg, api_name="Gemini", cause=e, status_code=500)
 
                     # Validar que tenga todas las claves necesarias
                     required_keys = [
@@ -164,14 +165,14 @@ class ContentGenerator:
                     # Si no se puede decodificar como JSON, devolver el texto completo
                     msg = "Se generó contenido, pero no en formato JSON."
                     logger.warning(msg)
-                    raise ErrorAPI(msg, api="Gemini")
+                    raise APIError(message=msg, api_name="Gemini", status_code=500)
             else:
-                # Raise ErrorAPI if response has no text
-                raise ErrorAPI("La respuesta de Gemini no contiene texto.", api="Gemini")
+                # Raise APIError if response has no text
+                raise APIError(message="La respuesta de Gemini no contiene texto.", api_name="Gemini", status_code=500)
 
         except Exception as e:
             logger.error(f"Error al generar contenido creativo: {e}", e)
-            raise ErrorAPI(f"Error al generar contenido creativo: {str(e)}", api="Gemini")
+            raise APIError(message=f"Error al generar contenido creativo: {str(e)}", api_name="Gemini", status_code=500)
 
     @handle_gemini_api_error
     def generate_job_description(
@@ -268,7 +269,7 @@ class ContentGenerator:
                     except json.JSONDecodeError as e:
                         msg = f"No se pudo decodificar la respuesta de Gemini como JSON: {e}. Texto: '{response_text[:100]}...'"
                         logger.warning(msg)
-                        raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
+                        raise APIError(message=msg, api_name="Gemini", cause=e, status_code=500)
 
                     # Validar que tenga todas las claves necesarias
                     required_keys = ["summary", "responsibilities", "requirements", "benefits"]

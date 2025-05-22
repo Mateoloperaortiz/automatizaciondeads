@@ -19,7 +19,8 @@ except ImportError:
 
 from adflux.api.common.error_handling import handle_gemini_api_error
 from adflux.api.common.logging import get_logger
-from adflux.api.common.excepciones import AdFluxError, ErrorAPI
+from adflux.exceptions.base import AdFluxError
+from adflux.exceptions.api import APIError
 
 # Configurar logger
 logger = get_logger("GeminiAPI")
@@ -54,13 +55,13 @@ class GeminiApiClient:
         if not GEMINI_SDK_AVAILABLE:
             msg = "El SDK de Google Generative AI no está disponible. Instálalo con 'pip install google-generativeai'."
             logger.error(msg)
-            raise AdFluxError(msg, codigo=500)
+            raise AdFluxError(message=msg, status_code=500)
 
         # Check for API key *before* trying to configure
         if not self.api_key:
             print(f"DEBUG: self.api_key inside check: {repr(self.api_key)}") # DEBUG
             logger.error("No se proporcionó una clave de API para Google Gemini.")
-            raise AdFluxError("No se proporcionó una clave de API para Google Gemini.", codigo=500)
+            raise AdFluxError(message="No se proporcionó una clave de API para Google Gemini.", status_code=500)
 
         # Try configuring the API
         try:
@@ -71,8 +72,8 @@ class GeminiApiClient:
         except Exception as e:
             msg = f"Error al inicializar la API de Google Gemini: {e}"
             logger.error(msg, exc_info=True)
-            # Raise ErrorAPI as configuration likely failed due to external API issue
-            raise ErrorAPI(msg, api="Gemini", excepcion_original=e)
+            # Raise APIError as configuration likely failed due to external API issue
+            raise APIError(message=msg, api_name="Gemini", cause=e, status_code=500)
 
     def ensure_initialized(self):
         """
