@@ -39,6 +39,13 @@ def creative_dashboard():
         
         analysis_data = segmentation_service.get_segmentation_analysis_data()
         segments = analysis_data.get("segment_summary", [])
+
+        # <<< START OF ADDED LOGGING >>>
+        logger.info(f"Jobs being passed to template: {[job.title for job in jobs if hasattr(job, 'title')] if jobs else 'No jobs found or jobs is None'}")
+        logger.info(f"Number of jobs: {len(jobs) if jobs is not None else 0}")
+        logger.info(f"Segments being passed to template: {[s.get('name', 'N/A') for s in segments if isinstance(s, dict)] if segments else 'No segments found or segments is None'}")
+        logger.info(f"Number of segments: {len(segments) if segments is not None else 0}")
+        # <<< END OF ADDED LOGGING >>>
         
         platforms = creative_service.get_supported_platforms()
         

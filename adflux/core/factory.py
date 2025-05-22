@@ -47,36 +47,47 @@ def create_app(config_class=Config):
     log_level_name = app.config.get("LOG_LEVEL", "INFO").upper()
     log_level = getattr(logging, log_level_name, logging.INFO)
 
-    app.logger.setLevel(log_level)
+    # Configure the 'adflux' package logger, which is an ancestor to all module loggers.
+    adflux_logger = logging.getLogger('adflux')
+    adflux_logger.setLevel(log_level) # log_level is already determined (e.g., DEBUG)
+
+    # Clear any existing handlers from adflux_logger to prevent duplication
+    for handler in adflux_logger.handlers[:]:
+        adflux_logger.removeHandler(handler)
+    # Stop 'adflux' logger from propagating to the root logger, as we're managing its handlers directly.
+    adflux_logger.propagate = False
 
     # Manejador de consola
     if app.config.get("LOG_TO_CONSOLE", True):
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(log_formatter)
-        stream_handler.setLevel(log_level)
-        app.logger.addHandler(stream_handler)
+        # The handler's level is implicitly managed by adflux_logger.setLevel()
+        # stream_handler.setLevel(log_level) # Can be set explicitly if desired
+        adflux_logger.addHandler(stream_handler)
 
     # Manejador de archivo rotatorio
     if app.config.get("LOG_TO_FILE", False):
         log_file = app.config.get("LOG_FILE", "adflux.log")
-        # Asegurarse de que la ruta del log sea absoluta o relativa a la instancia
         if not os.path.isabs(log_file):
              log_file = os.path.join(app.instance_path, log_file)
-        # Crear directorio si no existe
         log_dir = os.path.dirname(log_file)
         if log_dir and not os.path.exists(log_dir):
              try:
                   os.makedirs(log_dir)
              except OSError:
-                  app.logger.error(f"No se pudo crear el directorio de logs: {log_dir}")
+                  # Use adflux_logger here or app.logger if it's configured to propagate to adflux_logger
+                  adflux_logger.error(f"No se pudo crear el directorio de logs: {log_dir}")
 
-        # 10 MB por archivo, 5 archivos de respaldo
         file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 10, backupCount=5, encoding='utf-8')
         file_handler.setFormatter(log_formatter)
-        file_handler.setLevel(log_level)
-        app.logger.addHandler(file_handler)
+        # file_handler.setLevel(log_level) # Implicitly managed by adflux_logger's level
+        adflux_logger.addHandler(file_handler)
 
-    app.logger.info(f"Logging configurado. Nivel: {log_level_name}, Consola: {app.config.get('LOG_TO_CONSOLE')}, Archivo: {app.config.get('LOG_TO_FILE')}")
+    # Ensure Flask's own app.logger (e.g., logging.getLogger('adflux.core.factory'))
+    # also respects the log level. Its messages will propagate to 'adflux_logger'.
+    app.logger.setLevel(log_level)
+
+    adflux_logger.info(f"Logging for 'adflux' package configurado. Nivel: {log_level_name}, Consola: {app.config.get('LOG_TO_CONSOLE')}, Archivo: {app.config.get('LOG_TO_FILE')}")
 
     # --- Habilitar Extensiones Jinja2 ---
     app.jinja_env.add_extension("jinja2.ext.do")

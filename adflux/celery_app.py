@@ -11,6 +11,7 @@ from typing import Dict, Any, List, Optional
 from celery import Celery, Task
 from celery.signals import task_failure, task_success, task_retry, worker_ready
 from flask import Flask
+from adflux.core.factory import create_app # Added import
 
 
 # Configurar logger
@@ -72,15 +73,7 @@ def make_celery(app: Flask) -> Celery:
         task_default_routing_key='default',
         worker_prefetch_multiplier=1,
         worker_max_tasks_per_child=1000,
-        task_queues=[
-            {
-                'name': queue_name,
-                'exchange': config['exchange'],
-                'routing_key': config['routing_key'],
-                'queue_arguments': config['queue_arguments']
-            }
-            for queue_name, config in QUEUE_CONFIG.items()
-        ],
+        task_queues=QUEUE_CONFIG,
         task_routes={
             # Tareas de alta prioridad
             'adflux.tasks.campaign_tasks.publish_campaign': {'queue': 'high', 'priority': 9},
@@ -187,3 +180,15 @@ def get_task_info() -> Dict[str, Any]:
         'queues': list(QUEUE_CONFIG.keys()),
         'total_tasks': len(tasks)
     }
+
+
+# --- Initialize Celery with Flask App Config ---
+# This ensures that when the worker imports 'celery' from this module,
+# it's already configured with the Flask app's settings (e.g., broker URL).
+
+# Create a Flask app instance to access its configuration
+_flask_app = create_app()
+
+# Configure the 'celery' instance (defined at the top of this file)
+# using the make_celery function (also defined in this file) and the Flask app's config.
+make_celery(_flask_app)

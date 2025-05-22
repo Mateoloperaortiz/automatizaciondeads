@@ -358,7 +358,7 @@ AdFlux/
 2. **Iniciar Trabajador Celery (en una terminal separada):**
 
    ```bash
-   celery -A adflux.extensions.celery worker --loglevel=info
+   celery -A adflux.celery_app.celery worker --loglevel=info
    ```
 
    Esto procesará tareas en segundo plano como la publicación de campañas y la sincronización de datos.

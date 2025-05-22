@@ -93,9 +93,9 @@
                 <tr class="hover:bg-gray-50">
                     {# Botón de Expansión - Alterna openSegmentId #}
                     <td class="px-4 py-4">
-                        <button @click="openSegmentId = openSegmentId === {{ segment.id|default(-1) }} ? null : {{ segment.id|default(-1) }}"
+                        <button @click="openSegmentId = openSegmentId === {{ segment.id|tojson }} ? null : {{ segment.id|tojson }}"
                                 class="text-gray-400 hover:text-gray-600">
-                            <svg :class="{ 'rotate-90': openSegmentId === {{ segment.id|default(-1) }} }"
+                            <svg :class="{ 'rotate-90': openSegmentId === {{ segment.id|tojson }} }"
                                  class="h-5 w-5 transform transition-transform duration-200"
                                  xmlns="http://www.w3.org/2000/svg"
                                  viewBox="0 0 20 20"
@@ -143,7 +143,7 @@
                     </td>
                 </tr>
                 {# --- Fila de Detalles (Oculta por defecto) --- #}
-                <tr x-show="openSegmentId === {{ segment.id|default(-1) }}"
+                <tr x-show="openSegmentId === {{ segment.id|tojson }}"
                     x-cloak
                     class="bg-gray-50">
                     <td colspan="5" class="px-6 py-4">
@@ -255,10 +255,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const segmentChart = new Chart(ctx, {
             type: 'pie', // O 'doughnut' o 'bar'
             data: {
-                labels: {{ chart_data.labels | tojson | safe }}, // Aplicar filtro safe
+                labels: ["Test A", "Test B", "Test C"], // Aplicar filtro safe
                 datasets: [{
                     label: '# of Candidates',
-                    data: {{ chart_data.data | tojson | safe }}, // Aplicar filtro safe
+                    data: [10, 20, 30], // Aplicar filtro safe
                     backgroundColor: [
                         'rgba(54, 162, 235, 0.6)', // Azul
                         'rgba(75, 192, 192, 0.6)', // Verde

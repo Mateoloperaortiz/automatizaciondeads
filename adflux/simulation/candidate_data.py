@@ -110,31 +110,32 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
         return None
 
     # Prompt para Gemini
-    prompt = """
+    # Nota: El candidate_id en el prompt es más una guía para Gemini, el ID final se asigna localmente.
+    prompt = f"""
     Eres un asistente especializado en recursos humanos. Tu tarea es generar datos realistas para un perfil de candidato de trabajo en Colombia.
 
-    Genera un objeto JSON con los siguientes campos:
-    - candidate_id: {candidate_id} (entero)
+    Genera un objeto JSON con los siguientes campos OBLIGATORIOS:
+    - candidate_id: {candidate_id} (entero, usa este valor exacto)
     - name: nombre completo colombiano realista (string)
-    # - email: email ficticio basado en el nombre (string) # Email will be generated locally
     - phone: número de teléfono colombiano ficticio (string)
     - location: ciudad en Colombia (string)
     - years_experience: años de experiencia laboral (entero entre 0 y 25)
     - education_level: nivel educativo (string: "High School", "Technical", "Bachelor's", "Master's", "PhD")
-    - skills: lista de habilidades profesionales (array de strings, al menos 5 habilidades)
+    - skills: lista de habilidades profesionales (array de strings, al menos 5 habilidades, no vacía)
     - primary_skill: habilidad principal, debe ser una de las listadas en skills (string)
     - desired_salary: salario deseado en pesos colombianos (entero entre 1,000,000 y 15,000,000)
     - desired_position: puesto deseado (string)
-    - summary: breve resumen profesional (string)
+    - summary: breve resumen profesional (string, al menos 20 palabras)
     - availability: disponibilidad (string: "Immediate", "2 weeks", "1 month", "Negotiable")
-    - languages: lista de idiomas y niveles (array de strings, ej: ["Spanish (Native)", "English (Intermediate)"])
+    - languages: lista de idiomas y niveles (array de strings, ej: ["Spanish (Native)", "English (Intermediate)"], no vacía)
     - job_id: ID de trabajo al que podría aplicar, puede ser null (entero o null)
 
-    IMPORTANTE: Asegúrate de que el JSON sea válido. Usa comillas dobles para todas las claves y valores de texto. Los valores booleanos deben ser true o false (sin comillas). Los valores null deben ser null (sin comillas). Responde SOLO con el objeto JSON, sin texto adicional ni explicaciones. No uses comillas triples ni marcadores de código.
+    IMPORTANTE: Asegúrate de que el JSON sea válido y contenga TODOS los campos especificados. Usa comillas dobles para todas las claves y valores de texto. Los valores booleanos deben ser true o false (sin comillas). Los valores null deben ser null (sin comillas). Responde SOLO con el objeto JSON, sin texto adicional ni explicaciones. No uses comillas triples ni marcadores de código.
     """
 
     # Generar datos con Gemini
     generated_data = generate_with_gemini(prompt)
+    log.debug(f"Datos crudos recibidos de Gemini para candidate_id {candidate_id}: {generated_data}")
 
     if generated_data:
         # Verificar que se hayan generado todos los campos requeridos
@@ -142,6 +143,7 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
             "candidate_id",
             "name",
             # "email", # Email will be generated and added by the calling function
+            # "phone", # Phone is in prompt but not strictly required by current logic, can be added if needed
             "location",
             "years_experience",
             "education_level",
@@ -154,8 +156,10 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
             "languages",
         ]
 
-        if all(key in generated_data for key in required_keys):
-            # Asegurar que candidate_id sea el proporcionado
+        missing_keys = [key for key in required_keys if key not in generated_data]
+
+        if not missing_keys:
+            # Asegurar que candidate_id sea el proporcionado (sobrescribir el de Gemini si es diferente)
             generated_data["candidate_id"] = candidate_id
 
             # --- Sobrescritura Híbrida: Mantener datos generados por LLM pero aplicar validaciones ---
@@ -171,46 +175,32 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
 
             # Asegurar que education_level sea uno de los valores permitidos
             valid_education_levels = ["High School", "Technical", "Bachelor's", "Master's", "PhD"]
-            if generated_data["education_level"] not in valid_education_levels:
+            if generated_data.get("education_level") not in valid_education_levels:
                 log.warning(
                     f"Nivel educativo no válido '{generated_data.get('education_level')}' para el candidato {candidate_id}. Usando valor aleatorio."
                 )
                 generated_data["education_level"] = random.choice(valid_education_levels)
 
-            # Asegurar que skills sea una lista no vacía
-            if not isinstance(generated_data["skills"], list) or not generated_data["skills"]:
+            # Asegurar que skills sea una lista no vacía y primary_skill esté en ella
+            if not isinstance(generated_data.get("skills"), list) or not generated_data.get("skills"):
                 log.warning(
                     f"Lista de habilidades vacía o no válida para el candidato {candidate_id}. Usando valores predeterminados."
                 )
-                generated_data["skills"] = [
-                    "Comunicación",
-                    "Resolución de Problemas",
-                    "Trabajo en Equipo",
-                    "Microsoft Office",
-                    "Gestión del Tiempo",
-                ]
+                generated_data["skills"] = random.sample(SAMPLE_SKILLS, k=random.randint(3,5))
+                generated_data["primary_skill"] = random.choice(generated_data["skills"])
             else:
-                # Limpiar valores vacíos o no válidos en la lista de habilidades
-                generated_data["skills"] = [
-                    skill for skill in generated_data["skills"] if skill and isinstance(skill, str)
-                ]
-                if generated_data["skills"]:
-                    # Asegurar que primary_skill sea una de las habilidades listadas
-                    if generated_data["primary_skill"] not in generated_data["skills"]:
-                        log.warning(
-                            f"Habilidad primaria '{generated_data.get('primary_skill')}' no está en la lista de habilidades para el candidato {candidate_id}. Usando una habilidad de la lista."
-                        )
-                        generated_data["primary_skill"] = random.choice(generated_data["skills"])
-                else:
+                generated_data["skills"] = [str(skill) for skill in generated_data["skills"] if skill and isinstance(skill, (str, int, float))]
+                if not generated_data["skills"]:
+                    generated_data["skills"] = random.sample(SAMPLE_SKILLS, k=random.randint(3,5))
+                
+                current_primary_skill = generated_data.get("primary_skill")
+                if not current_primary_skill or str(current_primary_skill) not in generated_data["skills"]:
                     log.warning(
-                        f"La lista de habilidades quedó vacía después de la limpieza para el candidato {candidate_id}. Estableciendo habilidad principal de marcador de posición."
+                        f"Habilidad primaria '{current_primary_skill}' no está en la lista de habilidades o es inválida para el candidato {candidate_id}. Usando una habilidad de la lista."
                     )
-                    generated_data["skills"] = [
-                        "Comunicación",
-                        "Resolución de Problemas",
-                        "Trabajo en Equipo",
-                    ]  # Re-añadir valores por defecto
                     generated_data["primary_skill"] = random.choice(generated_data["skills"])
+                else:
+                    generated_data["primary_skill"] = str(current_primary_skill)
 
             # Convertir desired_salary (aún generado por LLM, pero añadir fallback)
             try:
@@ -221,18 +211,40 @@ def generate_candidate_profile(candidate_id: int) -> Optional[Dict[str, Any]]:
                     f"No se pudo convertir desired_salary '{generated_data.get('desired_salary')}' a int para el candidato {candidate_id}. Usando fallback: {fallback_salary}."
                 )
                 generated_data["desired_salary"] = fallback_salary
+            
+            # Validar summary, availability, languages para que no sean vacíos si existen
+            for key_to_check in ["summary", "availability", "languages"]:
+                if key_to_check in generated_data:
+                    if isinstance(generated_data[key_to_check], str) and not generated_data[key_to_check].strip():
+                        log.warning(f"Campo '{key_to_check}' estaba vacío para candidato {candidate_id}. Será reemplazado por fallback.")
+                        # Deleción para que el fallback local lo genere o se podría poner un default aquí.
+                        del generated_data[key_to_check] # Esto hará que se marque como 'missing' y use el fallback
+                        if key_to_check not in missing_keys: missing_keys.append(key_to_check)
+                    elif isinstance(generated_data[key_to_check], list) and not generated_data[key_to_check]:
+                        log.warning(f"Campo lista '{key_to_check}' estaba vacío para candidato {candidate_id}. Será reemplazado por fallback.")
+                        del generated_data[key_to_check]
+                        if key_to_check not in missing_keys: missing_keys.append(key_to_check)
+            
+            # Si después de las validaciones, alguna clave requerida se volvió 'missing'
+            final_missing_keys = [key for key in required_keys if key not in generated_data or not generated_data[key]]
+            if final_missing_keys:
+                 log.error(
+                    f"Después de validaciones, datos de candidato (candidate_id {candidate_id}) faltan o tienen vacíos en claves requeridas: {final_missing_keys}. "
+                    f"Datos (parciales/originales): {generated_data}. Usando datos locales de respaldo."
+                )
+                 return _generate_local_candidate(candidate_id)
 
-            # --- Fin Sobrescritura Híbrida ---
-
-            log.info(f"Datos de candidato generados correctamente para candidate_id {candidate_id}")
+            log.info(f"Datos de candidato generados y validados correctamente para candidate_id {candidate_id}")
             return generated_data
         else:
-            missing_keys = [key for key in required_keys if key not in generated_data]
-            log.error(f"Datos de candidato generados faltan claves requeridas: {missing_keys}. Usando datos locales de respaldo.")
+            log.error(
+                f"Datos de candidato generados (candidate_id {candidate_id}) faltan claves requeridas inicialmente: {missing_keys}. "
+                f"Datos recibidos: {generated_data}. Usando datos locales de respaldo."
+            )
             return _generate_local_candidate(candidate_id)
     else:
         log.error(
-            f"Fallo al generar datos de candidato para candidate_id {candidate_id} usando Gemini. Usando datos locales de respaldo."
+            f"Fallo al generar datos de candidato para candidate_id {candidate_id} usando Gemini (retornó None). Usando datos locales de respaldo."
         )
         return _generate_local_candidate(candidate_id)
 

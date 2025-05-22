@@ -167,109 +167,109 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
         return None
 
     # Prompt para Gemini
-    prompt = """
+    prompt = f"""
     Eres un asistente especializado en recursos humanos. Tu tarea es generar datos realistas para una oferta de trabajo en Colombia.
 
-    Genera un objeto JSON con los siguientes campos:
-    - job_id: {job_id} (entero)
-    - title: título del puesto (string)
-    - company_name: nombre de una empresa colombiana real (string)
-    - location: ciudad en Colombia (string)
-    - description: descripción detallada del puesto (string)
-    - requirements: lista de requisitos (array de strings)
-    - salary_range: rango salarial en pesos colombianos (string)
+    Genera un objeto JSON con los siguientes campos OBLIGATORIOS:
+    - job_id: {job_id} (entero, usa este valor exacto)
+    - title: título del puesto (string, no vacío)
+    - company_name: nombre de una empresa colombiana real y conocida (string, no vacío)
+    - location: ciudad en Colombia (string, no vacío)
+    - description: descripción DETALLADA del puesto (string, al menos 50 palabras)
+    - requirements: lista de requisitos específicos y medibles (array de strings, al menos 3 elementos, no vacía)
+    - salary_range: rango salarial en pesos colombianos, formato "$X.XXX.XXX - $Y.YYY.YYY" (string, no vacío)
     - employment_type: tipo de empleo (string: "Full-time", "Part-time", "Contract", "Temporary", "Internship")
     - experience_level: nivel de experiencia requerido (string: "Entry-level", "Mid-level", "Senior", "Executive")
     - education_level: nivel educativo requerido (string: "High School", "Technical", "Bachelor's", "Master's", "PhD")
-    - application_url: URL ficticia para aplicar (string)
-    - posted_date: fecha de publicación en formato ISO (string, dentro de los últimos 30 días)
-    - closing_date: fecha de cierre en formato ISO (string, entre 15 y 60 días después de posted_date)
+    - application_url: URL ficticia para aplicar, formato https://example.com/apply/job-title (string, no vacío)
+    - posted_date: fecha de publicación en formato ISO (string, YYYY-MM-DDTHH:MM:SS.ffffff, dentro de los últimos 30 días)
+    - closing_date: fecha de cierre en formato ISO (string, YYYY-MM-DDTHH:MM:SS.ffffff, entre 15 y 60 días después de posted_date)
     - status: estado de la oferta (string: "open", "closed", "draft")
-    - department: departamento de la empresa (string)
-    - remote: si es trabajo remoto (boolean)
-    - benefits: lista de beneficios (array de strings)
-    - short_description: descripción corta para anuncios (string, máximo 150 caracteres)
+    - department: departamento de la empresa (string, no vacío, ej: "Tecnología", "Ventas")
+    - remote: si es trabajo remoto (boolean: true o false)
+    - benefits: lista de beneficios ofrecidos (array de strings, al menos 2 elementos, no vacía)
+    - short_description: descripción corta para anuncios (string, máximo 150 caracteres, no vacía)
 
-    IMPORTANTE: Asegúrate de que el JSON sea válido. Usa comillas dobles para todas las claves y valores de texto. Los valores booleanos deben ser true o false (sin comillas). Responde SOLO con el objeto JSON, sin texto adicional ni explicaciones. No uses comillas triples ni marcadores de código.
+    IMPORTANTE: Asegúrate de que el JSON sea válido y contenga TODOS los campos especificados. Usa comillas dobles para todas las claves y valores de texto. Los valores booleanos deben ser true o false (sin comillas). Los valores null deben ser null (sin comillas). Responde SOLO con el objeto JSON, sin texto adicional ni explicaciones. No uses comillas triples ni marcadores de código.
     """
 
     # Generar datos con Gemini
     generated_data = generate_with_gemini(prompt)
+    log.debug(f"Datos crudos recibidos de Gemini para job_id {job_id}: {generated_data}")
 
     if generated_data:
-        # Verificar que se hayan generado todos los campos requeridos
         required_keys = [
-            "job_id",
-            "title",
-            "company_name",
-            "location",
-            "description",
-            "requirements",
-            "salary_range",
-            "employment_type",
-            "experience_level",
-            "education_level",
-            "application_url",
-            "posted_date",
-            "closing_date",
-            "status",
-            "department",
-            "remote",
-            "benefits",
-            "short_description",
+            "job_id", "title", "company_name", "location", "description", "requirements",
+            "salary_range", "employment_type", "experience_level", "education_level",
+            "application_url", "posted_date", "closing_date", "status", "department",
+            "remote", "benefits", "short_description"
         ]
 
-        if all(key in generated_data for key in required_keys):
-            # Asegurar que job_id sea el proporcionado
-            generated_data["job_id"] = job_id
+        missing_keys = [key for key in required_keys if key not in generated_data]
 
-            # Asegurar que las fechas estén en formato ISO
+        if not missing_keys:
+            generated_data["job_id"] = job_id # Sobrescribir para asegurar consistencia
+
+            # Validaciones y saneamientos
             try:
-                # Validar posted_date
-                posted_date = datetime.fromisoformat(
-                    generated_data["posted_date"].replace("Z", "+00:00")
-                )
-
-                # Validar closing_date
-                closing_date = datetime.fromisoformat(
-                    generated_data["closing_date"].replace("Z", "+00:00")
-                )
-
-                # Verificar que closing_date sea posterior a posted_date
+                posted_date_str = generated_data.get("posted_date", "")
+                closing_date_str = generated_data.get("closing_date", "")
+                posted_date = datetime.fromisoformat(posted_date_str.replace("Z", "+00:00"))
+                closing_date = datetime.fromisoformat(closing_date_str.replace("Z", "+00:00"))
                 if closing_date <= posted_date:
-                    # Ajustar closing_date si es necesario
                     closing_date = posted_date + timedelta(days=random.randint(15, 60))
-                    generated_data["closing_date"] = closing_date.isoformat()
+                generated_data["posted_date"] = posted_date.isoformat()
+                generated_data["closing_date"] = closing_date.isoformat()
             except (ValueError, TypeError):
-                # Si hay error en las fechas, generar nuevas
-                now = datetime.now()
-                posted_date = now - timedelta(days=random.randint(0, 30))
+                log.warning(f"Error en formato de fecha para job_id {job_id}. Generando fechas locales.")
+                posted_date = datetime.now() - timedelta(days=random.randint(0, 30))
                 closing_date = posted_date + timedelta(days=random.randint(15, 60))
                 generated_data["posted_date"] = posted_date.isoformat()
                 generated_data["closing_date"] = closing_date.isoformat()
 
-            # Asegurar que status sea uno de los valores permitidos
-            valid_statuses = ["open", "closed", "draft"]
-            if generated_data["status"] not in valid_statuses:
-                generated_data["status"] = random.choice(valid_statuses)
+            if generated_data.get("status") not in VALID_STATUSES:
+                log.warning(f"Status no válido '{generated_data.get('status')}' para job_id {job_id}. Usando fallback.")
+                generated_data["status"] = random.choice(VALID_STATUSES)
 
-            # Asegurar que remote sea booleano
-            if not isinstance(generated_data["remote"], bool):
-                generated_data["remote"] = str(generated_data["remote"]).lower() in [
-                    "true",
-                    "yes",
-                    "si",
-                    "1",
-                ]
+            if not isinstance(generated_data.get("remote"), bool):
+                log.warning(f"Valor de 'remote' no booleano '{generated_data.get('remote')}' para job_id {job_id}. Intentando convertir.")
+                generated_data["remote"] = str(generated_data.get("remote", "false")).lower() in ["true", "yes", "si", "1"]
 
-            log.info(f"Datos de trabajo generados correctamente para job_id {job_id}")
+            # Validar campos de texto y listas no vacíos
+            for key in ["title", "company_name", "location", "description", "salary_range", "application_url", "department", "short_description"]:
+                if not generated_data.get(key) or not str(generated_data.get(key, "")).strip():
+                    log.warning(f"Campo '{key}' vacío o inválido para job_id {job_id}. Marcando como faltante.")
+                    if key not in missing_keys: missing_keys.append(key)
+            
+            for key in ["requirements", "benefits"]:
+                if not generated_data.get(key) or not isinstance(generated_data.get(key), list) or not generated_data.get(key):
+                    log.warning(f"Campo lista '{key}' vacío o inválido para job_id {job_id}. Marcando como faltante.")
+                    if key not in missing_keys: missing_keys.append(key)
+                elif isinstance(generated_data.get(key), list):
+                     generated_data[key] = [str(item) for item in generated_data[key] if item and str(item).strip()]
+                     if not generated_data[key]: # Si después de limpiar queda vacía
+                        log.warning(f"Campo lista '{key}' quedó vacío post-limpieza para job_id {job_id}. Marcando como faltante.")
+                        if key not in missing_keys: missing_keys.append(key)
+
+            if missing_keys: # Re-chequear missing_keys después de validaciones
+                log.error(
+                    f"Después de validaciones, datos de trabajo (job_id {job_id}) faltan o tienen vacíos en claves requeridas: {sorted(list(set(missing_keys)))}. "
+                    f"Datos (parciales/originales): {generated_data}. Usando datos locales de respaldo."
+                )
+                return _generate_local_job(job_id)
+
+            log.info(f"Datos de trabajo generados y validados correctamente para job_id {job_id}")
             return generated_data
         else:
-            missing_keys = [key for key in required_keys if key not in generated_data]
-            log.error(f"Datos de trabajo generados faltan claves requeridas: {missing_keys}. Usando datos locales de respaldo.")
+            log.error(
+                f"Datos de trabajo generados (job_id {job_id}) faltan claves requeridas inicialmente: {sorted(list(set(missing_keys)))}. "
+                f"Datos recibidos: {generated_data}. Usando datos locales de respaldo."
+            )
             return _generate_local_job(job_id)
     else:
-        log.error(f"Fallo al generar datos de trabajo para job_id {job_id} usando Gemini. Usando datos locales de respaldo.")
+        log.error(
+            f"Fallo al generar datos de trabajo para job_id {job_id} usando Gemini (retornó None). Usando datos locales de respaldo."
+        )
         return _generate_local_job(job_id)
 
 
