@@ -71,9 +71,9 @@ def db_seed(jobs, candidates):
             click.echo(f"Sembrando {len(generated_jobs)} trabajos en la base de datos...")
             for job_data in generated_jobs:
                 # Convertir fechas de string a objetos date
-                if "posting_date" in job_data and job_data["posting_date"]:
-                    job_data["posting_date"] = datetime.datetime.fromisoformat(
-                        job_data["posting_date"].replace("Z", "+00:00")
+                if "posted_date" in job_data and job_data["posted_date"]:
+                    job_data["posted_date"] = datetime.datetime.fromisoformat(
+                        job_data["posted_date"].replace("Z", "+00:00")
                     ).date()
                 if "closing_date" in job_data and job_data["closing_date"]:
                     job_data["closing_date"] = datetime.datetime.fromisoformat(
@@ -136,7 +136,7 @@ def db_seed(jobs, candidates):
                 {
                     "job_id": job.job_id,
                     "status": job.status,
-                    "posting_date": job.posted_date.isoformat() if job.posted_date else None,
+                    "posted_date": job.posted_date.isoformat() if job.posted_date else None,
                     "closing_date": job.closing_date.isoformat() if job.closing_date else None,
                 }
                 for job in jobs_db
