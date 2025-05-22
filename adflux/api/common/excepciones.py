@@ -4,9 +4,16 @@ Definiciones de excepciones personalizadas para AdFlux.
 Este módulo contiene las clases de excepción personalizadas utilizadas
 en toda la aplicación para proporcionar un manejo de errores consistente.
 
-NOTA: Este módulo ahora importa AdFluxError desde adflux.exceptions.base
-y APIError desde adflux.exceptions.api cuando es posible, y proporciona
-las demás excepciones para mantener compatibilidad con el código existente.
+NOTA: Este módulo está OBSOLETO y se mantiene solo por compatibilidad.
+Todas las excepciones han sido movidas a adflux.exceptions.
+Para nuevo código, importar directamente desde:
+- adflux.exceptions.base para AdFluxError
+- adflux.exceptions.api para APIError
+- adflux.exceptions.validation para ValidationError
+- adflux.exceptions.database para DatabaseError
+- adflux.exceptions.authentication para AuthenticationError
+- adflux.exceptions.authorization para AuthorizationError
+- adflux.exceptions.resource para ResourceNotFoundError
 """
 
 from typing import Dict, Any, Optional, List, Union

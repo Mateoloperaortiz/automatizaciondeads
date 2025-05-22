@@ -2,6 +2,10 @@
 Middleware para manejo de errores en AdFlux.
 
 Este módulo proporciona un middleware para manejar errores de manera centralizada.
+
+NOTA: Este módulo está OBSOLETO y se mantiene solo por compatibilidad.
+La funcionalidad de manejo de errores ha sido consolidada en adflux.api.common.error_handling.
+Para nuevo código, utilizar las funciones y decoradores de ese módulo.
 """
 
 import traceback
@@ -11,10 +15,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union, Callable
 from flask import Flask, request, jsonify, Response, current_app
 from werkzeug.exceptions import HTTPException
 
-from ..exceptions import (
-    AdFluxError, APIError, DatabaseError, ValidationError,
-    BusinessError, AuthenticationError, AuthorizationError
-)
+from ..exceptions.base import AdFluxError
+from ..exceptions.api import APIError
+from ..exceptions.database import DatabaseError
+from ..exceptions.validation import ValidationError
+from ..exceptions.business import BusinessError
+from ..exceptions.authentication import AuthenticationError
+from ..exceptions.authorization import AuthorizationError
 
 
 # Configurar logger
