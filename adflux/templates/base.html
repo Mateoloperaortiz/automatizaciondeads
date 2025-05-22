@@ -167,7 +167,10 @@
                                 </div>
                             {% endif %}
                         {% endwith %}
-
+                    </div>
+                    
+                    <!-- Main Content Container (separate from flash messages) -->
+                    <div id="main-content-container" class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                         <!-- Bloque de contenido principal -->
                         {% block content %}
                         {% endblock %}
@@ -190,19 +193,21 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             const flashContainer = document.getElementById('flash-messages-container');
-            if (flashContainer && flashContainer.children.length > 0) {
-                // Hacer scroll hasta los mensajes flash
+            const flashMessages = flashContainer ? flashContainer.querySelector('.flash-messages') : null;
+            
+            if (flashMessages && flashContainer.children.length > 0) {
+                // Hacer scroll hasta los mensajes flash si hay alguno
                 flashContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                 // Configurar temporizador para ocultar los mensajes después de 5 segundos
                 setTimeout(function() {
-                    // Agregar clase para animar la desaparición
-                    flashContainer.style.opacity = '0';
-                    flashContainer.style.transition = 'opacity 1s';
+                    // Agregar clase para animar la desaparición solo de los mensajes flash
+                    flashMessages.style.opacity = '0';
+                    flashMessages.style.transition = 'opacity 1s';
 
                     // Eliminar los mensajes después de la animación
                     setTimeout(function() {
-                        flashContainer.style.display = 'none';
+                        flashMessages.style.display = 'none';
                     }, 1000);
                 }, 5000);
             }
