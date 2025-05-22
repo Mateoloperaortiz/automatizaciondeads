@@ -3,6 +3,9 @@ Utilidades para el manejo de errores en AdFlux.
 
 Este módulo proporciona decoradores y funciones para manejar errores
 de manera consistente en toda la aplicación.
+
+NOTA: Este módulo ahora utiliza las excepciones definidas en adflux.exceptions
+y proporciona adaptadores para mantener compatibilidad con el código existente.
 """
 
 import functools
@@ -27,8 +30,10 @@ try:
 except ImportError:
     FacebookRequestError = Exception
 
+from ...exceptions.base import AdFluxError
+from ...exceptions.api import APIError
+
 from .excepciones import (
-    AdFluxError,
     ErrorBaseDatos,
     ErrorValidacion,
     ErrorAutenticacion,
@@ -339,12 +344,25 @@ def handle_meta_api_error(func: Callable) -> Callable:
             get_api_error = lambda obj: obj.api_error_message() if hasattr(obj, 'api_error_message') and callable(getattr(obj, 'api_error_message', None)) else str(obj)
             # Directly call the lambda, let other exceptions propagate if needed
             mensaje_api_error = get_api_error(e)
-            raise ErrorAPI(mensaje=f"Error de API Meta: {mensaje_api_error}", api="Meta", excepcion_original=e)
+            raise APIError(
+                message=f"Error de API Meta: {mensaje_api_error}",
+                api_name="Meta",
+                cause=e,
+                status_code=500
+            )
         except ImportError as e:
-            raise AdFluxError(mensaje=f"Error de importación del SDK de Meta: {e}", codigo=500)
+            raise AdFluxError(
+                message=f"Error de importación del SDK de Meta: {e}",
+                status_code=500
+            )
         except Exception as e:
             # Wrap other exceptions
-            raise ErrorAPI(mensaje=f"Error inesperado interactuando con API Meta: {e}", api="Meta", excepcion_original=e)
+            raise APIError(
+                message=f"Error inesperado interactuando con API Meta: {e}",
+                api_name="Meta",
+                cause=e,
+                status_code=500
+            )
 
     return wrapper
 
@@ -366,7 +384,12 @@ def handle_google_ads_api_error(func: Callable) -> Callable:
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            raise ErrorAPI(mensaje=f"Error de API Google Ads: {str(e)}", api="Google Ads", excepcion_original=e)
+            raise APIError(
+                message=f"Error de API Google Ads: {str(e)}",
+                api_name="Google Ads",
+                cause=e,
+                status_code=500
+            )
 
     return wrapper
 
@@ -388,7 +411,12 @@ def handle_gemini_api_error(func: Callable) -> Callable:
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            # Raise standardized ErrorAPI
-            raise ErrorAPI(mensaje=f"Error de API Gemini: {str(e)}", api="Gemini", excepcion_original=e)
+            # Raise standardized APIError
+            raise APIError(
+                message=f"Error de API Gemini: {str(e)}",
+                api_name="Gemini",
+                cause=e,
+                status_code=500
+            )
 
     return wrapper
