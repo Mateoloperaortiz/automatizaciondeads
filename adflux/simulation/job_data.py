@@ -144,7 +144,6 @@ def _generate_local_job(job_id: int) -> Dict[str, Any]:
         "status": random.choice(VALID_STATUSES),
         "department": random.choice(SAMPLE_DEPARTMENTS),
         "remote": random.choice([True, False]),
-        "skills": skills_sample,
         "benefits": random.sample(SAMPLE_BENEFITS, k=min(3, len(SAMPLE_BENEFITS))),
         "short_description": f"{title} en {company} ({location}).",
     }
@@ -188,7 +187,6 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
     - status: estado de la oferta (string: "open", "closed", "draft")
     - department: departamento de la empresa (string)
     - remote: si es trabajo remoto (boolean)
-    - skills: lista de habilidades requeridas (array de strings)
     - benefits: lista de beneficios (array de strings)
     - short_description: descripción corta para anuncios (string, máximo 150 caracteres)
 
@@ -217,7 +215,6 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
             "status",
             "department",
             "remote",
-            "skills",
             "benefits",
             "short_description",
         ]
