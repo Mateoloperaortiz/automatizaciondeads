@@ -350,7 +350,7 @@ AdFlux/
 1. **Iniciar el Servidor de Desarrollo Flask:**
 
    ```bash
-   flask run
+   python run.py
    ```
 
    La interfaz web será accesible en `http://127.0.0.1:5000`
