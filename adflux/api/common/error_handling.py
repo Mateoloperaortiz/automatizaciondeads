@@ -16,7 +16,7 @@ y proporciona adaptadores para mantener compatibilidad con el código existente.
 import functools
 import traceback
 import logging
-from typing import Callable, Any, Tuple, Dict, Optional, List, Union
+from typing import Callable, Any, Tuple, Dict, Optional, List, Union, Type
 
 try:
     from flask import current_app, flash, jsonify, request, Flask, Response
@@ -308,9 +308,79 @@ def manejar_excepcion(
             return mensaje
 
 
+def handle_error(
+    api_name: Optional[str] = None,
+    es_api: bool = True,
+    status_code: int = 500,
+    redirect_on_error: bool = False,
+    error_template: str = "error.html",
+    specific_exceptions: Optional[Dict[Type[Exception], Callable[[Exception], Exception]]] = None
+) -> Callable:
+    """
+    Decorador genérico para manejar errores de manera consistente.
+    
+    Args:
+        api_name: Nombre de la API (si aplica).
+        es_api: Si la respuesta es para una API o para la web.
+        status_code: Código de estado HTTP por defecto para errores.
+        redirect_on_error: Si se debe redirigir a la página anterior en caso de error (solo para web).
+        error_template: Plantilla a usar para mostrar errores (solo para web).
+        specific_exceptions: Diccionario de excepciones específicas y funciones para manejarlas.
+        
+    Returns:
+        Decorador configurado para manejar errores.
+    """
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                prefijo = f"Error en {func.__name__}"
+                
+                if specific_exceptions and any(isinstance(e, exc_type) for exc_type in specific_exceptions):
+                    for exc_type, handler in specific_exceptions.items():
+                        if isinstance(e, exc_type):
+                            raise handler(e)
+                
+                if api_name:
+                    if isinstance(e, FacebookRequestError) and api_name == "Meta":
+                        mensaje_api_error = ""
+                        get_api_error = lambda obj: obj.api_error_message() if hasattr(obj, 'api_error_message') and callable(getattr(obj, 'api_error_message', None)) else str(obj)
+                        mensaje_api_error = get_api_error(e)
+                        raise APIError(
+                            message=f"Error de API {api_name}: {mensaje_api_error}",
+                            api_name=api_name,
+                            cause=e,
+                            status_code=status_code
+                        )
+                    else:
+                        raise APIError(
+                            message=f"Error de API {api_name}: {str(e)}",
+                            api_name=api_name,
+                            cause=e,
+                            status_code=status_code
+                        )
+                
+                if es_api:
+                    return manejar_excepcion(e, prefijo, es_api=True)
+                else:
+                    manejar_excepcion(e, prefijo, es_api=False)
+                    if redirect_on_error and request and hasattr(request, "referrer") and request.referrer:
+                        from flask import redirect
+                        return redirect(request.referrer)
+                    else:
+                        from flask import render_template
+                        return render_template(error_template, error=str(e))
+                        
+        return wrapper
+    return decorator
+
+
 def manejar_error_api(func: Callable) -> Callable:
     """
     Decorador para manejar errores en rutas de API.
+    Mantiene compatibilidad con el código existente.
 
     Args:
         func: La función a decorar.
@@ -318,21 +388,13 @@ def manejar_error_api(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de API.
     """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            prefijo = f"Error en {func.__name__}"
-            return manejar_excepcion(e, prefijo, es_api=True)
-
-    return wrapper
+    return handle_error(es_api=True)(func)
 
 
 def manejar_error_web(func: Callable) -> Callable:
     """
     Decorador para manejar errores en rutas web.
+    Mantiene compatibilidad con el código existente.
 
     Args:
         func: La función a decorar.
@@ -340,22 +402,7 @@ def manejar_error_web(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores web.
     """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            prefijo = f"Error en {func.__name__}"
-            manejar_excepcion(e, prefijo, es_api=False)
-            if request and hasattr(request, "referrer") and request.referrer:
-                from flask import redirect
-                return redirect(request.referrer)
-            else:
-                from flask import render_template
-                return render_template("error.html", error=str(e))
-
-    return wrapper
+    return handle_error(es_api=False, redirect_on_error=True)(func)
 
 
 def handle_meta_api_error(func: Callable) -> Callable:
@@ -369,39 +416,19 @@ def handle_meta_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Meta.
     """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except FacebookRequestError as e:
-            # Handle Facebook errors specifically
-            mensaje_api_error = ""
-            # Use lambda to safely attempt calling api_error_message()
-            get_api_error = lambda obj: obj.api_error_message() if hasattr(obj, 'api_error_message') and callable(getattr(obj, 'api_error_message', None)) else str(obj)
-            # Directly call the lambda, let other exceptions propagate if needed
-            mensaje_api_error = get_api_error(e)
-            raise APIError(
-                message=f"Error de API Meta: {mensaje_api_error}",
-                api_name="Meta",
-                cause=e,
-                status_code=500
-            )
-        except ImportError as e:
-            raise AdFluxError(
-                message=f"Error de importación del SDK de Meta: {e}",
-                status_code=500
-            )
-        except Exception as e:
-            # Wrap other exceptions
-            raise APIError(
-                message=f"Error inesperado interactuando con API Meta: {e}",
-                api_name="Meta",
-                cause=e,
-                status_code=500
-            )
-
-    return wrapper
+    specific_exceptions = {
+        ImportError: lambda e: AdFluxError(
+            message=f"Error de importación del SDK de Meta: {e}",
+            status_code=500
+        )
+    }
+    
+    return handle_error(
+        api_name="Meta",
+        es_api=True,
+        status_code=500,
+        specific_exceptions=specific_exceptions
+    )(func)
 
 
 def handle_google_ads_api_error(func: Callable) -> Callable:
@@ -415,20 +442,7 @@ def handle_google_ads_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Google Ads.
     """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            raise APIError(
-                message=f"Error de API Google Ads: {str(e)}",
-                api_name="Google Ads",
-                cause=e,
-                status_code=500
-            )
-
-    return wrapper
+    return handle_error(api_name="Google Ads", es_api=True, status_code=500)(func)
 
 
 def handle_gemini_api_error(func: Callable) -> Callable:
@@ -442,21 +456,7 @@ def handle_gemini_api_error(func: Callable) -> Callable:
     Returns:
         La función decorada que maneja los errores de la API de Google Gemini.
     """
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            # Raise standardized APIError
-            raise APIError(
-                message=f"Error de API Gemini: {str(e)}",
-                api_name="Gemini",
-                cause=e,
-                status_code=500
-            )
-
-    return wrapper
+    return handle_error(api_name="Gemini", es_api=True, status_code=500)(func)
 
 
 logger = logging.getLogger(__name__)
