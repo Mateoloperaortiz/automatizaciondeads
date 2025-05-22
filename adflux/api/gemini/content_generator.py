@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Optional, Tuple
 
 from .client import GeminiApiClient, get_client
 from adflux.api.common.error_handling import handle_gemini_api_error
-from adflux.api.common.excepciones import AdFluxError
+from adflux.exceptions.base import AdFluxError
 
 logger = logging.getLogger("GeminiContentGenerator")
 
@@ -67,7 +67,7 @@ class ContentGenerator:
         Asegura que el cliente de la API esté inicializado.
         """
         if not hasattr(self.client, "ensure_initialized"):
-            raise AdFluxError("Cliente de Gemini no válido", codigo=500)
+            raise AdFluxError(message="Cliente de Gemini no válido", status_code=500)
         self.client.ensure_initialized()
 
     @handle_gemini_api_error
