@@ -25,7 +25,8 @@ except ImportError:
 from adflux.api.common.error_handling import handle_meta_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.meta.client import get_client, MetaApiClient
-from adflux.api.common.excepciones import AdFluxError, ErrorValidacion
+from adflux.exceptions.base import AdFluxError
+from adflux.exceptions.validation import ValidationError as ErrorValidacion
 
 # Configurar logger
 logger = get_logger("MetaUtils")
@@ -60,13 +61,13 @@ class MetaUtils:
         api = self.client.get_api()
         if not api:
             # Raise exception instead of returning tuple
-            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
+            raise AdFluxError(message="No se pudo inicializar la API de Meta", status_code=500)
 
         try:
             # Verificar que el archivo existe
             if not os.path.exists(image_path):
                 # Raise validation error
-                raise ErrorValidacion(f"El archivo de imagen no existe: {image_path}")
+                raise ErrorValidacion(message=f"El archivo de imagen no existe: {image_path}")
 
             # Obtener la cuenta publicitaria
             account = AdAccount(ad_account_id)
@@ -123,7 +124,7 @@ class MetaUtils:
         api = self.client.get_api()
         if not api:
             # Raise exception instead of returning tuple
-            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
+            raise AdFluxError(message="No se pudo inicializar la API de Meta", status_code=500)
 
         try:
             # Obtener la cuenta publicitaria

@@ -22,7 +22,7 @@ except ImportError:
 from adflux.api.common.error_handling import handle_google_ads_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.google.client import get_client, GoogleAdsApiClient
-from adflux.api.common.excepciones import AdFluxError
+from adflux.exceptions.base import AdFluxError
 
 # Configurar logger
 logger = get_logger("GoogleAdsCampaigns")
@@ -56,7 +56,7 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
             sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
-            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
+            raise AdFluxError(message=f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", status_code=500)
 
         try:
             # Crear servicio de GoogleAdsService
@@ -133,7 +133,7 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
             sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
-            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
+            raise AdFluxError(message=f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", status_code=500)
 
         try:
             # Añadir un identificador único al nombre de la campaña
@@ -251,7 +251,7 @@ class CampaignManager:
         google_client = self.client.get_client()
         if not google_client or not GOOGLE_ADS_SDK_AVAILABLE:
             sdk_msg = "" if GOOGLE_ADS_SDK_AVAILABLE else " (SDK no disponible)"
-            raise AdFluxError(f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", codigo=500)
+            raise AdFluxError(message=f"No se pudo inicializar el cliente de Google Ads{sdk_msg}", status_code=500)
 
         try:
             # Extraer datos de la campaña

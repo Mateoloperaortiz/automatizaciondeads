@@ -19,7 +19,7 @@ except ImportError:
 from adflux.api.common.error_handling import handle_meta_api_error
 from adflux.api.common.logging import get_logger
 from adflux.api.meta.client import get_client, MetaApiClient
-from adflux.api.common.excepciones import AdFluxError
+from adflux.exceptions.base import AdFluxError
 
 # Configurar logger
 logger = get_logger("MetaAdSets")
@@ -52,7 +52,7 @@ class AdSetManager:
         """
         api = self.client.get_api()
         if not api:
-            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
+            raise AdFluxError(message="No se pudo inicializar la API de Meta", status_code=500)
 
         try:
             from facebook_business.adobjects.campaign import Campaign
@@ -108,7 +108,7 @@ class AdSetManager:
             raise
         except ImportError as e:
             logger.error(f"Error al importar el objeto del SDK de Facebook: {e}")
-            raise AdFluxError(f"Error al importar el objeto del SDK de Facebook: {e}", codigo=500)
+            raise AdFluxError(message=f"Error al importar el objeto del SDK de Facebook: {e}", status_code=500)
 
     @handle_meta_api_error
     def create_ad_set(
@@ -142,7 +142,7 @@ class AdSetManager:
         """
         api = self.client.get_api()
         if not api:
-            raise AdFluxError("No se pudo inicializar la API de Meta", codigo=500)
+            raise AdFluxError(message="No se pudo inicializar la API de Meta", status_code=500)
 
         try:
             from facebook_business.adobjects.adaccount import AdAccount
@@ -192,7 +192,7 @@ class AdSetManager:
             raise
         except ImportError as e:
             logger.error(f"Error al importar el objeto del SDK de Facebook: {e}")
-            raise AdFluxError(f"Error al importar el objeto del SDK de Facebook: {e}", codigo=500)
+            raise AdFluxError(message=f"Error al importar el objeto del SDK de Facebook: {e}", status_code=500)
 
 
 # Crear una instancia del gestor por defecto
