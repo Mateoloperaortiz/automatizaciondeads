@@ -100,12 +100,12 @@ def generate_simulated_applications(
             app_id_counter += 1
 
         # Simular una fecha de aplicación realista
-        job_posting_date = job.get("posting_date")
+        job_posting_date = job.get("posted_date")
         job_closing_date = job.get("closing_date")
 
         try:
             # Convertir fechas de string a datetime
-            posting_date = (
+            posted_date = (
                 datetime.fromisoformat(job_posting_date.replace("Z", "+00:00"))
                 if job_posting_date
                 else datetime.now() - timedelta(days=30)
@@ -121,13 +121,13 @@ def generate_simulated_applications(
             latest_date = min(closing_date, now)
 
             # Asegurar que la fecha de aplicación sea posterior a la fecha de publicación
-            if latest_date <= posting_date:
+            if latest_date <= posted_date:
                 log.debug(f"Fechas inválidas para el trabajo {job_id}, ajustando.")
-                latest_date = posting_date + timedelta(days=1)
+                latest_date = posted_date + timedelta(days=1)
 
-            # Generar fecha aleatoria entre posting_date y latest_date
-            application_date = posting_date + timedelta(
-                seconds=random.randint(0, int((latest_date - posting_date).total_seconds()))
+            # Generar fecha aleatoria entre posted_date y latest_date
+            application_date = posted_date + timedelta(
+                seconds=random.randint(0, int((latest_date - posted_date).total_seconds()))
             )
 
             # Formatear como string ISO

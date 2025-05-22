@@ -201,12 +201,12 @@ def populate_jobs(app: Flask, count: int = 20) -> List[JobOpening]:
 
                 # Procesar fechas
                 try:
-                    posting_date_str = job_data.get(
-                        "posting_date", job_data.get("posted_date", datetime.now().isoformat())
+                    posted_date_str = job_data.get(
+                        "posted_date", job_data.get("posting_date", datetime.now().isoformat())
                     )
-                    if isinstance(posting_date_str, str):
+                    if isinstance(posted_date_str, str):
                         posted_date = datetime.fromisoformat(
-                            posting_date_str.replace("Z", "+00:00")
+                            posted_date_str.replace("Z", "+00:00")
                         ).date()
                     else:
                         posted_date = datetime.now().date()
@@ -501,22 +501,22 @@ def populate_applications(
                     continue
 
                 # Generar fecha de aplicación realista
-                posting_date = job.posted_date or datetime.now().date() - timedelta(days=30)
+                posted_date = job.posted_date or datetime.now().date() - timedelta(days=30)
                 closing_date = job.closing_date or datetime.now().date() + timedelta(days=30)
                 now = datetime.now().date()
                 latest_date = min(closing_date, now)
 
                 # Asegurar que la fecha de aplicación sea posterior a la fecha de publicación
-                if latest_date <= posting_date:
-                    application_date = posting_date + timedelta(days=1)
+                if latest_date <= posted_date:
+                    application_date = posted_date + timedelta(days=1)
                 else:
-                    # Generar fecha aleatoria entre posting_date y latest_date
-                    days_diff = (latest_date - posting_date).days
+                    # Generar fecha aleatoria entre posted_date y latest_date
+                    days_diff = (latest_date - posted_date).days
                     if days_diff > 0:
                         random_days = random.randint(0, days_diff)
-                        application_date = posting_date + timedelta(days=random_days)
+                        application_date = posted_date + timedelta(days=random_days)
                     else:
-                        application_date = posting_date
+                        application_date = posted_date
 
                 # Crear objeto Application directamente
                 application = Application(

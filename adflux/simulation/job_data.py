@@ -122,8 +122,8 @@ def _generate_local_job(job_id: int) -> Dict[str, Any]:
     title = random.choice(SAMPLE_TITLES)
     company = random.choice(SAMPLE_COMPANIES)
     location = random.choice(SAMPLE_LOCATIONS)
-    posting_date = datetime.now() - timedelta(days=random.randint(0, 30))
-    closing_date = posting_date + timedelta(days=random.randint(15, 60))
+    posted_date = datetime.now() - timedelta(days=random.randint(0, 30))
+    closing_date = posted_date + timedelta(days=random.randint(15, 60))
 
     skills_sample = random.sample(SAMPLE_SKILLS, k=min(5, len(SAMPLE_SKILLS)))
 
@@ -139,7 +139,7 @@ def _generate_local_job(job_id: int) -> Dict[str, Any]:
         "experience_level": random.choice(EXPERIENCE_LEVELS),
         "education_level": random.choice(EDUCATION_LEVELS),
         "application_url": f"https://example.com/jobs/{job_id}",
-        "posting_date": posting_date.isoformat(),
+        "posted_date": posted_date.isoformat(),
         "closing_date": closing_date.isoformat(),
         "status": random.choice(VALID_STATUSES),
         "department": random.choice(SAMPLE_DEPARTMENTS),
@@ -183,8 +183,8 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
     - experience_level: nivel de experiencia requerido (string: "Entry-level", "Mid-level", "Senior", "Executive")
     - education_level: nivel educativo requerido (string: "High School", "Technical", "Bachelor's", "Master's", "PhD")
     - application_url: URL ficticia para aplicar (string)
-    - posting_date: fecha de publicación en formato ISO (string, dentro de los últimos 30 días)
-    - closing_date: fecha de cierre en formato ISO (string, entre 15 y 60 días después de posting_date)
+    - posted_date: fecha de publicación en formato ISO (string, dentro de los últimos 30 días)
+    - closing_date: fecha de cierre en formato ISO (string, entre 15 y 60 días después de posted_date)
     - status: estado de la oferta (string: "open", "closed", "draft")
     - department: departamento de la empresa (string)
     - remote: si es trabajo remoto (boolean)
@@ -212,7 +212,7 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
             "experience_level",
             "education_level",
             "application_url",
-            "posting_date",
+            "posted_date",
             "closing_date",
             "status",
             "department",
@@ -228,9 +228,9 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
 
             # Asegurar que las fechas estén en formato ISO
             try:
-                # Validar posting_date
-                posting_date = datetime.fromisoformat(
-                    generated_data["posting_date"].replace("Z", "+00:00")
+                # Validar posted_date
+                posted_date = datetime.fromisoformat(
+                    generated_data["posted_date"].replace("Z", "+00:00")
                 )
 
                 # Validar closing_date
@@ -238,17 +238,17 @@ def generate_job_opening(job_id: int) -> Optional[Dict[str, Any]]:
                     generated_data["closing_date"].replace("Z", "+00:00")
                 )
 
-                # Verificar que closing_date sea posterior a posting_date
-                if closing_date <= posting_date:
+                # Verificar que closing_date sea posterior a posted_date
+                if closing_date <= posted_date:
                     # Ajustar closing_date si es necesario
-                    closing_date = posting_date + timedelta(days=random.randint(15, 60))
+                    closing_date = posted_date + timedelta(days=random.randint(15, 60))
                     generated_data["closing_date"] = closing_date.isoformat()
             except (ValueError, TypeError):
                 # Si hay error en las fechas, generar nuevas
                 now = datetime.now()
-                posting_date = now - timedelta(days=random.randint(0, 30))
-                closing_date = posting_date + timedelta(days=random.randint(15, 60))
-                generated_data["posting_date"] = posting_date.isoformat()
+                posted_date = now - timedelta(days=random.randint(0, 30))
+                closing_date = posted_date + timedelta(days=random.randint(15, 60))
+                generated_data["posted_date"] = posted_date.isoformat()
                 generated_data["closing_date"] = closing_date.isoformat()
 
             # Asegurar que status sea uno de los valores permitidos
