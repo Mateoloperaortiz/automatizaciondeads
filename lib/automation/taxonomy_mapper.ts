@@ -63,7 +63,7 @@ function loadTaxonomy(): AudienceTaxonomy {
 // Ensure taxonomy is loaded on module initialization
 loadTaxonomy();
 
-const LOW_CONFIDENCE_THRESHOLD = 0.5; // Example threshold for segmentation confidence
+const LOW_CONFIDENCE_THRESHOLD = 0.25; // Match the threshold used in engine.ts
 
 export function mapAudiencePrimitivesToTargeting(
     primitives: AudiencePrimitive[],
@@ -142,6 +142,11 @@ export function mapAudiencePrimitivesToTargeting(
             locations: taxonomy.fallback_audience.locations || [],
             seniority: taxonomy.fallback_audience.seniority || [],
         };
+    }
+
+    // If we have some targeting but no locations, add default location
+    if (targeting.locations.length === 0 && taxonomy.fallback_audience.locations) {
+        targeting.locations = taxonomy.fallback_audience.locations;
     }
 
     return targeting;

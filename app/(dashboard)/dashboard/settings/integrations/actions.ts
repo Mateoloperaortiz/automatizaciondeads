@@ -308,7 +308,55 @@ export async function connectXPlatformAction(
     }
 }
 
-// TODO: Add disconnectXPlatformAction similar to disconnectMetaAction
+export async function disconnectXPlatformAction(
+  prevState: IntegrationActionState
+): Promise<IntegrationActionState> {
+  const team = await getTeamForUser();
+  if (!team) {
+    return { error: 'User not authenticated or no team found.', platform: 'x' };
+  }
+
+  try {
+    // 1. Find the existing connection
+    const connection = await db.query.socialPlatformConnections.findFirst({
+      where: and(
+        eq(socialPlatformConnections.teamId, team.id),
+        eq(socialPlatformConnections.platformName, 'x')
+      ),
+    });
+
+    if (!connection) {
+      return { error: 'No active X connection found to disconnect.', platform: 'x' };
+    }
+
+    // 2. For X, since we use app-level tokens (from .env) for API calls via connectXPlatformAction,
+    //    a user-specific token revocation on X's side isn't applicable in the same way as Meta.
+    //    The "disconnection" primarily means removing the configuration from our database.
+    //    If there were a specific X API endpoint to de-authorize an app for a specific ads account
+    //    that was linked via an app-level token, that could be called here.
+    //    However, the current setup implies the app itself has permissions, and we're just
+    //    disabling its use for this team by removing the DB record.
+
+    // 3. Delete the connection from our database
+    const result = await db
+      .delete(socialPlatformConnections)
+      .where(eq(socialPlatformConnections.id, connection.id)) // Delete by specific connection ID
+      .returning({ id: socialPlatformConnections.id });
+
+    if (result.length === 0) {
+      return { error: 'Failed to delete the X connection from the database.', platform: 'x' };
+    }
+
+    revalidatePath('/dashboard/settings/integrations');
+    revalidatePath('/api/connections/x'); 
+
+    return { success: true, message: 'X Ads platform disconnected successfully.', platform: 'x' };
+
+  } catch (err: any) {
+    console.error('Error disconnecting X Ads platform:', err);
+    return { error: err.message || 'Failed to disconnect X Ads platform.', platform: 'x' };
+  }
+}
 
 // --- Google Ads OAuth 2.0 Actions ---
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -353,4 +401,4 @@ export async function redirectToGoogleConnect() {
 
     const oauthURL = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     redirect(oauthURL);
-} 
+}

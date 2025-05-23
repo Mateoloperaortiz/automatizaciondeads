@@ -6,26 +6,76 @@ import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
 const META_GRAPH_API_VERSION = 'v19.0'; // Or your desired API version
 const META_GRAPH_API_BASE_URL = `https://graph.facebook.com/${META_GRAPH_API_VERSION}`;
 
+interface MetaApiErrorResponse {
+    message: string;
+    type: string;
+    code: number;
+    error_subcode?: number;
+    fbtrace_id: string;
+    // Meta might also include 'error_user_title' and 'error_user_msg'
+    error_user_title?: string;
+    error_user_msg?: string;
+}
 interface MetaApiResponse {
     id?: string;
-    error?: {
-        message: string;
-        type: string;
-        code: number;
-        error_subcode?: number;
-        fbtrace_id: string;
-    };
+    error?: MetaApiErrorResponse;
     // Other fields might be present depending on the endpoint
 }
 
+export class MetaApiError extends Error {
+    public readonly type?: string;
+    public readonly code?: number;
+    public readonly subcode?: number;
+    public readonly fbtrace_id?: string;
+    public readonly userTitle?: string;
+    public readonly userMsg?: string;
+    public readonly status?: number; // HTTP status
+
+    constructor(
+        message: string,
+        apiError?: MetaApiErrorResponse,
+        httpStatus?: number
+    ) {
+        super(message);
+        this.name = 'MetaApiError';
+        this.status = httpStatus;
+        if (apiError) {
+            this.type = apiError.type;
+            this.code = apiError.code;
+            this.subcode = apiError.error_subcode;
+            this.fbtrace_id = apiError.fbtrace_id;
+            this.userTitle = apiError.error_user_title;
+            this.userMsg = apiError.error_user_msg;
+        }
+        // Ensure the prototype is correctly set for instanceof checks
+        Object.setPrototypeOf(this, MetaApiError.prototype);
+    }
+}
+
+const RETRYABLE_ERROR_CODES = [
+    1, // Unknown error (sometimes transient)
+    2, // Service temporarily unavailable
+    4, // Application-level throttling
+    17, // User request limit reached
+    32, // Page-level throttling (for page-related calls)
+    613, // Calls to this API have exceeded the rate limit
+    80004, // Application request limit reached (older code, sometimes still seen)
+    // Add more specific subcodes if known, e.g., error_subcode for rate limiting
+];
+
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY_MS = 1000; // Initial delay, can be made exponential
+
 /**
- * Helper function to make API calls to Meta Graph API.
+ * Helper function to make API calls to Meta Graph API with retry logic.
  */
 async function callMetaApi<T = MetaApiResponse>(
-    endpoint: string, 
-    accessToken: string, 
-    method: 'GET' | 'POST' | 'DELETE' = 'GET', 
-    body: Record<string, any> | null = null
+    endpoint: string,
+    accessToken: string,
+    method: 'GET' | 'POST' | 'DELETE' = 'GET',
+    body: Record<string, any> | null = null,
+    maxRetries: number = DEFAULT_MAX_RETRIES,
+    retryDelayMs: number = DEFAULT_RETRY_DELAY_MS
 ): Promise<T> {
     const headers: Record<string, string> = {
         'Authorization': `Bearer ${accessToken}`,
@@ -34,31 +84,66 @@ async function callMetaApi<T = MetaApiResponse>(
         headers['Content-Type'] = 'application/json';
     }
 
-    const url = `${META_GRAPH_API_BASE_URL}${endpoint}`;
-    console.log(`Calling Meta API: ${method} ${url}`);
-    if (body) console.log('Request body:', JSON.stringify(body, null, 2));
+    // Construct the URL and append the access_token as a query parameter
+    let url = `${META_GRAPH_API_BASE_URL}${endpoint}`;
+    const urlObj = new URL(url);
+    // If the endpoint already has query params, preserve them
+    urlObj.searchParams.append('access_token', accessToken);
+    url = urlObj.toString();
 
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: headers,
-            body: body ? JSON.stringify(body) : undefined,
-        });
+    let attempts = 0;
+    while (attempts < maxRetries) {
+        console.log(`Calling Meta API (Attempt ${attempts}/${maxRetries + 1}): ${method} ${url}`);
+        if (body) console.log('Request body:', JSON.stringify(body, null, 2));
 
-        const responseData = await response.json();
-        console.log('Meta API Response:', JSON.stringify(responseData, null, 2));
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: headers,
+                body: body ? JSON.stringify(body) : undefined,
+            });
 
-        if (!response.ok || responseData.error) {
-            const errorInfo = responseData.error || { message: `HTTP error! status: ${response.status}`, code: response.status };
-            console.error('Meta API Error:', errorInfo);
-            // Throw an error that can be caught by the calling function
-            throw new Error(`Meta API Error (${errorInfo.code} ${errorInfo.type || 'HTTPError'}): ${errorInfo.message}`);
+            const responseData: MetaApiResponse = await response.json();
+            console.log('Meta API Response:', JSON.stringify(responseData, null, 2));
+
+            if (!response.ok || responseData.error) {
+                const errorInfo = responseData.error || {
+                    message: `HTTP error! status: ${response.status}`,
+                    code: response.status, // Use HTTP status as code if no API error code
+                    type: 'HTTPError',
+                    fbtrace_id: response.headers.get('x-fb-trace-id') || 'N/A',
+                };
+                
+                const apiError = new MetaApiError(
+                    `Meta API Error (${errorInfo.code} ${errorInfo.type}): ${errorInfo.message}`,
+                    errorInfo,
+                    response.status
+                );
+
+                if (RETRYABLE_ERROR_CODES.includes(apiError.code || 0) && attempts <= maxRetries) {
+                    console.warn(`Retryable Meta API error (Code: ${apiError.code}). Attempt ${attempts} of ${maxRetries + 1}. Retrying in ${retryDelayMs * attempts}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempts)); // Exponential backoff
+                    continue; // Retry the loop
+                }
+                throw apiError; // Non-retryable error or max retries exceeded
+            }
+            return responseData as T;
+        } catch (error: any) {
+            if (error instanceof MetaApiError) { // Re-throw MetaApiError
+                throw error;
+            }
+            // Handle network errors or other unexpected issues
+            console.error(`Network or parsing error calling Meta API (Attempt ${attempts}/${maxRetries + 1}) ${method} ${url}:`, error);
+            if (attempts <= maxRetries) {
+                console.warn(`Retrying due to network/parsing error. Attempt ${attempts} of ${maxRetries + 1}. Retrying in ${retryDelayMs * attempts}ms...`);
+ await new Promise(r => setTimeout(r, retryDelayMs * (2 ** (attempts - 1))));
+                continue;
+            }
+            throw new MetaApiError(`Failed to call Meta API after ${attempts} attempts: ${error.message}`);
         }
-        return responseData as T;
-    } catch (error: any) {
-        console.error(`Network or parsing error calling Meta API ${method} ${url}:`, error);
-        throw new Error(`Failed to call Meta API: ${error.message}`);
     }
+    // Should not be reached if loop logic is correct, but as a fallback:
+    throw new MetaApiError(`Exhausted retries for Meta API call to ${method} ${url}`);
 }
 
 
@@ -76,10 +161,14 @@ async function createMetaCampaign(
 ): Promise<string | null> {
     try {
         const endpoint = `/${adAccountId}/campaigns`;
-        const response = await callMetaApi(endpoint, accessToken, 'POST', campaignPayload);
+        const response = await callMetaApi<{id: string}>(endpoint, accessToken, 'POST', campaignPayload);
         return response.id || null;
-    } catch (error) {
-        console.error('Failed to create Meta campaign:', error);
+    } catch (error: any) {
+        if (error instanceof MetaApiError) {
+            console.error(`Meta API Error creating campaign (Code: ${error.code}, Type: ${error.type}, Trace: ${error.fbtrace_id}): ${error.message}`);
+        } else {
+            console.error('Failed to create Meta campaign due to an unexpected error:', error.message);
+        }
         return null;
     }
 }
@@ -98,10 +187,14 @@ async function createMetaAdSet(
 ): Promise<string | null> {
     try {
         const endpoint = `/${adAccountId}/adsets`;
-        const response = await callMetaApi(endpoint, accessToken, 'POST', adSetPayload);
+        const response = await callMetaApi<{id: string}>(endpoint, accessToken, 'POST', adSetPayload);
         return response.id || null;
-    } catch (error) {
-        console.error('Failed to create Meta ad set:', error);
+    } catch (error: any) {
+         if (error instanceof MetaApiError) {
+            console.error(`Meta API Error creating ad set (Code: ${error.code}, Type: ${error.type}, Trace: ${error.fbtrace_id}): ${error.message}`);
+        } else {
+            console.error('Failed to create Meta ad set due to an unexpected error:', error.message);
+        }
         return null;
     }
 }
@@ -120,10 +213,14 @@ async function createMetaAdCreative(
 ): Promise<string | null> {
     try {
         const endpoint = `/${adAccountId}/adcreatives`;
-        const response = await callMetaApi(endpoint, accessToken, 'POST', adCreativePayload);
+        const response = await callMetaApi<{id: string}>(endpoint, accessToken, 'POST', adCreativePayload);
         return response.id || null;
-    } catch (error) {
-        console.error('Failed to create Meta ad creative:', error);
+    } catch (error: any) {
+        if (error instanceof MetaApiError) {
+            console.error(`Meta API Error creating ad creative (Code: ${error.code}, Type: ${error.type}, Trace: ${error.fbtrace_id}): ${error.message}`);
+        } else {
+            console.error('Failed to create Meta ad creative due to an unexpected error:', error.message);
+        }
         return null;
     }
 }
@@ -154,10 +251,14 @@ async function createMetaAd(
             status: status,
         };
         const endpoint = `/${adAccountId}/ads`;
-        const response = await callMetaApi(endpoint, accessToken, 'POST', adPayload);
+        const response = await callMetaApi<{id: string}>(endpoint, accessToken, 'POST', adPayload);
         return response.id || null;
-    } catch (error) {
-        console.error('Failed to create Meta ad:', error);
+    } catch (error: any) {
+        if (error instanceof MetaApiError) {
+            console.error(`Meta API Error creating ad (Code: ${error.code}, Type: ${error.type}, Trace: ${error.fbtrace_id}): ${error.message}`);
+        } else {
+            console.error('Failed to create Meta ad due to an unexpected error:', error.message);
+        }
         return null;
     }
 }
@@ -179,8 +280,10 @@ export async function uploadMetaAdImageByUrl(
         const imageResponse = await fetch(imageUrl);
         if (!imageResponse.ok) throw new Error(`Failed to download image. Status: ${imageResponse.status}`);
         const imageBuffer = await imageResponse.arrayBuffer();
+        
+        // Convert buffer to base64
         const imageBase64 = Buffer.from(imageBuffer).toString('base64');
-
+        
         const endpoint = `${META_GRAPH_API_BASE_URL}/${adAccountId}/adimages`;
         const formData = new FormData();
         formData.append('bytes', imageBase64);
@@ -271,5 +374,4 @@ export async function postAdToMeta(
 
 // TODO:
 // - More sophisticated error handling and retry logic for API calls.
-// - Function to update ad status (e.g., from PAUSED to ACTIVE). 
-// - Function to update ad status (e.g., from PAUSED to ACTIVE). 
+// - Function to update ad status (e.g., from PAUSED to ACTIVE).

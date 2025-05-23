@@ -1,7 +1,7 @@
 import { XCampaignPayload, XLineItemPayload, XFullAdStructure } from '../translators/x_translator';
 import OAuth from 'oauth-1.0a';
-import crypto from 'crypto'; // Node.js crypto for nonce
-import CryptoJS from 'crypto-js'; // For HMAC-SHA1
+// Node.js crypto for nonce is not used by oauth-1.0a library directly for this setup
+import crypto from 'crypto'; // Use Node's native crypto
 
 // Base URL for X Ads API (ensure this is the correct version, e.g., /12/)
 const X_ADS_API_BASE_URL = 'https://ads-api.twitter.com/12'; 
@@ -35,77 +35,90 @@ interface XFundingInstrumentsResponse extends XApiResponse {
  * Helper function to make API calls to X Ads API using OAuth 1.0a.
  */
 async function callXApi<T = XApiResponse>(
-    endpoint: string, 
-    userAccessToken: string, 
-    userTokenSecret: string, 
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', 
-    body: Record<string, any> | null = null,
-    queryParams: Record<string, any> | null = null 
+    endpoint: string,
+    userAccessToken: string,
+    userTokenSecret: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    payload?: Record<string, any> | null, // Can be form data or JSON data for body
+    queryParams?: Record<string, any> | null,
+    // Explicit content type for payload; defaults to form-urlencoded for POST/PUT if payload exists and not specified
+    contentTypeHeader?: 'application/json' | 'application/x-www-form-urlencoded' 
 ): Promise<T> {
     if (!X_CONSUMER_KEY || !X_CONSUMER_SECRET) {
         throw new Error('X Consumer Key or Secret is not configured in environment variables.');
     }
+
     const oauth = new OAuth({
         consumer: { key: X_CONSUMER_KEY, secret: X_CONSUMER_SECRET },
         signature_method: 'HMAC-SHA1',
         hash_function(base_string, key) {
-            return CryptoJS.HmacSHA1(base_string, key).toString(CryptoJS.enc.Base64);
-        },
-    });
-    const requestData: OAuth.RequestOptions = {
-        url: `${X_ADS_API_BASE_URL}${endpoint}`,
-        method: method,
-    };
-    
-    let fetchBody: any = null;
-    let finalUrl = requestData.url;
-    // Determine Content-Type early based on body/queryParams presence for POST/PUT
-    let contentType: string | undefined = undefined;
-    if ((method === 'POST' || method === 'PUT')) {
-        if (body && Object.keys(body).length > 0 && (!queryParams || Object.keys(queryParams).length === 0)) {
-            contentType = 'application/json';
-        } else if (queryParams && Object.keys(queryParams).length > 0) {
-            contentType = 'application/x-www-form-urlencoded';
-        } else if (body) { // Default to JSON if only body is present
-            contentType = 'application/json';
+            return crypto.createHmac('sha1', key).update(base_string).digest('base64');
         }
+    });
+
+    let baseUrlForSignature = `${X_ADS_API_BASE_URL}${endpoint}`;
+    let finalFetchUrl = baseUrlForSignature;
+    
+    // All URL query parameters are signed if present
+    const signedParameters = queryParams ? { ...queryParams } : {};
+
+    const requestDataForSigning: OAuth.RequestOptions = {
+        url: baseUrlForSignature, // Base URL for signature
+        method: method,
+        data: signedParameters, // Start with URL query params for signing
+    };
+
+    let fetchBody: string | null = null;
+    const headers: HeadersInit = {};
+
+    if (queryParams) {
+        finalFetchUrl = `${baseUrlForSignature}?${new URLSearchParams(queryParams as Record<string, string>).toString()}`;
     }
 
-    if (method === 'GET' && queryParams) {
-        finalUrl = `${finalUrl}?${new URLSearchParams(queryParams as Record<string,string>).toString()}`;
-        requestData.data = queryParams;
-    } else if ((method === 'POST' || method === 'PUT')) {
-        if (contentType === 'application/json') {
-            requestData.data = queryParams || {}; // Only URL params for signature
-            fetchBody = JSON.stringify(body);
-        } else { // Assume form-urlencoded or no specific body for signature (if queryParams are used in URL for POST)
-            requestData.data = body || queryParams || {}; // Parameters for signature if form-urlencoded
-            if (requestData.data && Object.keys(requestData.data).length > 0) {
-                 fetchBody = new URLSearchParams(requestData.data as Record<string,string>).toString();
-            } else {
-                fetchBody = null; // No body if no data for form
+    if (method === 'POST' || method === 'PUT') {
+        if (payload) {
+            let resolvedContentType = contentTypeHeader;
+            if (!resolvedContentType && payload && Object.keys(payload).length > 0) {
+                // Default to form-urlencoded if contentType not specified but payload exists,
+                // as this seems common for X Ads API based on campaign creation.
+                resolvedContentType = 'application/x-www-form-urlencoded';
+            }
+
+            if (resolvedContentType === 'application/x-www-form-urlencoded') {
+                headers['Content-Type'] = 'application/x-www-form-urlencoded';
+                fetchBody = new URLSearchParams(payload as Record<string, string>).toString();
+                // Add form body parameters to the signature data
+                requestDataForSigning.data = { ...signedParameters, ...payload };
+            } else if (resolvedContentType === 'application/json') {
+                headers['Content-Type'] = 'application/json';
+                fetchBody = JSON.stringify(payload);
+                // JSON body parameters are NOT added to signature data by default in OAuth 1.0a
+                // requestDataForSigning.data remains just signedParameters (URL query params)
             }
         }
-    } else {
-        requestData.data = queryParams || {};
     }
+    // For GET/DELETE, queryParams (if any) are already in requestDataForSigning.data via signedParameters. No body.
 
     const token = { key: userAccessToken, secret: userTokenSecret };
-    const authHeader = oauth.toHeader(oauth.authorize(requestData, token));
-
-    const finalHeaders: HeadersInit = { ...authHeader }; // Use HeadersInit for fetch
-    if (contentType) {
-        finalHeaders['Content-Type'] = contentType;
-    }
+    const authorization = oauth.authorize(requestDataForSigning, token);
+    headers['Authorization'] = oauth.toHeader(authorization)['Authorization'];
     
-    console.log(`Calling X Ads API: ${method} ${finalUrl}`);
-    if (fetchBody) console.log('X Ads Request body:', fetchBody);
-    console.log('X Ads Headers:', finalHeaders);
+    // Mask Authorization header for logging
+    const safeHeaders = { ...headers };
+    if (safeHeaders['Authorization']) {
+        safeHeaders['Authorization'] = '[REDACTED]';
+    }
+    // Optionally, mask sensitive query/body data here if needed
+
+    console.log(`Calling X Ads API: ${method} [URL REDACTED FOR SENSITIVITY]`);
+    if (fetchBody) console.log('X Ads Request body: [REDACTED FOR SENSITIVITY]');
+    console.log('X Ads Headers:', safeHeaders);
+    console.log('X Ads Request Data for Signing:', requestDataForSigning);
 
     try {
-        const response = await fetch(finalUrl, {
+        const response = await fetch(finalFetchUrl, {
             method: method,
-            headers: finalHeaders,
+            headers: headers,
             body: fetchBody,
         });
         const responseData = await response.json(); // Assume X Ads API always returns JSON
@@ -118,7 +131,7 @@ async function callXApi<T = XApiResponse>(
         }
         return responseData as T;
     } catch (error: any) {
-        console.error(`Network or parsing error calling X Ads API ${method} ${finalUrl}:`, error);
+        console.error(`Network or parsing error calling X Ads API ${method} ${finalFetchUrl}:`, error);
         if (error.response && typeof error.response.json === 'function') { // If fetch error includes response
              console.error("X API Raw Error Response:", await error.response.json());
         }
@@ -157,11 +170,14 @@ export async function fetchXFundingInstrumentId(
 ): Promise<string | null> {
     console.log(`Fetching funding instruments for X Ads Account: ${adsAccountId}`);
     try {
+        // GET request, no payload, no specific queryParams here, no specific contentType
         const response = await callXApi<XFundingInstrumentsResponse>(
             `/accounts/${adsAccountId}/funding_instruments`,
             userAccessToken,
             userTokenSecret,
-            'GET'
+            'GET',
+            null, // no payload
+            null  // no queryParams
         );
 
         if (response && response.data && response.data.length > 0) {
@@ -213,12 +229,14 @@ export async function postAdToX(
     }
 
     try {
+        // Campaign creation: POST with form-urlencoded data
         const campaignResponse = await callXApi<{data: {id: string}}>(
             `/accounts/${accountId}/campaigns`,
-            userAccessToken, userTokenSecret, 
-            'POST', 
-            null, 
-            xAdStructure.campaignPayload as Record<string, any> // queryParams will be stringified as form data
+            userAccessToken, userTokenSecret,
+            'POST',
+            xAdStructure.campaignPayload as Record<string, any>, // payload is form data
+            null, // no URL queryParams
+            'application/x-www-form-urlencoded' // explicit contentType
         );
         const campaignId = campaignResponse?.data?.id;
         if (!campaignId) {
@@ -240,16 +258,17 @@ export async function postAdToX(
         // It might be `promoted_tweet_ids` or similar, or part of a `creatives` array within the line item.
         // Assuming lineItemPayloadWithCampaign includes a field like `tweet_ids` (as per x_translator.ts)
         const finalLineItemPayload = { ...lineItemPayloadWithCampaign, tweet_ids: tweetIdsToUse };
-        // X Ads API often uses form-data for POST, so pass as queryParams for callXApi's current structure
-        // Or, if it's a JSON body, pass as `body` and null for `queryParams`.
-        // Let's assume for line_items it's a JSON body for this example if translator made it so.
-        // If not, and if it's form params, then like campaign: body=null, queryParams=finalLineItemPayload
-
+        // X Ads API often uses form-data for POST.
+        // However, the original code for line items used the `body` parameter of callXApi,
+        // which was then treated as JSON. We'll maintain this assumption for line items.
+        // If line items also need form-urlencoded, the contentType should be changed.
         const lineItemResponse = await callXApi<{data: {id: string}}>(
             `/accounts/${accountId}/line_items`,
             userAccessToken, userTokenSecret,
             'POST',
-            finalLineItemPayload // body is JSON
+            finalLineItemPayload, // payload is JSON data
+            null, // no URL queryParams
+            'application/json' // explicit contentType
         );
         const lineItemId = lineItemResponse?.data?.id;
         if (!lineItemId) {
@@ -275,4 +294,4 @@ export async function postAdToX(
 // - X Ads API Endpoints & Payloads: Verify all paths (e.g., `/12/accounts/...`) and the exact JSON or form-data structures for campaigns, line items, targeting criteria, and tweet promotion.
 // - Funding Instrument ID: This is required for campaign creation and needs to be fetched and stored.
 // - Tweet Creation/Selection: Robustly implement `ensureTweetCreative` to create a new tweet via X API v2 or allow selection of existing tweets.
-// - Targeting in x_translator.ts: Map your agnostic targeting to X's specific criteria (keywords, interests, follower look-alikes, conversation topics, device, geo, etc.). 
+// - Targeting in x_translator.ts: Map your agnostic targeting to X's specific criteria (keywords, interests, follower look-alikes, conversation topics, device, geo, etc.).

@@ -8,6 +8,7 @@ import {
   boolean,
   decimal,
   unique,
+  jsonb, // Import jsonb for storing array of objects
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -99,6 +100,13 @@ export const jobAds = pgTable('job_ads', {
   googleCampaignResourceId: text('google_campaign_resource_name'),
   googleAdGroupResourceId: text('google_ad_group_resource_name'),
   googleAdResourceId: text('google_ad_resource_name'),
+  // Fields for storing audience segmentation results
+  derivedAudiencePrimitives: jsonb('derived_audience_primitives'), // Stores AudiencePrimitive[]
+  audienceClusterId: text('audience_cluster_id'),
+  audienceConfidence: decimal('audience_confidence', { precision: 5, scale: 4 }), // e.g., 0.8532
+  audienceClusterProfileName: text('audience_cluster_profile_name'), // Human-readable cluster name
+  mappedTargeting: jsonb('mapped_targeting'), // Stores PlatformAgnosticTargeting
+  segmentationProcessedAt: timestamp('segmentation_processed_at'), // When segmentation was last run
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()

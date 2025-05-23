@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     const accessToken = tokenData.access_token;
-    const refreshToken = tokenData.refresh_token; // Should be present if access_type=offline was used
+    const refreshToken = tokenData.refresh_token; 
     const expiresIn = tokenData.expires_in; // in seconds
     const scopes = tokenData.scope; // Space-separated string of granted scopes
 
@@ -93,13 +93,33 @@ export async function GET(request: NextRequest) {
     // const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}`}});
     // if(userInfoResponse.ok) { const userInfo = await userInfoResponse.json(); platformUserId = userInfo.sub; }
 
+    // If no refresh token is returned, try to find an existing one for this team/platform
+    let finalRefreshToken = refreshToken;
+    // Ensure team is loaded before lookup
     const team = await getTeamForUser();
     if (!team) {
       return NextResponse.redirect(`${baseRedirectUrl}?error_google=User%20session%20invalid%20or%20no%20team`);
     }
-
+    if (!finalRefreshToken) {
+      // Look up existing connection for this team and platform
+      const existingConnection = await db.query.socialPlatformConnections.findFirst({
+        where: and(
+          eq(socialPlatformConnections.teamId, team.id),
+          eq(socialPlatformConnections.platformName, 'google')
+        )
+      });
+      if (existingConnection && existingConnection.refreshToken) {
+        finalRefreshToken = existingConnection.refreshToken;
+      } else {
+        // A refresh token is crucial for long-term access to Google Ads API.
+        // If access_type=offline and prompt=consent were used, it should be returned on first auth.
+        console.error('Google OAuth Error: Refresh token not received and no existing token found. Ensure access_type=offline and prompt=consent are used.');
+        return NextResponse.redirect(`${baseRedirectUrl}?error_google=${encodeURIComponent('Refresh token not provided by Google. Please try re-authorizing.')}`);
+      }
+    }
+    
     const encryptedAccessToken = encrypt(accessToken);
-    const encryptedRefreshToken = refreshToken ? encrypt(refreshToken) : undefined;
+    const encryptedRefreshToken = encrypt(finalRefreshToken); // Use the found or new refresh token
 
     const connectionData: NewSocialPlatformConnection = {
       teamId: team.id,
@@ -135,4 +155,4 @@ export async function GET(request: NextRequest) {
     console.error('Google OAuth Callback Error:', err);
     return NextResponse.redirect(`${baseRedirectUrl}?error_google=${encodeURIComponent(err.message || 'Unexpected Google callback error')}`);
   }
-} 
+}

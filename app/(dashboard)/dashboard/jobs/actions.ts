@@ -319,51 +319,161 @@ export async function publishJobAdNowAction(
     }
 }
 
-export type TriggerEngineState = {
-    error?: string | null;
-    success?: boolean;
-    message?: string | null;
-    processedCount?: number;
-};
+export interface TriggerEngineState {
+  message: string | null;
+  error: string | null; 
+  success: boolean;
+  processedCount?: number;
+}
+
+export interface TestSegmentationState {
+  message: string | null;
+  error: string | null;
+  success: boolean;
+  segmentationData?: {
+    derivedAudiencePrimitives?: any;
+    audienceClusterId?: string;
+    audienceConfidence?: number;
+    audienceClusterProfileName?: string;
+    mappedTargeting?: any;
+  };
+}
 
 export async function triggerAutomationEngineAction(
-    prevState: TriggerEngineState
+  _prevState: TriggerEngineState
 ): Promise<TriggerEngineState> {
-    console.log("Attempting to trigger automation engine manually...");
+  console.log("Attempting to trigger automation engine manually...");
 
-    const triggerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/automation/trigger`;
-    const cronSecret = process.env.CRON_JOB_SECRET;
+  const triggerUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/automation/trigger`;
+  const cronSecret = process.env.CRON_JOB_SECRET;
 
-    if (!cronSecret) {
-        return { error: "CRON_JOB_SECRET is not configured. Cannot trigger engine securely." };
+  if (!cronSecret) {
+    return { error: "CRON_JOB_SECRET is not configured. Cannot trigger engine securely." };
+  }
+
+  try {
+    const response = await fetch(triggerUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${cronSecret}`,
+      },
+      cache: 'no-store', // Ensure it hits the endpoint fresh
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error triggering automation engine: ${response.status}`, errorText);
+      return { error: `Failed to trigger engine: ${response.status} ${errorText}` };
+    }
+
+    const result = await response.json();
+    console.log("Automation engine triggered successfully via action:", result);
+    return { 
+      success: result.success,
+      message: result.message || 'Automation engine run complete.',
+      processedCount: result.processedCount,
+      error: result.error
+    };
+
+  } catch (err: any) {
+    console.error('Error in triggerAutomationEngineAction:', err);
+    return { error: err.message || 'Failed to trigger automation engine.' };
+  }
+}
+
+export async function testSegmentationAction(
+  prevState: TestSegmentationState,
+  formData: FormData
+): Promise<TestSegmentationState> {
+  try {
+    const team = await getTeamForUser();
+    if (!team) {
+      return { ...prevState, error: 'User not authenticated or not part of a team.', success: false };
+    }
+
+    const jobAdId = formData.get('jobAdId');
+    if (!jobAdId || typeof jobAdId !== 'string') {
+      return { ...prevState, error: 'Job Ad ID is required.', success: false };
+    }
+
+    const parsedJobAdId = parseInt(jobAdId, 10);
+    if (isNaN(parsedJobAdId)) {
+      return { ...prevState, error: 'Invalid Job Ad ID.', success: false };
+    }
+
+    // Fetch the job ad
+    const jobAd = await db.query.jobAds.findFirst({
+      where: and(
+        eq(jobAds.id, parsedJobAdId),
+        eq(jobAds.teamId, team.id)
+      ),
+    });
+
+    if (!jobAd) {
+      return { ...prevState, error: 'Job ad not found or access denied.', success: false };
+    }
+
+    // Call the segmentation service
+    const serviceUrl = process.env.PYTHON_SEGMENTATION_SERVICE_URL;
+    if (!serviceUrl) {
+      return { ...prevState, error: 'Segmentation service not configured.', success: false };
     }
 
     try {
-        const response = await fetch(triggerUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${cronSecret}`,
-            },
-            cache: 'no-store', // Ensure it hits the endpoint fresh
-        });
+      const response = await fetch(serviceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_ad_text: jobAd.descriptionShort || jobAd.title }),
+      });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Error triggering automation engine: ${response.status}`, errorText);
-            return { error: `Failed to trigger engine: ${response.status} ${errorText}` };
+      if (!response.ok) {
+        return { ...prevState, error: 'Segmentation service request failed.', success: false };
+      }
+
+      const segmentationResult = await response.json();
+      
+      // Map the audience primitives to platform-agnostic targeting
+      const { mapAudiencePrimitivesToTargeting } = await import('@/lib/automation/taxonomy_mapper');
+      const mappedTargeting = mapAudiencePrimitivesToTargeting(
+        segmentationResult.derived_audience_primitives || [],
+        segmentationResult.cluster_assignment_confidence
+      );
+
+      // Load cluster profiles to get the name
+      let clusterProfileName = undefined;
+      if (segmentationResult.assigned_cluster_id) {
+        try {
+          const fs = await import('fs').then(m => m.promises);
+          const path = await import('path');
+          const profilesPath = path.join(process.cwd(), 'services/audience_segmentation_service/models/cluster_profiles.json');
+          const profilesData = await fs.readFile(profilesPath, 'utf-8');
+          const clusterProfiles = JSON.parse(profilesData);
+          const profile = clusterProfiles[segmentationResult.assigned_cluster_id];
+          clusterProfileName = profile?.name || `Cluster ${segmentationResult.assigned_cluster_id}`;
+        } catch (error) {
+          console.error('Failed to load cluster profiles:', error);
+          clusterProfileName = `Cluster ${segmentationResult.assigned_cluster_id}`;
         }
+      }
 
-        const result = await response.json();
-        console.log("Automation engine triggered successfully via action:", result);
-        return { 
-            success: result.success,
-            message: result.message || 'Automation engine run complete.',
-            processedCount: result.processedCount,
-            error: result.error
-        };
-
-    } catch (err: any) {
-        console.error('Error in triggerAutomationEngineAction:', err);
-        return { error: err.message || 'Failed to trigger automation engine.' };
+      return {
+        message: 'Segmentation test completed successfully.',
+        error: null,
+        success: true,
+        segmentationData: {
+          derivedAudiencePrimitives: segmentationResult.derived_audience_primitives,
+          audienceClusterId: segmentationResult.assigned_cluster_id,
+          audienceConfidence: segmentationResult.cluster_assignment_confidence,
+          audienceClusterProfileName: clusterProfileName,
+          mappedTargeting: mappedTargeting,
+        },
+      };
+    } catch (error) {
+      console.error('Error during segmentation test:', error);
+      return { ...prevState, error: 'Failed to test segmentation.', success: false };
     }
+  } catch (error) {
+    console.error('Error in testSegmentationAction:', error);
+    return { ...prevState, error: 'An unexpected error occurred.', success: false };
+  }
 } 

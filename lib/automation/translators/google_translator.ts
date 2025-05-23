@@ -129,13 +129,29 @@ export function translateToGoogleAd(
     const adGroupCriteriaPayloads: resources.AdGroupCriterion[] = []; // Array of resource instances
     
     // Location Mapping - creating resources.AdGroupCriterion with LocationInfo
+    // For a production system, this mapping should be externalized and more comprehensive.
+    // Google provides a downloadable CSV of all geo target constants.
+    // Example: https://developers.google.com/google-ads/api/reference/data/geotargets
+    const geoTargetLookup: Record<string, number | undefined> = {
+        'COUNTRY_US': 2840, // United States
+        'COUNTRY_CA': 2124, // Canada
+        'STATE_CA_US': 21137, // California, US
+        'STATE_NY_US': 21167, // New York, US
+        'CITY_NYC_NY_US': 1023191, // New York City, NY, US
+        'CITY_SF_CA_US': 1014221, // San Francisco, CA, US (Note: Google's ID for SF is 1014221, not 1014044 as in example)
+        // Add more common codes as needed or implement a more robust lookup from an external file
+    };
+
     if (targetingParams.locations && targetingParams.locations.length > 0) {
         targetingParams.locations.forEach(locCode => {
+            const geoTargetId = geoTargetLookup[locCode];
             let geoTargetConstantResourceName: string | undefined;
-            if (locCode === 'COUNTRY_US') geoTargetConstantResourceName = ResourceNames.geoTargetConstant(2840);
-            else if (locCode === 'COUNTRY_CA') geoTargetConstantResourceName = ResourceNames.geoTargetConstant(2124);
-            // TODO: Add a lookup for city/region codes to geoTargetConstant resource names
-            // Example: else if (locCode === 'CITY_SF_CA_US') geoTargetConstantResourceName = 'geoTargetConstants/1014044'; 
+
+            if (geoTargetId) {
+                geoTargetConstantResourceName = ResourceNames.geoTargetConstant(geoTargetId);
+            } else {
+                console.warn(`Google Ads Translator: No geo target constant ID found for location code: ${locCode}. Skipping.`);
+            }
             
             if (geoTargetConstantResourceName) {
                 adGroupCriteriaPayloads.push(
@@ -231,4 +247,4 @@ export function translateToGoogleAd(
         adPayload, 
         adGroupCriteriaPayloads, 
     };
-} 
+}

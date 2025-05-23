@@ -60,13 +60,32 @@ function JobAdTableRow({ ad, onAction }: { ad: JobAd, onAction: () => void }) {
     'post_failed_meta', 'post_failed_x', 'post_failed_google', 'post_failed_all'
   ].includes(ad.status || '');
 
+  // Get segmentation confidence if available
+  const segmentationConfidence = ad.audienceConfidence ? parseFloat(ad.audienceConfidence as string) : null;
+
   return (
     <TableRow className={`${(isDeleting || isPublishing) ? 'opacity-50' : ''}`}>
       <TableCell className="font-medium py-3">{ad.title}</TableCell>
       <TableCell>
-        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${ad.status === 'live' || ad.status === 'partially_live' ? 'bg-green-100 text-green-700' : (ad.status === 'draft' || ad.status === 'scheduled') ? 'bg-yellow-100 text-yellow-700' : ad.status && ad.status.startsWith('post_failed') ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
-            {ad.status ? ad.status.charAt(0).toUpperCase() + ad.status.slice(1) : 'N/A'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${ad.status === 'live' || ad.status === 'partially_live' ? 'bg-green-100 text-green-700' : (ad.status === 'draft' || ad.status === 'scheduled') ? 'bg-yellow-100 text-yellow-700' : ad.status && ad.status.startsWith('post_failed') ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
+              {ad.status ? ad.status.charAt(0).toUpperCase() + ad.status.slice(1) : 'N/A'}
+          </span>
+          {segmentationConfidence !== null && (
+            <span 
+              className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                segmentationConfidence < 0.25 
+                  ? 'bg-red-100 text-red-700' 
+                  : segmentationConfidence < 0.5 
+                  ? 'bg-yellow-100 text-yellow-700' 
+                  : 'bg-green-100 text-green-700'
+              }`}
+              title={`Segmentation confidence: ${(segmentationConfidence * 100).toFixed(1)}%`}
+            >
+              {(segmentationConfidence * 100).toFixed(0)}%
+            </span>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <div className="flex space-x-1.5">

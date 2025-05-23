@@ -6,7 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Facebook, Loader2 } from 'lucide-react';
 import useSWR from 'swr';
 import { SocialPlatformConnection } from '@/lib/db/schema';
-import { redirectToMetaConnect, disconnectMetaAction, IntegrationActionState, connectXPlatformAction, redirectToGoogleConnect } from './actions';
+import { 
+    redirectToMetaConnect, 
+    disconnectMetaAction, 
+    IntegrationActionState, 
+    connectXPlatformAction, 
+    disconnectXPlatformAction, // Import the new action
+    redirectToGoogleConnect 
+} from './actions';
 import { useSearchParams } from 'next/navigation';
 
 // Placeholder X Icon (replace with a proper one if available, e.g., from lucide-react or custom SVG)
@@ -51,11 +58,13 @@ export default function IntegrationsPage() {
   const { data: xConnection, error: fetchXError, isLoading: isLoadingX, mutate: mutateX } = 
     useSWR<SocialPlatformConnection | null>('/api/connections/x', fetcher); // New SWR hook for X
   const [connectXState, submitConnectXAction, isConnectingX] = useActionState<IntegrationActionState, void>(
-    connectXPlatformAction, // Use the new action
+    connectXPlatformAction, 
     { ...initialIntegrationState, platform: 'x' }
   );
-  // Placeholder for X disconnect action state if/when implemented
-  // const [disconnectXState, submitDisconnectXAction, isDisconnectingX] = useActionState(...);
+  const [disconnectXState, submitDisconnectXAction, isDisconnectingX] = useActionState<IntegrationActionState, void>(
+    disconnectXPlatformAction, // Use the new disconnect action
+    { ...initialIntegrationState, platform: 'x' }
+  );
 
   // Google State (New)
   const { data: googleConnection, error: fetchGoogleError, isLoading: isLoadingGoogle, mutate: mutateGoogle } = 
@@ -79,11 +88,10 @@ export default function IntegrationsPage() {
     });
   };
 
-  // Placeholder for X disconnect handler
-  const handleDisconnectX = async () => {
-    alert('X disconnect logic not yet implemented.');
-    // TODO: Implement disconnectXAction and use useActionState for it
-    // mutateX(); // To re-fetch X connection status
+  const handleDisconnectX = () => {
+    if (window.confirm('Are you sure you want to disconnect your X Ads platform?')) {
+        startTransition(() => { submitDisconnectXAction(); });
+    }
   };
 
   const handleConnectGoogle = async () => {
@@ -112,6 +120,15 @@ export default function IntegrationsPage() {
       alert(`Error enabling X Ads: ${connectXState.error}`);
     }
   }, [connectXState, mutateX]);
+
+  useEffect(() => {
+    if (disconnectXState.success) {
+      alert(disconnectXState.message || 'X Ads platform disconnected.');
+      mutateX();
+    } else if (disconnectXState.error && disconnectXState.platform === 'x') {
+      alert(`Error disconnecting X Ads: ${disconnectXState.error}`);
+    }
+  }, [disconnectXState, mutateX]);
 
   useEffect(() => {
     if (oauthSuccess === 'meta_connected' || oauthSuccess === 'x_connected' || oauthSuccess === 'google_connected') {
@@ -163,8 +180,11 @@ export default function IntegrationsPage() {
         <p className="text-sm text-green-600 font-medium">
           X Ads Enabled (Ad Account: {xConnection.platformAccountId || 'N/A'}, Funding ID: {xConnection.fundingInstrumentId || 'N/A'})
         </p>
-        {connectXState.error && connectXState.platform === 'x' && <p className="text-xs text-red-500">Setup Error: {connectXState.error}</p>} 
-        <Button variant="outline" onClick={handleDisconnectX} className="w-full sm:w-auto">Disconnect X (Placeholder)</Button>
+        {connectXState.error && connectXState.platform === 'x' && <p className="text-xs text-red-500">Setup Error: {connectXState.error}</p>}
+        {disconnectXState.error && disconnectXState.platform === 'x' && <p className="text-xs text-red-500">Error: {disconnectXState.error}</p>}
+        <Button variant="outline" onClick={handleDisconnectX} disabled={isDisconnectingX} className="w-full sm:w-auto">
+          {isDisconnectingX ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Disconnect X
+        </Button>
       </div>
     );
   } else {
@@ -255,4 +275,4 @@ export default function IntegrationsPage() {
       </div>
     </section>
   );
-} 
+}

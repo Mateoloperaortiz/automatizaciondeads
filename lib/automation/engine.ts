@@ -5,7 +5,7 @@ import { mapAudiencePrimitivesToTargeting, PlatformAgnosticTargeting } from './t
 import { translateToMetaAd } from './translators/meta_translator';
 import { postAdToMeta, uploadMetaAdImageByUrl } from './platform_apis/meta_ads_api';
 import { decrypt } from '@/lib/security/crypto';
-import { getTeamForUser } from '@/lib/db/queries';
+// import { getTeamForUser } from '@/lib/db/queries'; // Not directly used in this file
 import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
 
 // X (Twitter) Imports
@@ -26,6 +26,37 @@ interface PythonSegmentationResponse {
     derived_audience_primitives: AudiencePrimitive[];
     assigned_cluster_id?: string;
     cluster_assignment_confidence?: number;
+}
+
+// Add interface for cluster profiles
+interface ClusterProfile {
+    name: string;
+    industry?: string;
+    skills?: string[];
+    seniority?: string;
+    keywords?: string[];
+}
+
+// Cache for cluster profiles
+let clusterProfilesCache: Record<string, ClusterProfile> | null = null;
+
+async function loadClusterProfiles(): Promise<Record<string, ClusterProfile>> {
+    if (clusterProfilesCache) {
+        return clusterProfilesCache;
+    }
+    
+    try {
+        const fs = await import('fs').then(m => m.promises);
+        const path = await import('path');
+        const profilesPath = path.join(process.cwd(), 'services/audience_segmentation_service/models/cluster_profiles.json');
+        const profilesData = await fs.readFile(profilesPath, 'utf-8');
+        clusterProfilesCache = JSON.parse(profilesData);
+        console.log('Loaded cluster profiles:', Object.keys(clusterProfilesCache || {}));
+        return clusterProfilesCache || {};
+    } catch (error) {
+        console.error('Failed to load cluster profiles:', error);
+        return {};
+    }
 }
 
 async function callPythonSegmentationService(jobAdText: string): Promise<PythonSegmentationResponse | null> {
@@ -86,9 +117,9 @@ export async function processScheduledAds() {
             adsAttemptedInLoop++;
             console.log(`Processing ad ID: ${ad.id}, Title: ${ad.title} (Attempt ${adsAttemptedInLoop} of ${eligibleAds.length})`);
             
-            let overallAdStatusForDb: JobAd['status'] = 'error_processing';
+            let overallAdStatusForDb: JobAd['status'] = 'error_processing'; // Default status if anything goes wrong early
             const platformPostSuccess: Record<string, boolean> = { meta: false, x: false, google: false };
-            const platformAdIdsToStore: Partial<Pick<JobAd, 'metaCampaignId' | 'metaAdSetId' | 'metaAdId' | 'xCampaignId' | 'xLineItemId' | 'xPromotedTweetId' | 'googleCampaignResourceId' | 'googleAdGroupResourceId' | 'googleAdResourceId'> > = {};
+            const platformAdIdsToStore: Partial<Pick<JobAd, 'metaCampaignId' | 'metaAdSetId' | 'metaAdId' | 'xCampaignId' | 'xLineItemId' | 'xPromotedTweetId' | 'googleCampaignResourceId' | 'googleAdGroupResourceId' | 'googleAdResourceId'>> = {};
 
             try {
                 await db.update(jobAds).set({ status: 'processing', updatedAt: new Date() }).where(eq(jobAds.id, ad.id));
@@ -99,12 +130,65 @@ export async function processScheduledAds() {
                     console.error(`Segmentation failed for ad ID: ${ad.id}.`);
                     overallAdStatusForDb = 'segmentation_failed';
                 } else {
-                    const mappedTargeting = mapAudiencePrimitivesToTargeting(
-                        segmentationResult.derived_audience_primitives,
-                        segmentationResult.cluster_assignment_confidence
-                    );
-                    console.log(`Ad ID: ${ad.id} - Mapped Targeting:`, mappedTargeting);
+                    // Store segmentation results first
+                    const segmentationDataToStore: Partial<JobAd> = {
+                        derivedAudiencePrimitives: segmentationResult.derived_audience_primitives as any,
+                        audienceClusterId: segmentationResult.assigned_cluster_id || null,
+                        audienceConfidence: segmentationResult.cluster_assignment_confidence?.toString() || null,
+                        segmentationProcessedAt: new Date(),
+                    };
 
+                    let mappedTargeting: PlatformAgnosticTargeting;
+                    const CONFIDENCE_THRESHOLD = 0.25; // As per ADS_AUTOMATION_PLAN.md
+
+                    if (segmentationResult.cluster_assignment_confidence !== undefined && 
+                        segmentationResult.cluster_assignment_confidence < CONFIDENCE_THRESHOLD) {
+                        
+                        console.warn(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence}) is below threshold (${CONFIDENCE_THRESHOLD}). Falling back to broad targeting.`);
+                        // For broad targeting, we might pass minimal or no specific primitives,
+                        // relying on the job ad text itself for keyword generation in translators,
+                        // and perhaps only very broad location targeting if available directly from the job ad.
+                        // Or, define a default set of broad primitives.
+                        // For simplicity, let's assume mapAudiencePrimitivesToTargeting can handle empty derived_audience_primitives
+                        // and will produce a "broad" PlatformAgnosticTargeting object.
+                        // Alternatively, create a specific "broad" PlatformAgnosticTargeting here.
+                        // Let's opt for creating a default broad targeting object directly.
+                        mappedTargeting = {
+                            locations: [], // Or a default broad location if applicable from ad.location or team settings
+                            skillKeywords: [], // Rely on ad title/description for keywords in translators
+                            industries: [],
+                            seniority: [],
+                            // Potentially other fields set to broad defaults
+                        };
+                        // We could also pass an empty array to mapAudiencePrimitivesToTargeting if it's designed to handle it:
+                        // mappedTargeting = mapAudiencePrimitivesToTargeting([], 0); 
+                    } else {
+                        console.log(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence ?? 'N/A'}) met or exceeded threshold / not applicable.`);
+                        mappedTargeting = mapAudiencePrimitivesToTargeting(
+                            segmentationResult.derived_audience_primitives,
+                            segmentationResult.cluster_assignment_confidence
+                        );
+                    }
+                    console.log(`Ad ID: ${ad.id} - Final Mapped Targeting:`, mappedTargeting);
+
+                    // Store the mapped targeting and get cluster profile name
+                    segmentationDataToStore.mappedTargeting = mappedTargeting as any;
+                    
+                    // Get cluster profile name from the segmentation result or derive it
+                    if (segmentationResult.assigned_cluster_id) {
+                        const clusterProfiles = await loadClusterProfiles();
+                        const profile = clusterProfiles[segmentationResult.assigned_cluster_id];
+                        segmentationDataToStore.audienceClusterProfileName = profile?.name || `Cluster ${segmentationResult.assigned_cluster_id}`;
+                    }
+
+                    // Save segmentation data to database
+                    await db.update(jobAds).set({
+                        ...segmentationDataToStore,
+                        updatedAt: new Date()
+                    }).where(eq(jobAds.id, ad.id));
+                    console.log(`Ad ID: ${ad.id} - Segmentation results saved to database.`);
+
+                    // Meta Platform Logic
                     if (ad.platformsMetaEnabled) {
                         console.log(`Ad ID: ${ad.id} - Attempting to post to Meta...`);
                         const metaConnection = await db.query.socialPlatformConnections.findFirst({
@@ -118,145 +202,121 @@ export async function processScheduledAds() {
                         if (metaConnection && metaConnection.accessToken && metaConnection.platformAccountId) {
                             try {
                                 const decryptedAccessToken = decrypt(metaConnection.accessToken);
-                                
                                 let imageHashForTranslator: string | undefined = undefined;
                                 if (ad.creativeAssetUrl) {
-                                    console.log(`Ad ID: ${ad.id} - Creative asset URL provided, attempting image upload: ${ad.creativeAssetUrl}`);
                                     imageHashForTranslator = (await uploadMetaAdImageByUrl(
                                         metaConnection.platformAccountId,
                                         ad.creativeAssetUrl,
                                         decryptedAccessToken
                                     )) || undefined;
-                                    if (imageHashForTranslator) {
-                                        console.log(`Ad ID: ${ad.id} - Image uploaded to Meta, hash: ${imageHashForTranslator}`);
-                                    } else {
-                                        console.warn(`Ad ID: ${ad.id} - Failed to upload image to Meta. Ad will be created without image if possible.`);
-                                    }
+                                    if (imageHashForTranslator) console.log(`Ad ID: ${ad.id} - Image uploaded to Meta, hash: ${imageHashForTranslator}`);
+                                    else console.warn(`Ad ID: ${ad.id} - Failed to upload image to Meta.`);
                                 }
-
-                                const metaPayloads = translateToMetaAd(
-                                    ad, 
-                                    mappedTargeting, 
-                                    imageHashForTranslator
-                                );
-
+                                const metaPayloads = translateToMetaAd(ad, mappedTargeting, imageHashForTranslator);
                                 if (metaPayloads) {
-                                    const metaPostResult = await postAdToMeta(
-                                        metaConnection.platformAccountId, 
-                                        metaPayloads,
-                                        decryptedAccessToken
-                                    );
+                                    const metaPostResult = await postAdToMeta(metaConnection.platformAccountId, metaPayloads, decryptedAccessToken);
                                     if (metaPostResult && metaPostResult.adId) {
                                         console.log(`Ad ID: ${ad.id} - Successfully posted to Meta. Meta Ad ID: ${metaPostResult.adId}`);
                                         platformPostSuccess.meta = true;
                                         platformAdIdsToStore.metaCampaignId = metaPostResult.campaignId;
                                         platformAdIdsToStore.metaAdSetId = metaPostResult.adSetId;
                                         platformAdIdsToStore.metaAdId = metaPostResult.adId;
-                                    } else {
-                                        console.error(`Ad ID: ${ad.id} - Failed to post to Meta (postAdToMeta returned null/error).`);
-                                    }
-                                } else {
-                                    console.error(`Ad ID: ${ad.id} - Failed to translate ad for Meta.`);
-                                }
-                            } catch (metaError) {
-                                console.error(`Ad ID: ${ad.id} - Error during Meta posting process:`, metaError);
-                            }
-                        } else {
-                            console.warn(`Ad ID: ${ad.id} - No active Meta connection or Ad Account ID for team ${ad.teamId}.`);
-                        }
-                    } else {
-                        console.log(`Ad ID: ${ad.id} - Meta platform not enabled.`);
-                    }
+                                    } else console.error(`Ad ID: ${ad.id} - Failed to post to Meta.`);
+                                } else console.error(`Ad ID: ${ad.id} - Failed to translate ad for Meta.`);
+                            } catch (metaError) { console.error(`Ad ID: ${ad.id} - Error during Meta posting:`, metaError); }
+                        } else console.warn(`Ad ID: ${ad.id} - No active Meta connection for team ${ad.teamId}.`);
+                    } else console.log(`Ad ID: ${ad.id} - Meta platform not enabled.`);
 
+                    // X (Twitter) Platform Logic
                     if (ad.platformsXEnabled) {
-                        console.log(`Ad ID: ${ad.id} - X Ads posting NOT YET IMPLEMENTED.`);
+                        console.log(`Ad ID: ${ad.id} - Attempting to post to X Ads...`);
                         const xConnection = await db.query.socialPlatformConnections.findFirst({
                             where: and(eq(socialPlatformConnections.teamId, ad.teamId), eq(socialPlatformConnections.platformName, 'x'), eq(socialPlatformConnections.status, 'active'))
                         });
                         const xAdsAppAccountId = process.env.X_ADS_ACCOUNT_ID;
                         const xAppUserAccessToken = process.env.X_USER_ACCESS_TOKEN;
                         const xAppUserTokenSecret = process.env.X_USER_ACCESS_TOKEN_SECRET;
-                        
-                        // Ensure fundingInstrumentId is passed as string | undefined
                         const fundingIdForTranslator = xConnection?.fundingInstrumentId || undefined;
 
                         if (xConnection && xAdsAppAccountId && xAppUserAccessToken && xAppUserTokenSecret && fundingIdForTranslator) {
-                            // const xPayloads = translateToXAd(ad, mappedTargeting, fundingIdForTranslator);
-                            // if (xPayloads) {
-                            //     const result = await postAdToX(xAdsAppAccountId, xPayloads, xAppUserAccessToken, xAppUserTokenSecret, ad);
-                            //     if (result?.lineItemId) { platformPostSuccess.x = true; /* ... store IDs ... */ }
-                            // }
-                        } else {
-                            console.warn(`Ad ID: ${ad.id} - X Ads prerequisites not met.`);
-                        }
-                    }
+                            try {
+                                const xPayloads = translateToXAd(ad, mappedTargeting, fundingIdForTranslator);
+                                if (xPayloads) {
+                                    const xPostResult = await postAdToX(xAdsAppAccountId, xPayloads, xAppUserAccessToken, xAppUserTokenSecret, ad);
+                                    if (xPostResult && xPostResult.lineItemId) {
+                                        console.log(`Ad ID: ${ad.id} - Successfully posted to X. X LineItem ID: ${xPostResult.lineItemId}`);
+                                        platformPostSuccess.x = true;
+                                        platformAdIdsToStore.xCampaignId = xPostResult.campaignId;
+                                        platformAdIdsToStore.xLineItemId = xPostResult.lineItemId;
+                                        platformAdIdsToStore.xPromotedTweetId = xPostResult.promotedTweetId;
+                                    } else console.error(`Ad ID: ${ad.id} - Failed to post to X.`);
+                                } else console.error(`Ad ID: ${ad.id} - Failed to translate ad for X.`);
+                            } catch (xError) { console.error(`Ad ID: ${ad.id} - Error during X posting:`, xError); }
+                        } else console.warn(`Ad ID: ${ad.id} - X Ads prerequisites not met.`);
+                    } else console.log(`Ad ID: ${ad.id} - X platform not enabled.`);
 
+                    // Google Ads Platform Logic
                     if (ad.platformsGoogleEnabled) {
-                        console.log(`Ad ID: ${ad.id} - Google Ads posting NOT YET IMPLEMENTED.`);
+                        console.log(`Ad ID: ${ad.id} - Attempting to post to Google Ads...`);
                         const googleConnection = await db.query.socialPlatformConnections.findFirst({
                             where: and(eq(socialPlatformConnections.teamId, ad.teamId), eq(socialPlatformConnections.platformName, 'google'), eq(socialPlatformConnections.status, 'active'))
                         });
-                        const googleDeveloperToken = process.env.GOOGLE_DEVELOPER_TOKEN; // Used inside postAdToGoogle via getGoogleAdsClient
+                        if (googleConnection && googleConnection.refreshToken && googleConnection.platformAccountId) {
+                            try {
+                                const decryptedRefreshToken = decrypt(googleConnection.refreshToken);
+                                const googlePayloads = translateToGoogleAd(ad, mappedTargeting);
+                                if (googlePayloads) {
+                                    const googlePostResult = await postAdToGoogle(
+                                        { refreshToken: decryptedRefreshToken, platformAccountId: googleConnection.platformAccountId },
+                                        googlePayloads,
+                                        ad.budgetDaily
+                                    );
+                                    if (googlePostResult && googlePostResult.campaignResourceName) {
+                                        console.log(`Ad ID: ${ad.id} - Successfully posted to Google Ads. Google Campaign: ${googlePostResult.campaignResourceName}`);
+                                        platformPostSuccess.google = true;
+                                        platformAdIdsToStore.googleCampaignResourceId = googlePostResult.campaignResourceName;
+                                        // platformAdIdsToStore.googleAdGroupResourceId = googlePostResult.adGroupResourceName; // If/when returned
+                                        // platformAdIdsToStore.googleAdResourceId = googlePostResult.adResourceName; // If/when returned
+                                    } else console.error(`Ad ID: ${ad.id} - Failed to post to Google Ads.`);
+                                } else console.error(`Ad ID: ${ad.id} - Failed to translate ad for Google Ads.`);
+                            } catch (googleError) { console.error(`Ad ID: ${ad.id} - Error during Google Ads posting:`, googleError); }
+                        } else console.warn(`Ad ID: ${ad.id} - Google Ads prerequisites not met.`);
+                    } else console.log(`Ad ID: ${ad.id} - Google platform not enabled.`);
+                } // End of if segmentationResult was successful
 
-                        if (googleConnection?.refreshToken && googleConnection.platformAccountId && googleDeveloperToken) {
-                            // const decryptedRefreshToken = decrypt(googleConnection.refreshToken); // Decryption handled by getGoogleAdsClient implicitly if needed there, or pass raw
-                            // const googlePayloads = translateToGoogleAd(ad, mappedTargeting);
-                            // if (googlePayloads) {
-                            //     const result = await postAdToGoogle(
-                            //         { refreshToken: googleConnection.refreshToken, platformAccountId: googleConnection.platformAccountId }, 
-                            //         googlePayloads,
-                            //         ad.budgetDaily // Pass budgetDaily as the third argument
-                            //     );
-                            //     if (result?.adResourceName) { platformPostSuccess.google = true; /* ... store IDs ... */ }
-                            // }
-                        } else {
-                             console.warn(`Ad ID: ${ad.id} - Google Ads prerequisites not met.`);
-                        }
-                    }
+                // Determine overall status based on platform successes
+                if (overallAdStatusForDb !== 'segmentation_failed') { 
+                    // This block executes if segmentation was successful OR if overallAdStatusForDb is still 'error_processing' (initial default)
+                    const platformsAttemptedCount = [ad.platformsMetaEnabled, ad.platformsXEnabled, ad.platformsGoogleEnabled].filter(Boolean).length;
+                    const platformsSucceededCount = Object.values(platformPostSuccess).filter(Boolean).length;
 
-                    if (segmentationResult) {
-                        overallAdStatusForDb = 'processed_placeholder';
-                    }
-                }
-                
-                const platformsAttempted = (ad.platformsMetaEnabled ? 1:0) + (ad.platformsXEnabled ? 1:0) + (ad.platformsGoogleEnabled ? 1:0);
-                const platformsSucceeded = (platformPostSuccess.meta ? 1:0) + (platformPostSuccess.x ? 1:0) + (platformPostSuccess.google ? 1:0);
-
-                if (overallAdStatusForDb !== 'segmentation_failed') {
-                    if (platformsSucceeded > 0) {
-                        if (platformsSucceeded === platformsAttempted && platformsAttempted > 0) {
-                            overallAdStatusForDb = 'live';
-                        } else if (platformsAttempted > 0) {
-                            overallAdStatusForDb = 'partially_live';
-                        } else {
-                            overallAdStatusForDb = 'processed_no_platforms';
-                        }
-                    } else if (platformsAttempted > 0) {
-                        overallAdStatusForDb = 'post_failed_all';
-                    } else {
+                    if (platformsAttemptedCount === 0) {
                         overallAdStatusForDb = 'processed_no_platforms';
+                    } else if (platformsSucceededCount === platformsAttemptedCount) {
+                        overallAdStatusForDb = 'live';
+                    } else if (platformsSucceededCount > 0) {
+                        overallAdStatusForDb = 'partially_live';
+                    } else { // platformsAttemptedCount > 0 but platformsSucceededCount === 0
+                        overallAdStatusForDb = 'post_failed_all';
                     }
                 }
-                if (overallAdStatusForDb === 'processed_placeholder' && platformsAttempted === 0) {
-                    overallAdStatusForDb = 'processed_no_platforms';
-                } else if (overallAdStatusForDb === 'processed_placeholder' && platformsSucceeded === 0 && platformsAttempted > 0) {
-                    overallAdStatusForDb = 'post_failed_all';
-                }
+                // If overallAdStatusForDb was 'segmentation_failed', it remains so.
+                // If it was 'error_processing' initially and segmentation succeeded, the above block sets a more specific status.
 
-                await db.update(jobAds).set({ 
-                    status: overallAdStatusForDb, 
-                    ...platformAdIdsToStore, 
-                    updatedAt: new Date() 
+                await db.update(jobAds).set({
+                    status: overallAdStatusForDb,
+                    ...platformAdIdsToStore,
+                    updatedAt: new Date()
                 }).where(eq(jobAds.id, ad.id));
                 
                 if (overallAdStatusForDb === 'live' || overallAdStatusForDb === 'partially_live') {
                     adsSuccessfullyPostedToAnyPlatform++;
                 }
-
                 console.log(`Ad ID: ${ad.id} final status: ${overallAdStatusForDb}`);
 
             } catch (error) {
-                console.error(`Unhandled error for ad ID ${ad.id}:`, error);
+                console.error(`Unhandled error processing ad ID ${ad.id}:`, error);
+                // Ensure status is updated to error_processing if an unhandled exception occurs in the try block
                 await db.update(jobAds).set({ status: 'error_processing', updatedAt: new Date() }).where(eq(jobAds.id, ad.id));
             }
         }
@@ -264,7 +324,7 @@ export async function processScheduledAds() {
         return { message: `Attempted to process ${adsAttemptedInLoop} ads. Successfully posted to at least one platform: ${adsSuccessfullyPostedToAnyPlatform}.`, processedCount: adsAttemptedInLoop };
 
     } catch (error) {
-        console.error('Error in processScheduledAds:', error);
-        return { error: 'Failed to query/process ads.', processedCount: 0 };
+        console.error('Error in processScheduledAds main try-catch:', error);
+        return { error: 'Failed to query/process ads due to a top-level error.', processedCount: 0 };
     }
-} 
+}
