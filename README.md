@@ -93,3 +93,56 @@ In your Vercel project settings (or during deployment), add all the necessary en
 2. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
 3. `POSTGRES_URL`: Set this to your production database URL.
 4. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
+
+---
+
+## Variables de entorno requeridas (`.env`)
+
+Copia y personaliza estas variables en tu archivo `.env` en la raíz del proyecto:
+
+```env
+# Base de la aplicación
+BASE_URL=http://localhost:3000
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Base de datos
+POSTGRES_URL=postgres://usuario:contraseña@host:puerto/base_de_datos
+
+# Autenticación
+AUTH_SECRET=pon_aqui_un_string_secreto
+
+# Stripe (pagos)
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# Cifrado
+ENCRYPTION_KEY=pon_aqui_una_cadena_hexadecimal_de_64_caracteres
+
+# Meta (Facebook/Instagram)
+META_APP_ID=tu_app_id_de_meta
+META_APP_SECRET=tu_app_secret_de_meta
+META_DEFAULT_PAGE_ID=tu_page_id_de_facebook
+
+# Google Ads
+GOOGLE_CLIENT_ID=tu_google_client_id
+GOOGLE_CLIENT_SECRET=tu_google_client_secret
+GOOGLE_DEVELOPER_TOKEN=tu_google_developer_token
+GOOGLE_LOGIN_CUSTOMER_ID=opcional_mcc_id
+GOOGLE_ADS_CUSTOMER_ID_FOR_APP=tu_google_ads_customer_id
+
+# X (Twitter)
+X_CONSUMER_KEY=tu_consumer_key
+X_CONSUMER_SECRET=tu_consumer_secret
+X_ADS_ACCOUNT_ID=tu_ads_account_id
+X_USER_ACCESS_TOKEN=tu_user_access_token
+X_USER_ACCESS_TOKEN_SECRET=tu_user_access_token_secret
+
+# OpenAI (opcional, para generación de anuncios con IA)
+OPENAI_API_KEY=tu_openai_api_key
+
+# Microservicio de segmentación (Python)
+PYTHON_SEGMENTATION_SERVICE_URL=http://localhost:8000/segment
+
+# Seguridad y automatización
+CRON_JOB_SECRET=un_secreto_para_tus_cron_jobs
+```
