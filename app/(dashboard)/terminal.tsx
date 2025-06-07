@@ -7,12 +7,12 @@ export function Terminal() {
   const [terminalStep, setTerminalStep] = useState(0);
   const [copied, setCopied] = useState(false);
   const terminalSteps = [
-    'git clone https://github.com/nextjs/saas-starter',
-    'pnpm install',
-    'pnpm db:setup',
-    'pnpm db:migrate',
-    'pnpm db:seed',
-    'pnpm dev 🎉',
+    'adflux run "Senior Software Engineer"',
+    'Analyzing job description...',
+    'AI audience selected: [Software Development, Python, APIs]',
+    'Connecting to platforms: [Meta, Google, X]',
+    'Publishing campaigns...',
+    'Automation complete! 🎉',
   ];
 
   useEffect(() => {
@@ -20,13 +20,13 @@ export function Terminal() {
       setTerminalStep((prev) =>
         prev < terminalSteps.length - 1 ? prev + 1 : prev
       );
-    }, 500);
+    }, 1200); // Slower speed for better readability
 
     return () => clearTimeout(timer);
   }, [terminalStep]);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(terminalSteps.join('\n'));
+    navigator.clipboard.writeText('adflux run "Your Job Title"');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -58,7 +58,7 @@ export function Terminal() {
               key={index}
               className={`${index > terminalStep ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
             >
-              <span className="text-green-400">$</span> {step}
+              <span className="text-orange-400">$</span> {step}
             </div>
           ))}
         </div>

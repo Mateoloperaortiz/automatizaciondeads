@@ -190,50 +190,57 @@ export async function postAdToGoogle(
         */
 
         console.log(`Submitting ${operations.length} operations to Google Ads API (Campaign & Budget ONLY TEST)...`);
-        const mutateResponse = await client.mutateResources(operations, { partial_failure: true, validate_only: false });
+        const response = await client.mutateResources(operations);
+        console.log(`Google Ads API raw response for Campaign & Budget ONLY TEST:`, JSON.stringify(response, null, 2));
 
-        if (mutateResponse.partial_failure_error && mutateResponse.partial_failure_error.details) {
-            console.warn("Google Ads: Partial failure occurred during mutate operation.");
-            mutateResponse.partial_failure_error.details.forEach((detail: any) => {
-                const opIndex = detail.path?.index || 0;
-                const entityType = operations[opIndex]?.entity || 'unknown_entity';
-                const fieldPath = detail.path?.field_name ? `${detail.path.field_name}` : 'N/A';
-                console.error(`  Error for operation ${opIndex} (${entityType}) at path ${fieldPath}: ${detail.message}`);
-            });
-        }
-        
-        const responses = mutateResponse.mutate_operation_responses || [];
-        const finalResults = {
-            campaignBudgetResourceName: getResourceNameFromOperationResponse(responses[0]),
-            campaignResourceName: getResourceNameFromOperationResponse(responses[1]),
-            adGroupResourceName: undefined, // Not created in this test
-            adResourceName: undefined,    // Not created in this test
-            criteriaResourceNames: [],    // Not created in this test
-        };
+        let campaignBudgetResourceName = '';
+        let campaignResourceName = '';
+        let hasError = false;
 
-        console.log("Google Ads entities created/attempted (Campaign & Budget ONLY TEST):", finalResults);
-
-        if (!finalResults.campaignBudgetResourceName || !finalResults.campaignResourceName) {
-             console.error("Google Ads: Failed to create Campaign Budget or Campaign.");
-             responses.forEach((opResponse: any, index: number) => {
-                if (operations[index] && !getResourceNameFromOperationResponse(opResponse)) {
-                    const entityType = operations[index].entity;
-                    let specificError = 'Unknown error in operation response';
-                    if (opResponse[`${entityType}_result`]?.partial_failure_error) {
-                        specificError = opResponse[`${entityType}_result`].partial_failure_error.message;
-                    } else if (opResponse.partial_failure_error) { // General partial failure for this op
-                        specificError = opResponse.partial_failure_error.message;
+        response.results.forEach((result, i) => {
+            const operationType = operations[i].campaign_budget_operation ? 'campaign_budget' : 'campaign';
+            let success = false;
+            if (result.campaign_budget_result?.resource_name) {
+                campaignBudgetResourceName = result.campaign_budget_result.resource_name;
+                success = true;
+            } else if (result.campaign_result?.resource_name) {
+                campaignResourceName = result.campaign_result.resource_name;
+                success = true;
+            } 
+            
+            if (!success) {
+                hasError = true;
+                // Enhanced error logging
+                const partialFailureError = response.partial_failure_error;
+                if (partialFailureError && partialFailureError.details) {
+                    const failureDetails = partialFailureError.details.find(detail => detail.request_index === i.toString());
+                    if (failureDetails && failureDetails.errors && failureDetails.errors.length > 0) {
+                        const errorCode = failureDetails.errors[0].error_code;
+                        const errorMessage = failureDetails.errors[0].message;
+                        console.error(`Operation ${i} (${operationType}) failed with specific error. Code: ${JSON.stringify(errorCode)}, Message: ${errorMessage}`);
+                    } else {
+                        console.error(`Operation ${i} (${operationType}) failed. No specific details found in partial_failure_error for index ${i}.`);
                     }
-                    console.error(`Operation ${index} (${entityType}) failed. Error:`, specificError, opResponse);
+                } else {
+                     console.error(`Operation ${i} (${operationType}) failed. Error: Unknown error in operation response`, result);
                 }
-             });
-             return null;
+            }
+        });
+
+        if (hasError || !campaignBudgetResourceName || !campaignResourceName) {
+            console.error('Google Ads: Failed to create Campaign Budget or Campaign due to one or more failed operations.');
+            return null;
         }
-        return finalResults;
+
+        console.log('Google Ads entities created/attempted (Campaign & Budget ONLY TEST):', { campaignBudgetResourceName, campaignResourceName });
+        // In a real scenario, you'd continue with Ad Group and Ad creation here...
+        return { campaignResourceName, campaignBudgetResourceName };
 
     } catch (error: any) {
-        console.error("Error in postAdToGoogle (Campaign & Budget ONLY TEST) orchestration:", error.message);
-        if (error.errors) console.error("Google Ads API Specific Errors:", JSON.stringify(error.errors, null, 2));
+        console.error(`Error in postAdToGoogle (Campaign & Budget ONLY TEST) orchestration:`, error.message);
+        if (error.errors) { // Google Ads API library often includes detailed errors here
+            console.error('Detailed Google Ads API errors:', JSON.stringify(error.errors, null, 2));
+        }
         return null;
     }
 }

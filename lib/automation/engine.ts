@@ -3,7 +3,11 @@ import { jobAds, socialPlatformConnections, JobAd } from '@/lib/db/schema';
 import { eq, and, lte, gte, isNull, or } from 'drizzle-orm';
 import { mapAudiencePrimitivesToTargeting, PlatformAgnosticTargeting } from './taxonomy_mapper';
 import { translateToMetaAd } from './translators/meta_translator';
-import { postAdToMeta, uploadMetaAdImageByUrl } from './platform_apis/meta_ads_api';
+import {
+  postAdToMeta,
+  uploadMetaAdImageByUrl,
+  verifyMetaAdAccountAccess,
+} from './platform_apis/meta_ads_api';
 import { decrypt } from '@/lib/security/crypto';
 // import { getTeamForUser } from '@/lib/db/queries'; // Not directly used in this file
 import { TEST_ACCOUNTS_ONLY } from '@/lib/config';
@@ -15,6 +19,35 @@ import { postAdToX } from './platform_apis/x_ads_api';
 // Google Ads Imports
 import { translateToGoogleAd } from './translators/google_translator';
 import { postAdToGoogle } from './platform_apis/google_ads_api';
+
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
+  'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were', 'will',
+  'with', 'we', 'our', 'looking', 'who', 'is', 'a', 'to', 'and', 'or', 'in', 'for',
+  'of', 'with', 'on', 'at', 'by', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'do', 'does', 'did', 'but', 'if', 'or', 'as', 'of', 'at', 'by', 'for',
+  'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',
+  'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under',
+  'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how',
+  'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such',
+  'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't',
+  'can', 'will', 'just', 'don', 'should', 'now', 'd', 'll', 'm', 'o', 're', 've', 'y',
+  'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 'hasn', 'haven', 'isn', 'ma',
+  'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 'weren', 'won', 'wouldn'
+]);
+
+function extractKeywordsFromText(text: string): string[] {
+    if (!text) return [];
+    
+    const words = text
+      .toLowerCase()
+      // eslint-disable-next-line no-useless-escape
+      .replace(/[^\w\s]/g, '') // remove punctuation
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !STOP_WORDS.has(word));
+      
+    return [...new Set(words)]; // Return unique keywords
+}
 
 interface AudiencePrimitive {
     category: string;
@@ -67,7 +100,7 @@ async function callPythonSegmentationService(jobAdText: string): Promise<PythonS
     }
     try {
         console.log(`Calling Python service for ad text: ${jobAdText.substring(0, 50)}...`);
-        const response = await fetch(serviceUrl, {
+        const response = await fetch(`${serviceUrl}/segment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ job_ad_text: jobAdText }),
@@ -144,26 +177,20 @@ export async function processScheduledAds() {
                     if (segmentationResult.cluster_assignment_confidence !== undefined && 
                         segmentationResult.cluster_assignment_confidence < CONFIDENCE_THRESHOLD) {
                         
-                        console.warn(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence}) is below threshold (${CONFIDENCE_THRESHOLD}). Falling back to broad targeting.`);
-                        // For broad targeting, we might pass minimal or no specific primitives,
-                        // relying on the job ad text itself for keyword generation in translators,
-                        // and perhaps only very broad location targeting if available directly from the job ad.
-                        // Or, define a default set of broad primitives.
-                        // For simplicity, let's assume mapAudiencePrimitivesToTargeting can handle empty derived_audience_primitives
-                        // and will produce a "broad" PlatformAgnosticTargeting object.
-                        // Alternatively, create a specific "broad" PlatformAgnosticTargeting here.
-                        // Let's opt for creating a default broad targeting object directly.
+                        console.warn(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence.toFixed(2)}) is below threshold (${CONFIDENCE_THRESHOLD}). Falling back to broad targeting with keyword extraction.`);
+                        
+                        const combinedText = `${ad.title} ${ad.descriptionShort || ''}`;
+                        const extractedKeywords = extractKeywordsFromText(combinedText);
+                        console.log(`Ad ID: ${ad.id} - Extracted keywords for broad targeting:`, extractedKeywords);
+
                         mappedTargeting = {
-                            locations: [], // Or a default broad location if applicable from ad.location or team settings
-                            skillKeywords: [], // Rely on ad title/description for keywords in translators
+                            locations: [], // Could still add a default location here
+                            skillKeywords: extractedKeywords,
                             industries: [],
                             seniority: [],
-                            // Potentially other fields set to broad defaults
                         };
-                        // We could also pass an empty array to mapAudiencePrimitivesToTargeting if it's designed to handle it:
-                        // mappedTargeting = mapAudiencePrimitivesToTargeting([], 0); 
                     } else {
-                        console.log(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence ?? 'N/A'}) met or exceeded threshold / not applicable.`);
+                        console.log(`Ad ID: ${ad.id} - Segmentation confidence (${segmentationResult.cluster_assignment_confidence?.toFixed(2) ?? 'N/A'}) met or exceeded threshold / not applicable.`);
                         mappedTargeting = mapAudiencePrimitivesToTargeting(
                             segmentationResult.derived_audience_primitives,
                             segmentationResult.cluster_assignment_confidence
@@ -202,15 +229,28 @@ export async function processScheduledAds() {
                         if (metaConnection && metaConnection.accessToken && metaConnection.platformAccountId) {
                             try {
                                 const decryptedAccessToken = decrypt(metaConnection.accessToken);
+
+                                // --- DIAGNOSTIC STEP ---
+                                const hasAccess = await verifyMetaAdAccountAccess(metaConnection.platformAccountId, decryptedAccessToken);
+                                if (!hasAccess) {
+                                    throw new Error(`Halting Meta processing due to failed diagnostic check. The app lacks permissions on the Ad Account. Please check Meta Business Suite settings.`);
+                                }
+                                // --- END DIAGNOSTIC ---
+                                
                                 let imageHashForTranslator: string | undefined = undefined;
                                 if (ad.creativeAssetUrl) {
-                                    imageHashForTranslator = (await uploadMetaAdImageByUrl(
-                                        metaConnection.platformAccountId,
-                                        ad.creativeAssetUrl,
-                                        decryptedAccessToken
-                                    )) || undefined;
-                                    if (imageHashForTranslator) console.log(`Ad ID: ${ad.id} - Image uploaded to Meta, hash: ${imageHashForTranslator}`);
-                                    else console.warn(`Ad ID: ${ad.id} - Failed to upload image to Meta.`);
+                                    if (TEST_ACCOUNTS_ONLY) {
+                                        console.log("TEST_ACCOUNTS_ONLY is enabled - skipping Meta image upload.");
+                                        imageHashForTranslator = "test_image_hash_12345"; // Provide a dummy hash for the translator
+                                    } else {
+                                        imageHashForTranslator = (await uploadMetaAdImageByUrl(
+                                            metaConnection.platformAccountId,
+                                            ad.creativeAssetUrl,
+                                            decryptedAccessToken
+                                        )) || undefined;
+                                        if (imageHashForTranslator) console.log(`Ad ID: ${ad.id} - Image uploaded to Meta, hash: ${imageHashForTranslator}`);
+                                        else console.warn(`Ad ID: ${ad.id} - Failed to upload image to Meta.`);
+                                    }
                                 }
                                 const metaPayloads = translateToMetaAd(ad, mappedTargeting, imageHashForTranslator);
                                 if (metaPayloads) {

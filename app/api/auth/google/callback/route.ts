@@ -90,8 +90,8 @@ export async function GET(request: NextRequest) {
     // We can add a placeholder for platformUserId if Google returns one via /userinfo endpoint, if needed.
     let platformUserId: string | undefined; 
     // Optionally, call Google's /oauth2/v3/userinfo endpoint with the accessToken to get user info like email/sub (Google User ID)
-    // const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}`}});
-    // if(userInfoResponse.ok) { const userInfo = await userInfoResponse.json(); platformUserId = userInfo.sub; }
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}`}});
+    if(userInfoResponse.ok) { const userInfo = await userInfoResponse.json(); platformUserId = userInfo.sub; }
 
     // If no refresh token is returned, try to find an existing one for this team/platform
     let finalRefreshToken = refreshToken;

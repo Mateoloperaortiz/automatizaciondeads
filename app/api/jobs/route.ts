@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { jobAds } from '@/lib/db/schema';
 import { getTeamForUser } from '@/lib/db/queries';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -19,7 +19,7 @@ export async function GET() {
       .select()
       .from(jobAds)
       .where(eq(jobAds.teamId, team.id))
-      .orderBy(jobAds.createdAt); // Or any other order you prefer
+      .orderBy(desc(jobAds.createdAt)); // Order by newest first
 
     return NextResponse.json(ads);
   } catch (error) {

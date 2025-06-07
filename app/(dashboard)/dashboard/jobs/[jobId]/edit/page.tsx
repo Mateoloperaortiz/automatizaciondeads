@@ -15,6 +15,7 @@ import { updateJobAdAction, UpdateJobAdState, testSegmentationAction, TestSegmen
 import { JobAd } from '@/lib/db/schema';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { startTransition } from 'react';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 // Add type definitions for segmentation data
 interface AudiencePrimitive {
@@ -176,7 +177,7 @@ export default function EditJobAdPage() {
             name="companyName"
             type="text"
             maxLength={100}
-            placeholder="e.g., Acme Innovations Inc."
+            placeholder="e.g., AdFlux Inc."
             className="w-full"
             defaultValue={defaultValues.companyName || ''}
           />
@@ -377,7 +378,7 @@ export default function EditJobAdPage() {
                 </div>
               )}
               
-              {jobAdData.derivedAudiencePrimitives && Array.isArray(jobAdData.derivedAudiencePrimitives) && (jobAdData.derivedAudiencePrimitives as AudiencePrimitive[]).length > 0 && (
+              {jobAdData.derivedAudiencePrimitives && Array.isArray(jobAdData.derivedAudiencePrimitives) && (jobAdData.derivedAudiencePrimitives as AudiencePrimitive[]).length > 0 ? (
                 <div className="mt-3 border-t border-gray-200 pt-3">
                   <p className="text-sm text-gray-600 mb-2">Derived Audience Segments:</p>
                   <div className="space-y-2">
@@ -400,9 +401,9 @@ export default function EditJobAdPage() {
                     })()}
                   </div>
                 </div>
-              )}
+              ) : null}
               
-              {jobAdData.mappedTargeting && Object.keys(jobAdData.mappedTargeting as any).length > 0 && (
+              {jobAdData.mappedTargeting && Object.keys(jobAdData.mappedTargeting as any).length > 0 ? (
                 <div className="mt-3 border-t border-gray-200 pt-3">
                   <p className="text-sm text-gray-600 mb-2">Platform Targeting:</p>
                   <div className="space-y-1 text-xs">
@@ -427,7 +428,7 @@ export default function EditJobAdPage() {
                     })()}
                   </div>
                 </div>
-              )}
+              ) : null}
               
               {jobAdData.segmentationProcessedAt && (
                 <p className="text-xs text-gray-500 mt-3">

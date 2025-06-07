@@ -286,6 +286,11 @@ export function translateToMetaAd(
         };
     }
 
+    if (!adCreativePayload.object_story_spec?.page_id && !adCreativePayload.object_story_spec?.link_data?.image_hash) {
+        console.error("Meta creative requires either a page_id or an image_hash in link_data.");
+        return null;
+    }
+
     return {
         campaignPayload,
         adSetPayload,

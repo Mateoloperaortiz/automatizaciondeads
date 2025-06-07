@@ -348,7 +348,11 @@ export async function triggerAutomationEngineAction(
   const cronSecret = process.env.CRON_JOB_SECRET;
 
   if (!cronSecret) {
-    return { error: "CRON_JOB_SECRET is not configured. Cannot trigger engine securely." };
+    return { 
+      error: "CRON_JOB_SECRET is not configured. Cannot trigger engine securely.",
+      message: null,
+      success: false
+    };
   }
 
   try {
@@ -363,7 +367,11 @@ export async function triggerAutomationEngineAction(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Error triggering automation engine: ${response.status}`, errorText);
-      return { error: `Failed to trigger engine: ${response.status} ${errorText}` };
+      return { 
+        error: `Failed to trigger engine: ${response.status} ${errorText}`,
+        message: null,
+        success: false
+      };
     }
 
     const result = await response.json();
@@ -377,7 +385,11 @@ export async function triggerAutomationEngineAction(
 
   } catch (err: any) {
     console.error('Error in triggerAutomationEngineAction:', err);
-    return { error: err.message || 'Failed to trigger automation engine.' };
+    return { 
+      error: err.message || 'Failed to trigger automation engine.',
+      message: null,
+      success: false
+    };
   }
 }
 

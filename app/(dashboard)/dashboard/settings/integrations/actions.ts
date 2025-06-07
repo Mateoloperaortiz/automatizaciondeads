@@ -16,10 +16,16 @@ const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 // Construct redirect URI more safely if NEXT_PUBLIC_BASE_URL might have trailing slash
 const META_REDIRECT_URI = `${NEXT_PUBLIC_BASE_URL ? NEXT_PUBLIC_BASE_URL.replace(/\/$/, '') : ''}/api/auth/meta/callback`;
 
-// Define the required scopes for your application
-// Example scopes: 'email', 'public_profile', 'ads_management', 'ads_read', 'pages_read_engagement'
-// Consult Meta documentation for the exact scopes needed for your job ad posting functionality.
-const META_SCOPES = ['ads_management', 'ads_read', 'pages_read_engagement', 'business_management'].join(',');
+// Scopes updated to match what is available in the user's Meta App dashboard.
+const META_SCOPES = [
+  'ads_management',
+  'ads_read',
+  'pages_read_engagement',
+  'business_management',
+  'pages_show_list',
+  'pages_manage_ads', // Using this instead of pages_manage_posts
+  'leads_retrieval'
+].join(',');
 
 export async function getMetaOAuthURL(): Promise<{ error?: string; url?: string }> {
   if (!META_APP_ID) {
@@ -51,6 +57,12 @@ export async function getMetaOAuthURL(): Promise<{ error?: string; url?: string 
       response_type: 'code',
       state: state,
     });
+
+    // For developers testing locally, forcing a re-authentication can sometimes help
+    // bypass issues with business login configurations or cached denials.
+    if (process.env.NODE_ENV === 'development') {
+      params.append('auth_type', 'rerequest');
+    }
 
     const oauthURL = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
     return { url: oauthURL };
@@ -257,12 +269,10 @@ export async function connectXPlatformAction(
 
     let fundingInstrumentId: string | null = null;
     try {
-        console.log(`Fetching funding instrument ID for X Ads Account: ${xAdsAccountId}`);
         fundingInstrumentId = await fetchXFundingInstrumentId(xAdsAccountId, xUserAccessToken, xUserTokenSecret);
         if (!fundingInstrumentId) {
             return { error: 'Could not fetch X Ads funding instrument ID. Please check account setup.', platform: 'x' };
         }
-        console.log(`Fetched X Funding Instrument ID: ${fundingInstrumentId}`);
     } catch (e: any) {
         console.error("Error fetching X funding instrument ID:", e);
         return { error: e.message || 'Failed to fetch X funding instrument ID.', platform: 'x' };
@@ -362,8 +372,11 @@ export async function disconnectXPlatformAction(
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 // const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET; // Needed for token exchange
 const GOOGLE_REDIRECT_URI_PATH = '/api/auth/google/callback';
-// Scope for Google Ads API
-const GOOGLE_ADS_SCOPE = 'https://www.googleapis.com/auth/adwords';
+// Scope for Google Ads API and user info
+const GOOGLE_SCOPES = [
+    'https://www.googleapis.com/auth/adwords',
+    'https://www.googleapis.com/auth/userinfo.profile' // To get user's unique ID and basic profile
+].join(' ');
 
 export async function redirectToGoogleConnect() {
     if (!GOOGLE_CLIENT_ID) {
@@ -393,7 +406,7 @@ export async function redirectToGoogleConnect() {
         client_id: GOOGLE_CLIENT_ID,
         redirect_uri: redirectUri,
         response_type: 'code',
-        scope: GOOGLE_ADS_SCOPE,
+        scope: GOOGLE_SCOPES,
         state: state,
         access_type: 'offline', // Request refresh token
         prompt: 'consent',       // Ensure user sees consent screen for offline access
@@ -401,4 +414,154 @@ export async function redirectToGoogleConnect() {
 
     const oauthURL = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     redirect(oauthURL);
+}
+
+export async function disconnectGoogleAction(
+    prevState: IntegrationActionState
+  ): Promise<IntegrationActionState> {
+    const team = await getTeamForUser();
+    if (!team) {
+      return { error: 'User not authenticated or no team found.', platform: 'google' };
+    }
+  
+    try {
+      // 1. Find the existing connection
+      const connection = await db.query.socialPlatformConnections.findFirst({
+        where: and(
+          eq(socialPlatformConnections.teamId, team.id),
+          eq(socialPlatformConnections.platformName, 'google')
+        ),
+      });
+  
+      if (!connection) {
+        return { error: 'No active Google connection found to disconnect.', platform: 'google' };
+      }
+  
+      // 2. Attempt to revoke the token on Google's side
+      if (connection.refreshToken) {
+        try {
+          const decryptedRefreshToken = decrypt(connection.refreshToken);
+          const revokeResponse = await fetch('https://oauth2.googleapis.com/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `token=${encodeURIComponent(decryptedRefreshToken)}`,
+          });
+  
+          if (revokeResponse.ok) {
+            console.log('Successfully revoked Google OAuth token.');
+          } else {
+            const errorData = await revokeResponse.json();
+            console.warn('Failed to revoke Google OAuth token:', errorData);
+          }
+        } catch (revokeErr: any) {
+          console.warn('Error during Google token revocation API call:', revokeErr.message);
+          // Continue to delete from our DB even if revocation fails
+        }
+      }
+  
+      // 3. Delete the connection from our database
+      const result = await db
+        .delete(socialPlatformConnections)
+        .where(eq(socialPlatformConnections.id, connection.id))
+        .returning({ id: socialPlatformConnections.id });
+  
+      if (result.length === 0) {
+        return { error: 'Failed to delete the Google connection from the database.', platform: 'google' };
+      }
+  
+      revalidatePath('/dashboard/settings/integrations');
+      revalidatePath('/api/connections/google'); 
+  
+      return { success: true, message: 'Google Ads account disconnected successfully.', platform: 'google' };
+  
+    } catch (err: any) {
+      console.error('Error disconnecting Google Ads account:', err);
+      return { error: err.message || 'Failed to disconnect Google Ads account.', platform: 'google' };
+    }
+  }
+
+export async function finalizeGoogleConnectionAction(
+  prevState: IntegrationActionState,
+  formData: FormData
+): Promise<IntegrationActionState> {
+  const selectedAccountId = formData.get('selectedAccountId') as string;
+  if (!selectedAccountId) {
+    return { error: 'No Google Ads account was selected.', platform: 'google' };
+  }
+
+  const cookieStore = await cookies();
+  const tempCookie = cookieStore.get('google_temp_connection')?.value;
+  // Clean up cookies after reading them
+  cookieStore.delete('google_temp_connection');
+  cookieStore.delete('google_ad_accounts_list');
+
+  if (!tempCookie) {
+    return { error: 'Connection session expired or data missing. Please try again.', platform: 'google' };
+  }
+
+  let tempData;
+  try {
+    tempData = JSON.parse(tempCookie);
+  } catch (e) {
+    return { error: 'Failed to parse connection data. Please try again.', platform: 'google' };
+  }
+
+  const {
+    accessToken,
+    refreshToken,
+    tokenExpiresAt,
+    platformUserId, // This would be the Google User ID (sub)
+    scopes,
+  } = tempData;
+
+  if (!accessToken || !refreshToken) {
+    return { error: 'Access or refresh token missing from session. Please try again.', platform: 'google' };
+  }
+
+  const team = await getTeamForUser();
+  if (!team) {
+    return { error: 'User not authenticated or no team found.', platform: 'google' };
+  }
+
+  try {
+    const encryptedAccessToken = encrypt(accessToken);
+    const encryptedRefreshToken = encrypt(refreshToken);
+
+    const connectionData: NewSocialPlatformConnection = {
+      teamId: team.id,
+      platformName: 'google',
+      accessToken: encryptedAccessToken,
+      refreshToken: encryptedRefreshToken,
+      tokenExpiresAt: tokenExpiresAt ? new Date(tokenExpiresAt) : null,
+      scopes: scopes || null,
+      platformUserId: platformUserId || null,
+      platformAccountId: selectedAccountId, // The selected "customers/..." ID
+      status: 'active',
+    };
+
+    await db.insert(socialPlatformConnections)
+      .values(connectionData)
+      .onConflictDoUpdate({
+        target: [socialPlatformConnections.teamId, socialPlatformConnections.platformName],
+        set: {
+          accessToken: encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
+          tokenExpiresAt: connectionData.tokenExpiresAt,
+          scopes: connectionData.scopes,
+          platformUserId: connectionData.platformUserId,
+          platformAccountId: selectedAccountId,
+          status: 'active',
+          updatedAt: new Date(),
+        },
+      });
+
+    revalidatePath('/dashboard/settings/integrations');
+    revalidatePath('/api/connections/google');
+
+    return { success: true, message: 'Google Ads account connected successfully.', platform: 'google' };
+
+  } catch (err: any) {
+    console.error('Error finalizing Google connection:', err);
+    return { error: err.message || 'Failed to finalize Google connection.', platform: 'google' };
+  }
 }

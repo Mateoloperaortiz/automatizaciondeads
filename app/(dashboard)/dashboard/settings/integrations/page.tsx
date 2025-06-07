@@ -12,7 +12,8 @@ import {
     IntegrationActionState, 
     connectXPlatformAction, 
     disconnectXPlatformAction, // Import the new action
-    redirectToGoogleConnect 
+    redirectToGoogleConnect,
+    disconnectGoogleAction
 } from './actions';
 import { useSearchParams } from 'next/navigation';
 
@@ -70,6 +71,10 @@ export default function IntegrationsPage() {
   const { data: googleConnection, error: fetchGoogleError, isLoading: isLoadingGoogle, mutate: mutateGoogle } = 
     useSWR<SocialPlatformConnection | null>('/api/connections/google', fetcher);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [disconnectGoogleState, submitDisconnectGoogleAction, isDisconnectingGoogle] = useActionState<IntegrationActionState, void>(
+    disconnectGoogleAction,
+    { ...initialIntegrationState, platform: 'google' }
+  );
 
   const handleConnectMeta = async () => {
     setIsConnectingMeta(true);
@@ -100,7 +105,9 @@ export default function IntegrationsPage() {
   };
 
   const handleDisconnectGoogle = async () => {
-    alert('Google disconnect logic not yet implemented.');
+    if (window.confirm('Are you sure you want to disconnect your Google Ads account?')) {
+        startTransition(() => { submitDisconnectGoogleAction(); });
+    }
   };
 
   useEffect(() => {
@@ -129,6 +136,15 @@ export default function IntegrationsPage() {
       alert(`Error disconnecting X Ads: ${disconnectXState.error}`);
     }
   }, [disconnectXState, mutateX]);
+
+  useEffect(() => {
+    if (disconnectGoogleState.success) {
+        alert(disconnectGoogleState.message || 'Google Ads account disconnected.');
+        mutateGoogle();
+    } else if (disconnectGoogleState.error && disconnectGoogleState.platform === 'google') {
+        alert(`Error disconnecting Google Ads: ${disconnectGoogleState.error}`);
+    }
+  }, [disconnectGoogleState, mutateGoogle]);
 
   useEffect(() => {
     if (oauthSuccess === 'meta_connected' || oauthSuccess === 'x_connected' || oauthSuccess === 'google_connected') {
@@ -208,10 +224,10 @@ export default function IntegrationsPage() {
   } else if (googleConnection) {
     googleStatusContent = (
       <div className="space-y-2">
-        <p className="text-sm text-green-600 font-medium">Connected (User ID: {googleConnection.platformUserId || 'N/A'})</p>
-        {/* Placeholder for disconnect error display */}
-        <Button variant="outline" onClick={handleDisconnectGoogle} /*disabled={isDisconnectingGoogle}*/ className="w-full sm:w-auto">
-          {/* {isDisconnectingGoogle ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} */} Disconnect Google (Placeholder)
+        <p className="text-sm text-green-600 font-medium">Connected (Ad Account: {googleConnection.platformAccountId || 'N/A'})</p>
+        {disconnectGoogleState.error && disconnectGoogleState.platform === 'google' && <p className="text-xs text-red-500">Error: {disconnectGoogleState.error}</p>}
+        <Button variant="outline" onClick={handleDisconnectGoogle} disabled={isDisconnectingGoogle} className="w-full sm:w-auto">
+          {isDisconnectingGoogle ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Disconnect Google
         </Button>
       </div>
     );
@@ -219,7 +235,6 @@ export default function IntegrationsPage() {
     googleStatusContent = (
       <div className="flex flex-col items-start space-y-2">
         {oauthErrorGoogle && <p className="text-sm text-red-500">Google Connection failed: {oauthErrorGoogle}</p>}
-        {/* Placeholder for disconnect error display */} 
         <Button onClick={handleConnectGoogle} disabled={isConnectingGoogle} className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white">
           {isConnectingGoogle ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}<span className="ml-2">Connect to Google</span>
         </Button>
@@ -259,8 +274,8 @@ export default function IntegrationsPage() {
           </CardContent>
         </Card>
 
-        {/* Google Ads Card (Placeholder as before) */}
-        <Card className="opacity-50"> 
+        {/* Google Ads Card */}
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Google Ads</CardTitle>
             <GoogleIcon />

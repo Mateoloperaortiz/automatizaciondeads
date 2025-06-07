@@ -1,0 +1,83 @@
+{
+  "0": {
+    "name": "Technology & Engineering",
+    "description": "Technical roles focused on software development, data science, infrastructure, and IT systems.",
+    "industry": "Technology",
+    "seniority": "Mid-Level",
+    "skills": [
+      "Python",
+      "JavaScript",
+      "SQL",
+      "Cloud Computing",
+      "AWS",
+      "Azure",
+      "Docker",
+      "Kubernetes",
+      "CI/CD",
+      "Agile",
+      "Scrum",
+      "APIs"
+    ],
+    "keywords": [
+      "engineer",
+      "developer",
+      "data scientist",
+      "devops",
+      "architect",
+      "technical",
+      "backend",
+      "frontend"
+    ],
+    "characteristic_distance": 1.50
+  },
+  "1": {
+    "name": "Business, Marketing & Sales",
+    "description": "Roles focused on business growth, customer acquisition, marketing strategy, and product management.",
+    "industry": "Business",
+    "seniority": "Mid-Level",
+    "skills": [
+      "SEO",
+      "SEM",
+      "Content Marketing",
+      "Social Media",
+      "CRM",
+      "Salesforce",
+      "Lead Generation",
+      "Market Research",
+      "Product Management"
+    ],
+    "keywords": [
+      "marketing",
+      "sales",
+      "product manager",
+      "business development",
+      "account executive",
+      "brand"
+    ],
+    "characteristic_distance": 1.70
+  },
+  "2": {
+    "name": "Corporate Operations & Support",
+    "description": "Roles that support the internal functioning and operations of the business, such as HR, finance, and logistics.",
+    "industry": "Operations",
+    "seniority": "Mid-Level",
+    "skills": [
+      "Project Management",
+      "Recruiting",
+      "Financial Analysis",
+      "Compliance",
+      "Logistics",
+      "Customer Support",
+      "System Administration"
+    ],
+    "keywords": [
+      "operations",
+      "analyst",
+      "support",
+      "human resources",
+      "recruiter",
+      "logistics"
+    ],
+    "characteristic_distance": 1.85
+  }
+}

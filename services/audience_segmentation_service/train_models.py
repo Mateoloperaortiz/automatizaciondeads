@@ -8,10 +8,11 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 # --- Configuration (should match or be consistent with main.py and create_dummy_models.py) --- #
-MODEL_DIR = "./models"
-UMAP_MODEL_PATH = os.path.join(MODEL_DIR, "fitted_umap.pkl")
-KMEANS_MODEL_PATH = os.path.join(MODEL_DIR, "fitted_kmeans.pkl")
-CLUSTER_PROFILES_PATH = os.path.join(MODEL_DIR, "cluster_profiles.json") # For reference, though this script might help generate data for it
+# Get the absolute path of the directory where the script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.path.join(SCRIPT_DIR, "models")
+DATA_DIR = os.path.join(SCRIPT_DIR, "data")
+CORPUS_PATH = os.path.join(DATA_DIR, "job_ads_corpus.json")
 SBERT_MODEL_NAME = 'all-MiniLM-L6-v2'
 
 # UMAP Parameters (tune these based on your data and experimentation)
@@ -25,7 +26,7 @@ KMEANS_K_RANGE = range(2, 7) # k will be tested from 2 to 6 (inclusive of 2, exc
 KMEANS_RANDOM_STATE = 42
 
 # --- Helper Functions --- # 
-def load_job_ad_corpus(filepath="./data/job_ads_corpus.json"):
+def load_job_ad_corpus(filepath=CORPUS_PATH):
     """
     Placeholder function to load your job ad dataset.
     Expects a JSON file where each entry has a field like 'text' or 'description'.
@@ -97,8 +98,8 @@ def train_pipeline():
         )
         print(f"Fitting UMAP on {corpus_sbert_embeddings.shape[0]} embeddings...")
         fitted_umap_model = umap_trainer.fit(corpus_sbert_embeddings)
-        joblib.dump(fitted_umap_model, UMAP_MODEL_PATH)
-        print(f"UMAP model trained and saved to {UMAP_MODEL_PATH}")
+        joblib.dump(fitted_umap_model, os.path.join(MODEL_DIR, 'fitted_umap.pkl'))
+        print(f"UMAP model trained and saved to {os.path.join(MODEL_DIR, 'fitted_umap.pkl')}")
         
         # Transform corpus with the fitted UMAP for K-Means training
         print("Transforming corpus embeddings with fitted UMAP...")
@@ -143,8 +144,8 @@ def train_pipeline():
 
     if best_kmeans_model and best_k != -1:
         print(f"Best k found: {best_k} with Silhouette Score: {best_silhouette_score:.4f}")
-        joblib.dump(best_kmeans_model, KMEANS_MODEL_PATH)
-        print(f"Optimal K-Means model (k={best_k}) trained and saved to {KMEANS_MODEL_PATH}")
+        joblib.dump(best_kmeans_model, os.path.join(MODEL_DIR, 'fitted_kmeans.pkl'))
+        print(f"Optimal K-Means model (k={best_k}) trained and saved to {os.path.join(MODEL_DIR, 'fitted_kmeans.pkl')}")
         # You can now assign all corpus ads to their clusters using best_kmeans_model.predict(corpus_reduced_embeddings)
         # and use this for generating the initial cluster_profiles.json
     else:
@@ -159,7 +160,7 @@ def train_pipeline():
     print("  2. For each cluster label (0 to k-1):")
     print("     a. Gather all job ad texts that belong to this cluster.")
     print("     b. Analyze these texts (e.g., common n-grams, topics via zero-shot classification) to define a profile.")
-    print(f"     c. Create an entry in {CLUSTER_PROFILES_PATH} like: \"0\": {{ \"name\": \"Cluster 0 Profile\", \"industry\": \"X\", ... }}")
+    print(f"     c. Create an entry in {os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models', 'cluster_profiles.json')} like: \"0\": {{ \"name\": \"Cluster 0 Profile\", \"industry\": \"X\", ... }}")
 
     print("\nOffline training pipeline finished.")
 

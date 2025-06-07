@@ -375,3 +375,24 @@ export async function postAdToMeta(
 // TODO:
 // - More sophisticated error handling and retry logic for API calls.
 // - Function to update ad status (e.g., from PAUSED to ACTIVE).
+
+export async function verifyMetaAdAccountAccess(adAccountId: string, accessToken: string): Promise<boolean> {
+  try {
+    const url = `https://graph.facebook.com/v19.0/act_${adAccountId}?fields=name&access_token=${accessToken}`;
+    console.log(`Running Meta diagnostic check: Verifying access to Ad Account ${adAccountId}`);
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error(`Meta Diagnostic FAILED. Could not read Ad Account. This is a permission issue.`);
+      console.error(`Meta's Response: ${data.error.message}`);
+      return false;
+    }
+    
+    console.log(`Meta Diagnostic SUCCESS. Successfully read Ad Account name: "${data.name}"`);
+    return true;
+  } catch (error) {
+    console.error("Meta Diagnostic FAILED: An unexpected error occurred during the Ad Account fetch.", error);
+    return false;
+  }
+}
