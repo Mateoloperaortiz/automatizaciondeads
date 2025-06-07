@@ -1,10 +1,10 @@
-# InspireAI: Automatización Inteligente de Anuncios de Empleo
+# Adflux: Automatización Inteligente de Anuncios de Empleo
 
-InspireAI es una plataforma avanzada que automatiza la publicación de anuncios de empleo en múltiples redes sociales (Meta, Google Ads y X), utilizando inteligencia artificial para segmentar y optimizar la audiencia de cada campaña. Nuestra solución ahorra tiempo, reduce costos y maximiza el alcance de tus vacantes, permitiéndote encontrar el mejor talento de manera eficiente y moderna.
+Adflux es una plataforma avanzada que automatiza la publicación de anuncios de empleo en múltiples redes sociales (Meta, Google Ads y X), utilizando inteligencia artificial para segmentar y optimizar la audiencia de cada campaña. Nuestra solución ahorra tiempo, reduce costos y maximiza el alcance de tus vacantes, permitiéndote encontrar el mejor talento de manera eficiente y moderna.
 
 ---
 
-## 🚀 ¿Qué hace InspireAI?
+## 🚀 ¿Qué hace Adflux?
 
 - **Automatiza** la creación, segmentación y publicación de anuncios de empleo en Meta (Facebook/Instagram), Google Ads y X (Twitter) desde un solo lugar.
 - **Segmenta audiencias** automáticamente usando IA y machine learning, analizando la descripción del puesto para identificar el público ideal.
@@ -17,7 +17,7 @@ InspireAI es una plataforma avanzada que automatiza la publicación de anuncios 
 
 ## 🧠 Segmentación de Audiencia con IA
 
-Cada vez que creas o programas un anuncio, InspireAI analiza el texto y utiliza un microservicio Python con modelos de machine learning (Sentence-BERT, UMAP, K-Means) para:
+Cada vez que creas o programas un anuncio, Adflux analiza el texto y utiliza un microservicio Python con modelos de machine learning (Sentence-BERT, UMAP, K-Means) para:
 - Extraer las características clave del puesto (industria, habilidades, seniority, palabras clave).
 - Asignar el anuncio a un perfil de audiencia óptimo, con un nivel de confianza visualizable en el dashboard.
 - Mapear la segmentación a los parámetros específicos de cada plataforma publicitaria.
