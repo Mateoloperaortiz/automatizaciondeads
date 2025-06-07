@@ -1,30 +1,53 @@
-# Next.js SaaS Starter
+# InspireAI: Automatización Inteligente de Anuncios de Empleo
 
-This is a starter template for building a SaaS application using **Next.js** with support for authentication, Stripe integration for payments, and a dashboard for logged-in users.
+InspireAI es una plataforma avanzada que automatiza la publicación de anuncios de empleo en múltiples redes sociales (Meta, Google Ads y X), utilizando inteligencia artificial para segmentar y optimizar la audiencia de cada campaña. Nuestra solución ahorra tiempo, reduce costos y maximiza el alcance de tus vacantes, permitiéndote encontrar el mejor talento de manera eficiente y moderna.
 
-**Demo: [https://next-saas-start.vercel.app/](https://next-saas-start.vercel.app/)**
+---
 
-## Features
+## 🚀 ¿Qué hace InspireAI?
 
-- Marketing landing page (`/`) with animated Terminal element
-- Pricing page (`/pricing`) which connects to Stripe Checkout
-- Dashboard pages with CRUD operations on users/teams
-- Basic RBAC with Owner and Member roles
-- Subscription management with Stripe Customer Portal
-- Email/password authentication with JWTs stored to cookies
-- Global middleware to protect logged-in routes
-- Local middleware to protect Server Actions or validate Zod schemas
-- Activity logging system for any user events
+- **Automatiza** la creación, segmentación y publicación de anuncios de empleo en Meta (Facebook/Instagram), Google Ads y X (Twitter) desde un solo lugar.
+- **Segmenta audiencias** automáticamente usando IA y machine learning, analizando la descripción del puesto para identificar el público ideal.
+- **Gestiona campañas**: programa, pausa, reactiva y archiva anuncios fácilmente desde un dashboard intuitivo.
+- **Conexión Multi-Plataforma**: vincula tus cuentas de anuncios de Meta, Google y X una sola vez y publica en todas simultáneamente.
+- **Gestión de equipos y roles**: organiza usuarios y equipos, con control de acceso y roles personalizados.
+- **Suscripciones y pagos**: integra Stripe para la gestión de planes y pagos recurrentes.
 
-## Tech Stack
+---
 
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
-- **Payments**: [Stripe](https://stripe.com/)
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
+## 🧠 Segmentación de Audiencia con IA
 
-## Getting Started
+Cada vez que creas o programas un anuncio, InspireAI analiza el texto y utiliza un microservicio Python con modelos de machine learning (Sentence-BERT, UMAP, K-Means) para:
+- Extraer las características clave del puesto (industria, habilidades, seniority, palabras clave).
+- Asignar el anuncio a un perfil de audiencia óptimo, con un nivel de confianza visualizable en el dashboard.
+- Mapear la segmentación a los parámetros específicos de cada plataforma publicitaria.
+- Adaptar la estrategia automáticamente si la confianza es baja, garantizando siempre la entrega del anuncio.
+
+---
+
+## 🏗️ Arquitectura y Tecnologías
+
+- **Frontend & Backend:** Next.js (App Router), TypeScript, TailwindCSS, shadcn/ui.
+- **Base de datos:** PostgreSQL gestionado con Drizzle ORM.
+- **Pagos:** Stripe para suscripciones y portal de clientes.
+- **Microservicio de IA:** Python (FastAPI, Sentence-BERT, UMAP, K-Means) para segmentación avanzada de audiencias.
+- **Automatización:** Orquestación de campañas, programación y logging de resultados.
+- **Seguridad:** Tokens y credenciales cifrados, autenticación robusta y control de acceso por roles.
+
+---
+
+## ✨ Características Destacadas
+
+- **Dashboard centralizado** para gestión de anuncios, equipos y conexiones.
+- **CRUD completo** de anuncios de empleo y conexiones de plataformas.
+- **Visualización de segmentación**: confianza, perfil asignado y parámetros de targeting.
+- **Pruebas de segmentación en tiempo real** antes de publicar.
+- **Automatización de campañas**: desde la creación hasta el monitoreo de resultados.
+- **Soporte para múltiples equipos y usuarios.**
+
+---
+
+## 🚦 Comenzando
 
 ```bash
 git clone https://github.com/nextjs/saas-starter
@@ -32,35 +55,35 @@ cd saas-starter
 pnpm install
 ```
 
-## Running Locally
+## 🖥️ Ejecución Local
 
-[Install](https://docs.stripe.com/stripe-cli) and log in to your Stripe account:
+[Instala](https://docs.stripe.com/stripe-cli) y accede a tu cuenta de Stripe:
 
 ```bash
 stripe login
 ```
 
-Run the database migrations and seed the database with a default user and team:
+Ejecuta las migraciones de base de datos y siembra los datos iniciales (usuario y equipo de prueba):
 
 ```bash
 pnpm db:migrate
 pnpm db:seed
 ```
 
-This will create the following user and team:
+Esto creará el siguiente usuario y equipo de prueba:
 
-- User: `test@test.com`
-- Password: `admin123`
+- Usuario: `test@test.com`
+- Contraseña: `admin123`
 
-You can also create new users through the `/sign-up` route.
+También puedes crear nuevos usuarios desde la ruta `/sign-up`.
 
-Finally, run the Next.js development server:
+Por último, inicia el servidor de desarrollo de Next.js:
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación en acción.
 
 You can listen for Stripe webhooks locally through their CLI to handle subscription change events:
 
